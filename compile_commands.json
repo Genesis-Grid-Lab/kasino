@@ -1,26 +1,50 @@
 [
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/App.cpp.o -c /home/nephilim/Projects/kasino/src/engine/App.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/App.cpp.o -c /home/nephilim/Projects/kasino/src/engine/App.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/App.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/App.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o -c /home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/Factory.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Factory.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/Factory.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/Factory.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o -c /home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o -c /home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
   "file": "/home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
   "output": "CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/window/WindowFactory.cpp.o -c /home/nephilim/Projects/kasino/src/window/WindowFactory.cpp",
-  "file": "/home/nephilim/Projects/kasino/src/window/WindowFactory.cpp",
-  "output": "CMakeFiles/engine.dir/src/window/WindowFactory.cpp.o"
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/engine.dir/src/gfx/glad/GLDevice.cpp.o -c /home/nephilim/Projects/kasino/src/gfx/glad/GLDevice.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/gfx/glad/GLDevice.cpp",
+  "output": "CMakeFiles/engine.dir/src/gfx/glad/GLDevice.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/main.cpp.o -c /home/nephilim/Projects/kasino/src/main.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/main.cpp.o -c /home/nephilim/Projects/kasino/src/main.cpp",
   "file": "/home/nephilim/Projects/kasino/src/main.cpp",
   "output": "CMakeFiles/Kasino.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/glad",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/glad/include -g -fPIC -o CMakeFiles/glad.dir/src/glad.c.o -c /home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
+  "file": "/home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
+  "output": "vendor/glad/CMakeFiles/glad.dir/src/glad.c.o"
 }
 ]

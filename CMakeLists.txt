@@ -41,10 +41,13 @@ elseif(WINDOW_BACKEND STREQUAL "native")
     file(GLOB_RECURSE iosFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/ios/*.cpp)
   else()
     message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}")
-endif()
+  endif()
 
-file(GLOB source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad)
+
+file(GLOB_RECURSE source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
 file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+file(GLOB gladFile ${CMAKE_CURRENT_SOURCE_DIR}/src/gfx/glad/*.cpp)
 
 add_library(engine
     ${source} ${headers}
@@ -52,12 +55,13 @@ add_library(engine
     ${nativeFile}
     ${iosFile}
     ${androidFile}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/WindowFactory.cpp
+    ${gladFile}
     )
 
 target_include_directories(engine PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad/include
+)
 
 # Backend selection
 if (WINDOW_BACKEND STREQUAL "glfw")
@@ -73,14 +77,20 @@ if (WINDOW_BACKEND STREQUAL "glfw")
         target_link_libraries(engine PUBLIC glfw)
     else()
         find_package(glfw3 REQUIRED)
-        target_link_libraries(engine PUBLIC glfw)
+        target_link_libraries(engine PUBLIC
+	  glfw
+	  glad
+	)
     endif()
 elseif (WINDOW_BACKEND STREQUAL "native")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_NATIVE=1)
+  target_link_libraries(engine PUBLIC glad)
 elseif(WINDOW_BACKEND STREQUAL "android")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_ANDROID=1)
+  target_link_libraries(engine PUBLIC glad)
 elseif(WINDOW_BACKEND STREQUAL "ios")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_IOS=1)
+  target_link_libraries(engine PUBLIC glad)
 else()
     message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}. Use glfw or native.")
 endif()

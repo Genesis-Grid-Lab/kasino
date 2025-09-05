@@ -1,4 +1,5 @@
-#include "window/WindowFactory.h"
+#include "core/Factory.h"
+#include "gfx/glad/GLDevice.h"
 #include "app/App.h"
 #include <memory>
 
@@ -12,9 +13,10 @@ int main(){
     desc.windowHeight  = 800;
     desc.resizable     = true;
     desc.fullscreen    = false;
-    desc.api           = GraphicsAPI::None; // later: OpenGL / Vulkan / Urban
+    desc.api           = GraphicsAPI::OpenGL; // later: OpenGL / Vulkan / Urban
 
-    auto window = CreateWindow(desc);
-    App app(std::move(window));
+    auto window = Factory::CreateWindow(desc);
+    auto device = Factory::CreateDevice();
+    App app(std::move(window), std::move(device));
     return app.Run();
 }

@@ -4,11 +4,27 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <array>
+#include <vector>
+#include <cstdint>
+#include <algorithm>
+#include <unordered_set>
 
-struct Vector2{
+
+namespace glm {
+
+  struct vec2{
     int x;
     int y;
-};
+  };
+
+  struct vec4 {
+    float x;
+    float y;
+    float w;
+    float h;    
+  };
+}
 
  //--------------------- Scope = unique pointer --------------------
 template<typename T>

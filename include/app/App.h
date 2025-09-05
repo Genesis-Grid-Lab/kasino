@@ -1,13 +1,16 @@
 #pragma once
 
+#include "input/InputSystem.h"
 #include "window/IWindow.h"
-#include <memory>
+#include "gfx/IGraphicsDevice.h"
 
 class App{
 public:
-    explicit App(std::unique_ptr<IWindow> window);
-    int Run();
+  explicit App(Scope<IWindow> window, Scope<IGraphicsDevice> device);
+  int Run();
 
 private:
-    std::unique_ptr<IWindow> m_Window;
+  Scope<IWindow> m_Window;
+  Scope<IGraphicsDevice> m_Device;
+  Scope<InputSystem> m_Input;
 };
