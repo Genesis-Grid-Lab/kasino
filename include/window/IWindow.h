@@ -3,6 +3,7 @@
 #include "core/Types.h"
 #include "window/WindowDesc.h"
 #include "events/EventBus.h"
+#include <utility>
 
 enum class WindowAPI {
   None,
@@ -27,9 +28,9 @@ public:
   virtual void PollEvents() = 0;
   virtual void SwapBuffers() = 0;
 
-  virtual glm::vec2 GetLogicalSize() const = 0;
-  virtual glm::vec2 GetWindowSize() const = 0;
-  virtual glm::vec2 GetFramebufferSize() const = 0;
+  virtual std::pair<float, float> GetLogicalSize() const = 0;
+  virtual std::pair<float, float> GetWindowSize() const = 0;
+  virtual std::pair<float, float> GetFramebufferSize() const = 0;
   virtual float GetDevicePixelRatio() const = 0;
 
   virtual void SetCloseCallback(CloseCallback cb) = 0;

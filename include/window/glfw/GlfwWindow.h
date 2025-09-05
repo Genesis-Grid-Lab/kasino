@@ -19,9 +19,9 @@ public:
   void PollEvents() override;
   void SwapBuffers() override;
 
-  glm::vec2 GetLogicalSize() const override;
-  glm::vec2 GetWindowSize() const override;
-  glm::vec2 GetFramebufferSize() const override;
+  std::pair<float, float> GetLogicalSize() const override;
+  std::pair<float, float> GetWindowSize() const override;
+  std::pair<float, float> GetFramebufferSize() const override;
   float GetDevicePixelRatio() const override;
 
   void SetCloseCallback(CloseCallback cb) override;

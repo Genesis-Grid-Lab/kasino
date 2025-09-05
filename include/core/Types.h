@@ -10,22 +10,8 @@
 #include <algorithm>
 #include <unordered_set>
 
-
-namespace glm {
-
-  struct vec2{
-    int x;
-    int y;
-  };
-
-  struct vec4 {
-    float x;
-    float y;
-    float w;
-    float h;    
-  };
-}
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
  //--------------------- Scope = unique pointer --------------------
 template<typename T>
 using Scope = std::unique_ptr<T>;

@@ -121,20 +121,20 @@ void GlfwWindow::SwapBuffers() {
   if(m_HasGL) glfwSwapBuffers(m_Window);
 }
 
-glm::vec2 GlfwWindow::GetLogicalSize() const{
-    return glm::vec2{m_logicalW, m_logicalH};
+std::pair<float, float> GlfwWindow::GetLogicalSize() const{
+    return {m_logicalW, m_logicalH};
 }
 
-glm::vec2 GlfwWindow::GetWindowSize() const {
+std::pair<float, float> GlfwWindow::GetWindowSize() const {
     int w,h;
     glfwGetWindowSize(m_Window, &w, &h);
-    return glm::vec2{w,h};
+    return {w,h};
 }
 
-glm::vec2 GlfwWindow::GetFramebufferSize() const {
+std::pair<float, float> GlfwWindow::GetFramebufferSize() const {
     int w,h;
     glfwGetFramebufferSize(m_Window, &w, &h);
-    return glm::vec2{w,h};
+    return {w,h};
 }
 
 float GlfwWindow::GetDevicePixelRatio() const { return m_dpr; }

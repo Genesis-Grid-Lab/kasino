@@ -25,24 +25,25 @@ if(WINDOW_BACKEND STREQUAL "glfw")
   file(GLOB_RECURSE iosFile)
   file(GLOB_RECURSE glfwFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/glfw/*.cpp)
 elseif(WINDOW_BACKEND STREQUAL "native")
-    file(GLOB_RECURSE nativeFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/native/*.cpp)
-    file(GLOB_RECURSE glfwFile)
-    file(GLOB_RECURSE androidFile)
-    file(GLOB_RECURSE iosFile)
-  elseif(WINDOW_BACKEND STREQUAL "android")
-    file(GLOB_RECURSE nativeFile)
-    file(GLOB_RECURSE glfwFile)
-    file(GLOB_RECURSE androidFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/android/*.cpp)
-    file(GLOB_RECURSE iosFile)
-  elseif(WINDOW_BACKEND STREQUAL "ios")
-    file(GLOB_RECURSE nativeFile)
-    file(GLOB_RECURSE glfwFile)
-    file(GLOB_RECURSE androidFile)
-    file(GLOB_RECURSE iosFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/ios/*.cpp)
-  else()
-    message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}")
-  endif()
+  file(GLOB_RECURSE nativeFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/native/*.cpp)
+  file(GLOB_RECURSE glfwFile)
+  file(GLOB_RECURSE androidFile)
+  file(GLOB_RECURSE iosFile)
+elseif(WINDOW_BACKEND STREQUAL "android")
+  file(GLOB_RECURSE nativeFile)
+  file(GLOB_RECURSE glfwFile)
+  file(GLOB_RECURSE androidFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/android/*.cpp)
+  file(GLOB_RECURSE iosFile)
+elseif(WINDOW_BACKEND STREQUAL "ios")
+  file(GLOB_RECURSE nativeFile)
+  file(GLOB_RECURSE glfwFile)
+  file(GLOB_RECURSE androidFile)
+  file(GLOB_RECURSE iosFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/ios/*.cpp)
+else()
+  message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}")
+endif()
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad)
 
 file(GLOB_RECURSE source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
@@ -61,6 +62,7 @@ add_library(engine
 target_include_directories(engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm
 )
 
 # Backend selection
@@ -74,23 +76,37 @@ if (WINDOW_BACKEND STREQUAL "glfw")
             GIT_TAG 3.4
         )
         FetchContent_MakeAvailable(glfw)
-        target_link_libraries(engine PUBLIC glfw)
+        target_link_libraries(engine PUBLIC
+	  glfw
+	  glad
+	  glm
+	)
     else()
         find_package(glfw3 REQUIRED)
         target_link_libraries(engine PUBLIC
 	  glfw
 	  glad
+	  glm
 	)
     endif()
 elseif (WINDOW_BACKEND STREQUAL "native")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_NATIVE=1)
-  target_link_libraries(engine PUBLIC glad)
+  target_link_libraries(engine PUBLIC
+    glad
+    glm
+  )
 elseif(WINDOW_BACKEND STREQUAL "android")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_ANDROID=1)
-  target_link_libraries(engine PUBLIC glad)
+  target_link_libraries(engine PUBLIC
+    glad
+    glm
+  )
 elseif(WINDOW_BACKEND STREQUAL "ios")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_IOS=1)
-  target_link_libraries(engine PUBLIC glad)
+  target_link_libraries(engine PUBLIC
+    glad
+    glm
+  )
 else()
     message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}. Use glfw or native.")
 endif()

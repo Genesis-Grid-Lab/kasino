@@ -46,7 +46,7 @@ void GLDevice::BeginFrame() {
 
     auto [fbw, fbh] = m_Window->GetFramebufferSize();
     glViewport(0, 0, fbw, fbh);
-    glClearColor(m_Clear.x , m_Clear.y, m_Clear.w, m_Clear.h);
+    glClearColor(m_Clear.x , m_Clear.y, m_Clear.z, m_Clear.w);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
