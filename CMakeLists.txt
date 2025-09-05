@@ -1,0 +1,75 @@
+cmake_minimum_required(VERSION 3.5)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# build output directories
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY $<0:>${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<0:>${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY $<0:>${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_PDB_OUTPUT_DIRECTORY $<0:>${CMAKE_BINARY_DIR}/lib)
+set(EXECUTABLE_OUTPUT_PATH $<0:>${CMAKE_BINARY_DIR}/bin)
+
+project(Kasino LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Options
+set(WINDOW_BACKEND "glfw" CACHE STRING "Window backend: glfw or native")
+option(USE_FECTH_GLFW "Fetch GLFW via FetchContent" ON)
+
+if(WINDOW_BACKEND STREQUAL "glfw")
+    file(GLOB_RECURSE nativeFile)
+    file(GLOB_RECURSE glfwFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/glfw/*.cpp)
+else()
+    file(GLOB_RECURSE nativeFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/native/*.cpp)
+    file(GLOB_RECURSE glfwFile)
+endif()
+
+file(GLOB source ${CMAKE_CURRENT_SOURCE_DIR}/src/app/*.cpp)
+file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+
+add_library(engine
+    ${source} ${headers}
+    ${glfwFile}
+    ${nativeFile}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/WindowFactory.cpp
+    )
+
+target_include_directories(engine PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+# Backend selection
+if (WINDOW_BACKEND STREQUAL "glfw")
+    target_compile_definitions(engine PUBLIC WINDOW_BACKEND_GLFW=1)
+    if (USE_FETCH_GLFW)
+        include(FetchContent)
+        FetchContent_Declare(
+            glfw
+            GIT_REPOSITORY https://github.com/glfw/glfw.git
+            GIT_TAG 3.4
+        )
+        FetchContent_MakeAvailable(glfw)
+        target_link_libraries(engine PUBLIC glfw)
+    else()
+        find_package(glfw3 REQUIRED)
+        target_link_libraries(engine PUBLIC glfw)
+    endif()
+elseif (WINDOW_BACKEND STREQUAL "native")
+    target_compile_definitions(engine PUBLIC WINDOW_BACKEND_NATIVE=1)
+else()
+    message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}. Use glfw or native.")
+endif()
+
+
+# Linux specifics (GLFW needs this; safe otherwise)
+if (UNIX AND NOT APPLE)
+    find_package(Threads REQUIRED)
+    target_link_libraries(engine PUBLIC Threads::Threads dl X11 Xrandr Xi Xxf86vm Xcursor)
+endif()
+
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE engine)
