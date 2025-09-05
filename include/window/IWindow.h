@@ -2,6 +2,7 @@
 
 #include "core/Types.h"
 #include "window/WindowDesc.h"
+#include "events/EventBus.h"
 
 class IWindow{
 public:
@@ -21,6 +22,8 @@ public:
 
     virtual void SetCloseCallback(CloseCallback cb) = 0;
     virtual void SetResizeCallback(ResizeCallback cb) = 0;
+
+    virtual EventBus &Events() = 0;    
 
     virtual void* GetNativeHandle() const = 0;
 };

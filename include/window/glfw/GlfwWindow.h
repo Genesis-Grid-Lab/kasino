@@ -1,6 +1,8 @@
 #pragma once
 
+#include "events/EventBus.h"
 #include "window/IWindow.h"
+#include "input/Key.h"
 #include <string>
 
 struct GLFWwindow;
@@ -22,6 +24,8 @@ public:
     void SetCloseCallback(CloseCallback cb) override;
     void SetResizeCallback(ResizeCallback cb) override;
 
+    EventBus &Events() override { return m_Events; }    
+
     void* GetNativeHandle() const override;
 
 private:
@@ -35,6 +39,7 @@ private:
     int m_logicalW = 360;
     int m_logicalH = 640;
     float m_dpr = 1.0f;
+    EventBus m_Events;    
 
     CloseCallback m_onClose;
     ResizeCallback m_onResize;

@@ -1,0 +1,93 @@
+#pragma once
+#include <cstdint>
+
+enum class Key : uint16_t {
+  Unknown = 0,
+  // Digits
+  Num0 = 48,
+  Num1 = 49,
+  Num2 = 50,
+  Num3 = 51,
+  Num4 = 52,
+  Num5 = 53,
+  Num6 = 54,
+  Num7 = 55,
+  Num8 = 56,
+  Num9 = 57,
+  // Letters (ASCII)
+  A = 65,
+  B,
+  C,
+  D,
+  E,
+  F,
+  G,
+  H,
+  I,
+  J,
+  K,
+  L,
+  M,
+  N,
+  O,
+  P,
+  Q,
+  R,
+  S,
+  T,
+  U,
+  V,
+  W,
+  X,
+  Y,
+  Z,
+  // Controls
+  Escape = 256,
+  Enter,
+  Tab,
+  Backspace,
+  Insert,
+  DeleteKey,
+  Right,
+  Left,
+  Down,
+  Up,
+
+  PageUp,
+  PageDown,
+  Home,
+  End,
+
+  CapsLock,
+  ScrollLock,
+  NumLock,
+
+  PrintScreen,
+  Pause,
+  // Function
+  F1 = 290,
+  F2,
+  F3,
+  F4,
+  F5,
+  F6,
+  F7,
+  F8,
+  F9,
+  F10,
+  F11,
+  F12,
+  // Modifiers
+  LeftShift = 340,
+  LeftControl,
+  LeftAlt,
+  LeftSuper,
+
+  RightShift,
+  RightControl,
+  RightAlt,
+  RightSuper,
+
+  Menu
+};
+

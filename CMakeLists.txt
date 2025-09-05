@@ -20,20 +20,38 @@ set(WINDOW_BACKEND "glfw" CACHE STRING "Window backend: glfw or native")
 option(USE_FECTH_GLFW "Fetch GLFW via FetchContent" ON)
 
 if(WINDOW_BACKEND STREQUAL "glfw")
-    file(GLOB_RECURSE nativeFile)
-    file(GLOB_RECURSE glfwFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/glfw/*.cpp)
-else()
+  file(GLOB_RECURSE nativeFile)
+  file(GLOB_RECURSE androidFile)
+  file(GLOB_RECURSE iosFile)
+  file(GLOB_RECURSE glfwFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/glfw/*.cpp)
+elseif(WINDOW_BACKEND STREQUAL "native")
     file(GLOB_RECURSE nativeFile ${CMAKE_CURRENT_SOURCE_DIR}/src/window/native/*.cpp)
     file(GLOB_RECURSE glfwFile)
+    file(GLOB_RECURSE androidFile)
+    file(GLOB_RECURSE iosFile)
+  elseif(WINDOW_BACKEND STREQUAL "android")
+    file(GLOB_RECURSE nativeFile)
+    file(GLOB_RECURSE glfwFile)
+    file(GLOB_RECURSE androidFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/android/*.cpp)
+    file(GLOB_RECURSE iosFile)
+  elseif(WINDOW_BACKEND STREQUAL "ios")
+    file(GLOB_RECURSE nativeFile)
+    file(GLOB_RECURSE glfwFile)
+    file(GLOB_RECURSE androidFile)
+    file(GLOB_RECURSE iosFile  ${CMAKE_CURRENT_SOURCE_DIR}/src/window/ios/*.cpp)
+  else()
+    message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}")
 endif()
 
-file(GLOB source ${CMAKE_CURRENT_SOURCE_DIR}/src/app/*.cpp)
+file(GLOB source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
 file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 add_library(engine
     ${source} ${headers}
     ${glfwFile}
     ${nativeFile}
+    ${iosFile}
+    ${androidFile}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/window/WindowFactory.cpp
     )
 
@@ -58,7 +76,11 @@ if (WINDOW_BACKEND STREQUAL "glfw")
         target_link_libraries(engine PUBLIC glfw)
     endif()
 elseif (WINDOW_BACKEND STREQUAL "native")
-    target_compile_definitions(engine PUBLIC WINDOW_BACKEND_NATIVE=1)
+  target_compile_definitions(engine PUBLIC WINDOW_BACKEND_NATIVE=1)
+elseif(WINDOW_BACKEND STREQUAL "android")
+  target_compile_definitions(engine PUBLIC WINDOW_BACKEND_ANDROID=1)
+elseif(WINDOW_BACKEND STREQUAL "ios")
+  target_compile_definitions(engine PUBLIC WINDOW_BACKEND_IOS=1)
 else()
     message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}. Use glfw or native.")
 endif()
