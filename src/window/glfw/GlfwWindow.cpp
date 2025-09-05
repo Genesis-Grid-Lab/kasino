@@ -31,7 +31,7 @@ static MouseButton mapMouse(int b) {
 
 static int s_glfwRefCount = 0;
 
-GlfwWindow::GlfwWindow(const WindowDesc& desc){
+GlfwWindow::GlfwWindow(const FactoryDesc& desc){
     if(s_glfwRefCount++ == 0){
         if(!glfwInit()){
             s_glfwRefCount--;
@@ -40,7 +40,7 @@ GlfwWindow::GlfwWindow(const WindowDesc& desc){
     }
 
     // Use GL context if requested; otherwise NO_API so Vulkan/other can attach later.
-    if (desc.api == GraphicsAPI::OpenGL) {
+    if (desc.graphics_api == GraphicsAPI::OpenGL) {
       glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, desc.glMajor);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, desc.glMinor);
@@ -95,7 +95,7 @@ GlfwWindow::GlfwWindow(const WindowDesc& desc){
     // Compute initial DPR
     updateDevicePixelRatio();
 
-    m_HasGL = (desc.api == GraphicsAPI::OpenGL);
+    m_HasGL = (desc.graphics_api == GraphicsAPI::OpenGL);
 }
 
 GlfwWindow::~GlfwWindow(){

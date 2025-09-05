@@ -12,6 +12,9 @@
 #endif
 
 #include "gfx/glad/GLDevice.h"
+#include "gfx/glad/GLBuffer.h"
+#include "gfx/glad/GLShader.h"
+#include "gfx/glad/GLVertexArray.h"
 
 // Scope<IWindow> CreateWindow(const WindowDesc& desc){
 // #if defined(WINDOW_BACKEND_GLFW)
@@ -33,7 +36,10 @@
 GraphicsAPI Factory::s_Gapi = GraphicsAPI::OpenGL;
 WindowAPI Factory::s_Wapi = WindowAPI::GLFW;
 
-Scope<IWindow> Factory::CreateWindow(const WindowDesc &desc) {
+void Factory::SetGraphicsAPI(GraphicsAPI api){ s_Gapi = api;}
+void Factory::SetWindowAPI(WindowAPI api){ s_Wapi = api;}
+
+Scope<IWindow> Factory::CreateWindow(const FactoryDesc &desc) {
   switch(s_Wapi){
   case WindowAPI::GLFW:
     return CreateScope<GlfwWindow>(desc);
@@ -43,10 +49,36 @@ Scope<IWindow> Factory::CreateWindow(const WindowDesc &desc) {
   return nullptr;
 }
 
-Scope<IGraphicsDevice> Factory::CreateDevice() {
+Scope<IGraphicsDevice> Factory::CreateDevice(const FactoryDesc &desc) {
   switch(s_Gapi){
   case GraphicsAPI::OpenGL:
-    return CreateScope<GLDevice>();
+    return CreateScope<GLDevice>(desc);
+  }
+
+  return nullptr;
+}
+
+
+Ref<IShader> Factory::CreateShader(){
+  switch(s_Gapi){
+  case GraphicsAPI::OpenGL:
+    return CreateRef<GLShader>();
+  }
+
+  return nullptr;
+}
+Ref<IBuffer> Factory::CreateBuffer(BufferType type){
+  switch(s_Gapi){
+  case GraphicsAPI::OpenGL:
+    return CreateRef<GLBuffer>(type);
+  }
+
+  return nullptr;
+}
+Ref<IVertexArray> Factory::CreateVertexArray(){
+  switch(s_Gapi){
+  case GraphicsAPI::OpenGL:
+    return CreateRef<GLVertexArray>();
   }
 
   return nullptr;

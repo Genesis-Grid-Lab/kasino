@@ -3,14 +3,14 @@
 #include "events/EventBus.h"
 #include "window/IWindow.h"
 #include "input/Key.h"
-#include "window/WindowDesc.h"
+#include "core/FactoryDesc.h"
 #include <string>
 
 struct GLFWwindow;
 
 class GlfwWindow : public IWindow{
 public:
-  explicit GlfwWindow(const WindowDesc& desc);
+  explicit GlfwWindow(const FactoryDesc& desc);
   ~GlfwWindow() override;
 
   WindowAPI API() const override { return WindowAPI::GLFW;}

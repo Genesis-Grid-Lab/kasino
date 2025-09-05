@@ -5,7 +5,7 @@
 
 int main(){
 
-    WindowDesc desc;
+    FactoryDesc desc;
     desc.title = "Kasino – Mobile Logical Scale";
     desc.logicalWidth  = 360;  // virtual “mobile” width
     desc.logicalHeight = 640;  // virtual “mobile” height
@@ -13,10 +13,11 @@ int main(){
     desc.windowHeight  = 800;
     desc.resizable     = true;
     desc.fullscreen    = false;
-    desc.api           = GraphicsAPI::OpenGL; // later: OpenGL / Vulkan / Urban
+    desc.window_api    = WindowAPI::GLFW;
+    desc.graphics_api  = GraphicsAPI::OpenGL;
 
     auto window = Factory::CreateWindow(desc);
-    auto device = Factory::CreateDevice();
+    auto device = Factory::CreateDevice(desc);
     App app(std::move(window), std::move(device));
     return app.Run();
 }

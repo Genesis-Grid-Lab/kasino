@@ -1,11 +1,7 @@
 #pragma once
+#include "core/FactoryDesc.h"
 class IWindow;
-
-enum class GraphicsAPI{
-  None,
-  OpenGL,
-  Vulkan
-};
+// class GraphicsAPI;
 
 class IGraphicsDevice{
 public:

@@ -1,8 +1,22 @@
 #pragma once
 #include <string>
-#include "gfx/IGraphicsDevice.h"
 
-struct WindowDesc{
+enum class WindowAPI {
+  None,
+  GLFW,
+  Native,
+  Android,
+  IOS
+};
+
+enum class GraphicsAPI{
+  None,
+  OpenGL,
+  Vulkan
+};
+
+
+struct FactoryDesc{
   std::string title = "Kasino";
     
   //Logical (virtual) size
@@ -18,8 +32,9 @@ struct WindowDesc{
 
   bool vsync = true;    
 
-  // Desired graphics API
-  GraphicsAPI api = GraphicsAPI::None;
+  // Desired API
+  WindowAPI window_api = WindowAPI::None;
+  GraphicsAPI graphics_api = GraphicsAPI::None;
 
   // OpenGL hints (used if api == OpenGL && backend supports GL)
   int  glMajor = 3;

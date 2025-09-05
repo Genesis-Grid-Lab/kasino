@@ -4,6 +4,10 @@
 // GLAD
 #include "glad/glad.h"
 
+GLDevice::GLDevice(const FactoryDesc& desc){
+  
+}
+
 bool GLDevice::Initialize(IWindow &window){
   m_Window = &window;
 

@@ -1,5 +1,6 @@
 #include "gfx/glad/GLShader.h"
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 static bool compile(GLuint sh, const char* src, std::string* log){
   glShaderSource(sh, 1, &src, nullptr);
@@ -53,3 +54,16 @@ bool GLShader::CompileFromSource(const char *vs, const char *fs,
   m_Uniforms.clear();
   return true;  
 }
+
+void GLShader::Bind() const { glUseProgram(m_Program); }
+void GLShader::Unbind() const { glUseProgram(0); }
+
+int GLShader::uniformLoc(const char* name){
+    auto it=m_Uniforms.find(name);
+    if(it!=m_Uniforms.end()) return it->second;
+    int loc=glGetUniformLocation(m_Program,name);
+    m_Uniforms[name]=loc; return loc;
+}
+void GLShader::SetFloat(const char* name,float v){ glUniform1f(uniformLoc(name),v); }
+void GLShader::SetVec2 (const char* name, const glm::vec2& v){ glUniform2f(uniformLoc(name),v.x,v.y); }
+void GLShader::SetMat4 (const char* name,const glm::mat4& v){ glUniformMatrix4fv(uniformLoc(name),1,GL_FALSE,glm::value_ptr(v)); }

@@ -1,17 +1,9 @@
 #pragma once
 
 #include "core/Types.h"
-#include "window/WindowDesc.h"
+#include "core/FactoryDesc.h"
 #include "events/EventBus.h"
 #include <utility>
-
-enum class WindowAPI {
-  None,
-  GLFW,
-  Native,
-  Android,
-  IOS
-};
 
 class IWindow{
 public:

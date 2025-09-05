@@ -5,6 +5,7 @@
 
 class GLDevice : public IGraphicsDevice{
  public:
+  explicit GLDevice(const FactoryDesc& desc);
   GraphicsAPI API() const override { return GraphicsAPI::OpenGL; }
   bool Initialize(IWindow& window) override;
   void BeginFrame() override;

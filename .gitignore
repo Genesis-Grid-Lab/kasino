@@ -1,6 +1,7 @@
 .vscode/
 Build/
 Targets/
+.cache/
 
 # Prerequisites
 *.d
