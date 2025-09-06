@@ -5,6 +5,7 @@
 class IShader{
 public:
   virtual ~IShader() = default;
+  virtual void Destroy() = 0;
 
   // Compile and link from two source strings
   virtual bool CompileFromSource(const char *vs, const char *fs,

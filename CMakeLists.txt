@@ -122,3 +122,15 @@ endif()
 add_executable(${PROJECT_NAME} src/main.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE engine)
+
+
+# copy data
+if(EXISTS ${CMAKE_SOURCE_DIR}/Data)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND 
+        ${CMAKE_COMMAND} -E copy_directory 
+        ${CMAKE_SOURCE_DIR}/Data
+        ${EXECUTABLE_OUTPUT_PATH}/Data
+    )
+else()
+    message(WARNING "[WARNING] no data directory!")
+endif()

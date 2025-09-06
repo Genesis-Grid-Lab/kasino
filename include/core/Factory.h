@@ -20,7 +20,7 @@ public:
   static Scope<IWindow> CreateWindow(const FactoryDesc &desc);
   static Scope<IGraphicsDevice> CreateDevice(const FactoryDesc &desc);
 
-  static Ref<IShader> CreateShader();
+  static Ref<IShader> CreateShader(const std::string& filepath);
   static Ref<IBuffer> CreateBuffer(BufferType type);
   static Ref<IVertexArray> CreateVertexArray();
   static std::shared_ptr<ITexture2D>   CreateTexture2D();

@@ -61,10 +61,10 @@ Scope<IGraphicsDevice> Factory::CreateDevice(const FactoryDesc &desc) {
 }
 
 
-Ref<IShader> Factory::CreateShader(){
+Ref<IShader> Factory::CreateShader(const std::string& filepath){
   switch(s_Gapi){
   case GraphicsAPI::OpenGL:
-    return CreateRef<GLShader>();
+    return CreateRef<GLShader>(filepath);
   }
 
   return nullptr;

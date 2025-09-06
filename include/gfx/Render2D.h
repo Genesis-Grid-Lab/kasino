@@ -1,49 +1,98 @@
 #pragma once
+#include <glm/glm.hpp>
 #include <memory>
 #include <vector>
 #include <cstdint>
-#include <glm/glm.hpp>
-#include "gfx/ITexture2D.h"
-#include "gfx/IShader.h"
-#include "gfx/IBuffer.h"
+
 #include "gfx/IVertexArray.h"
+#include "gfx/IBuffer.h"
+#include "gfx/IShader.h"
+#include "gfx/ITexture2D.h"
+
+template<typename T> using Ref = std::shared_ptr<T>;
+class Camera2D;
 
 class Render2D {
 public:
-    static bool Initialize();
+  struct Statistics {
+    uint32_t DrawCalls   = 0;
+    uint32_t QuadCount   = 0;
+    uint32_t TextureBinds= 0;
+  };
 
-    // Provide camera VP and framebuffer size (fb used for viewport if you want).
-    static void BeginScene(const glm::mat4& viewProj, int fbWidth, int fbHeight);
-    static void EndScene();
+public:
+  static bool Initialize();
+  static void Shutdown();
 
-    static void Clear(float r,float g,float b,float a);
+  static void BeginScene(const Camera2D& camera);
+  static void BeginScene(const glm::mat4& viewProj);
+  static void EndScene();
+  static void Flush();                          // force a flush
 
-    static void DrawQuad(float x,float y,float w,float h, float r,float g,float b,float a);
-    static void DrawQuad(float x,float y,float w,float h, ITexture2D* tex,
-                  float tr=1,float tg=1,float tb=1,float ta=1,
-                  float u0=0,float v0=0,float u1=1,float v1=1,float tiling=1);
+  // Solid color quad (Z default 0)
+  static void DrawQuad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
+  static void DrawQuad(const glm::vec3& pos, const glm::vec2& size, const glm::vec4& color);
 
-    struct Stats { uint32_t drawCalls=0, quadCount=0; };
-    Stats GetStats() const { return m_stats; }
-    static void  ResetStats() { m_stats = {}; }
+  // Textured quad
+  static void DrawQuad(const glm::vec2& pos, const glm::vec2& size, const Ref<ITexture2D>& tex,
+		       float tilingFactor = 1.0f, const glm::vec4& tint = glm::vec4(1.0f));
+  static void DrawQuad(const glm::vec3& pos, const glm::vec2& size, const Ref<ITexture2D>& tex,
+		       float tilingFactor = 1.0f, const glm::vec4& tint = glm::vec4(1.0f));
 
-private:    
-    static constexpr uint32_t MaxQuads=10000, MaxVerts=MaxQuads*4, MaxIndices=MaxQuads*6, MaxTexSlots=16;
+  // Transform-based
+  static void DrawQuad(const glm::mat4& transform, const glm::vec4& color);
+  static void DrawQuad(const glm::mat4& transform, const Ref<ITexture2D>& tex,
+		       float tilingFactor = 1.0f, const glm::vec4& tint = glm::vec4(1.0f));
 
-    static void startBatch();
-    static void flush();
-    int  getTextureSlot(ITexture2D* tex);
-    void submitQuad(float x,float y,float w,float h,const float color[4],int slot,
-                    float u0,float v0,float u1,float v1,float tiling);
+  static void ResetStats();
+  static Statistics GetStats();
 
-private:                        
-    uint32_t m_quadCount=0;
+private:
+  struct QuadVertex {
+    glm::vec3 Position;   // aPos
+    glm::vec4 Color;      // aColor
+    glm::vec2 TexCoord;   // aUV
+    float     TexIndex;   // aTexIndex
+    float     Tiling;     // aTiling
+  };
 
-    ITexture2D* m_texSlots[MaxTexSlots]{};
-    uint32_t    m_texCount=0;
+  static void StartBatch();
+  static void NextBatch();
+  static float GetTextureIndexOrAppend(const Ref<ITexture2D>& texture);
+  static void PushQuad(const glm::mat4& transform,
+		       const glm::vec4& color,
+		       float texIndex,
+		       float tiling);
 
-    glm::mat4   m_viewProj {1.0f};
+private:
+  static inline const uint32_t MaxQuads     = 20000;                     // Hazel default-ish
+  static inline const uint32_t MaxVertices  = MaxQuads * 4;
+  static inline const uint32_t MaxIndices   = MaxQuads * 6;
+  static inline const uint32_t MaxTexSlots  = 16;                        // keep 16, matches shader ladder
 
-    Stats m_stats;
-    bool  m_ready=false;
+private:
+  // GPU
+  static Ref<IVertexArray> s_VAO;
+  static Ref<IBuffer>      s_VBO;
+  static Ref<IBuffer>      s_IBO;
+  static Ref<IShader>      s_Shader;
+
+  // White 1x1
+  static Ref<ITexture2D>   s_WhiteTexture;
+
+  // CPU staging
+  static std::vector<QuadVertex> s_CPUBuffer;
+  static uint32_t                s_QuadCount;
+
+  // Texture slots
+  static Ref<ITexture2D> s_TextureSlots[MaxTexSlots];
+  static uint32_t        s_TextureSlotCount;
+
+  // Scene
+  static glm::mat4 s_ViewProj;
+
+  // Stats
+  static Statistics s_Stats;
+
+  static bool s_Initialized;
 };

@@ -2,6 +2,7 @@
 #include "window/IWindow.h"
 #include "gfx/RenderCommand.h"
 #include "core/Factory.h"
+#include "gfx/ViewportUtil.h"
 
 // GLAD
 #include "glad/glad.h"
@@ -43,16 +44,28 @@ bool GLDevice::Initialize(IWindow &window){
   // Enable/disable vsync on the active context
   m_Window->SetSwapInterval(m_Window->IsVsyncEnabled() ? 1 : 0);
 
-  RenderCommand::Init(Factory::CreateRendererAPI());
-
   m_Initialized = true;
   return true;
 }
 
 void GLDevice::BeginFrame(int fbWidth, int fbHeight) {
-    if (!m_Initialized) return;
+  if (!m_Initialized) return;
 
-    RenderCommand::SetViewport(0,0,fbWidth,fbHeight);
+  // Get logical size (your IWindow already exposes it)
+  auto [lw, lh] = m_Window->GetLogicalSize();
+  if (lw <= 0 || lh <= 0) { lw = fbWidth; lh = fbHeight; }
+
+  // Integer scale that fits (pixel-perfect, centered)
+  const int sW = fbWidth  / lw;
+  const int sH = fbHeight / lh;
+  const int S  = std::max(1, std::min(sW, sH));
+
+  const int vpW = lw * S;
+  const int vpH = lh * S;
+  const int vpX = (fbWidth  - vpW) / 2;
+  const int vpY = (fbHeight - vpH) / 2;
+
+  RenderCommand::SetViewport(vpX, vpY, vpW, vpH);
 }
 
 void GLDevice::EndFrame() {

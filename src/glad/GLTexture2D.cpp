@@ -11,8 +11,8 @@ void GLTexture2D::allocate(uint32_t w, uint32_t h, int channels){
     m_w=w; m_h=h; m_channels=channels;
     GLenum fmt = (channels==4)? GL_RGBA : GL_RGB;
     glBindTexture(GL_TEXTURE_2D, m_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, /*GL_LINEAR*/GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, /*GL_LINEAR*/GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, (channels==4?GL_RGBA8:GL_RGB8), w, h, 0, fmt, GL_UNSIGNED_BYTE, nullptr);

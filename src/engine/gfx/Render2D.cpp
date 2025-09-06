@@ -1,141 +1,250 @@
 #include "gfx/Render2D.h"
 #include "core/Factory.h"
 #include "gfx/RenderCommand.h"
+#include "gfx/Camera2D.h"
+
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cstdio>
 #include <cstring>
 
-static const char* VS = R"(#version 330 core
-layout(location=0) in vec2 aPos;
-layout(location=1) in vec4 aColor;
-layout(location=2) in vec2 aUV;
-layout(location=3) in float aTexIndex;
-layout(location=4) in float aTiling;
-uniform mat4 uViewProj;
-out vec4 vColor; out vec2 vUV; out float vTexIndex; out float vTiling;
-void main(){ vColor=aColor; vUV=aUV; vTexIndex=aTexIndex; vTiling=aTiling;
-             gl_Position = uViewProj * vec4(aPos,0,1); } )";
+// ==================== Static storage ====================
 
-static const char* FS = R"(#version 330 core
-in vec4 vColor; in vec2 vUV; in float vTexIndex; in float vTiling;
-out vec4 FragColor; uniform sampler2D uTextures[16];
-vec4 sampleT(float idx, vec2 uv){ int i=int(idx+0.5); return texture(uTextures[i], uv * vTiling); }
-void main(){ FragColor = vColor * sampleT(vTexIndex, vUV); } )";
+Ref<IVertexArray> Render2D::s_VAO;
+Ref<IBuffer>      Render2D::s_VBO;
+Ref<IBuffer>      Render2D::s_IBO;
+Ref<IShader>      Render2D::s_Shader;
+Ref<ITexture2D>   Render2D::s_WhiteTexture;
 
-struct QuadVertex { float x,y; float r,g,b,a; float u,v; float texIndex; float tiling; };
+std::vector<Render2D::QuadVertex> Render2D::s_CPUBuffer;
+uint32_t Render2D::s_QuadCount = 0;
 
-static bool s_ready = false;
-static std::shared_ptr<IVertexArray> m_vao;
-static std::shared_ptr<IBuffer>      m_vbo;
-static std::shared_ptr<IBuffer>      m_ibo;
-static std::shared_ptr<IShader>      m_shader;
-static std::shared_ptr<ITexture2D>   m_white;
-static std::vector<QuadVertex> m_cpu;
+Ref<ITexture2D> Render2D::s_TextureSlots[Render2D::MaxTexSlots] = {};
+uint32_t        Render2D::s_TextureSlotCount = 0;
 
-bool Render2D::Initialize(){
-    if(s_ready) return true;
+glm::mat4 Render2D::s_ViewProj(1.0f);
 
-    m_vao = Factory::CreateVertexArray();
-    m_vbo = Factory::CreateBuffer(BufferType::Vertex);
-    m_ibo = Factory::CreateBuffer(BufferType::Index);
-    m_shader = Factory::CreateShader();
+Render2D::Statistics Render2D::s_Stats{};
+bool Render2D::s_Initialized = false;
 
-    std::string log;
-    if(!m_shader->CompileFromSource(VS,FS,&log)){ fprintf(stderr,"[Render2D] Shader: %s\n", log.c_str()); return false; }
+// ==================== Public API ====================
 
-    int samplers[16]; for(int i=0;i<16;i++) samplers[i]=i;
-    m_shader->Bind();
-    m_shader->SetIntArray("uTextures", samplers, 16);
+bool Render2D::Initialize() {
+  if (s_Initialized) return true;
 
-    m_cpu.resize(MaxVerts);
-    m_vbo->SetData(nullptr, sizeof(QuadVertex)*MaxVerts, true);
+  s_VAO    = Factory::CreateVertexArray();
+  s_VBO    = Factory::CreateBuffer(BufferType::Vertex);
+  s_IBO    = Factory::CreateBuffer(BufferType::Index);
+  s_Shader = Factory::CreateShader("Data/Shaders/basic.glsl");
 
-    std::vector<uint32_t> idx(MaxIndices);
-    uint32_t off=0;
-    for(uint32_t i=0;i<MaxIndices;i+=6){
-        idx[i+0]=off+0; idx[i+1]=off+1; idx[i+2]=off+2;
-        idx[i+3]=off+0; idx[i+4]=off+2; idx[i+5]=off+3;
-        off+=4;
-    }
-    m_ibo->SetData(idx.data(), idx.size()*sizeof(uint32_t), false);
+  // std::string log;
+  // if (!s_Shader->CompileFromSource(kVS, kFS, &log)) {
+  //   std::fprintf(stderr, "[Render2D] Shader compile/link failed: %s\n", log.c_str());
+  //   return false;
+  // }
+  s_Shader->Bind();
+  int samplers[MaxTexSlots]; for (int i=0; i<(int)MaxTexSlots; ++i) samplers[i] = i;
+  s_Shader->SetIntArray("uTextures", samplers, (int)MaxTexSlots);
 
-    m_vao->Bind(); m_vbo->Bind();
-    m_vao->EnableAttrib(0,2,0x1406,false,sizeof(QuadVertex),offsetof(QuadVertex,x));
-    m_vao->EnableAttrib(1,4,0x1406,false,sizeof(QuadVertex),offsetof(QuadVertex,r));
-    m_vao->EnableAttrib(2,2,0x1406,false,sizeof(QuadVertex),offsetof(QuadVertex,u));
-    m_vao->EnableAttrib(3,1,0x1406,false,sizeof(QuadVertex),offsetof(QuadVertex,texIndex));
-    m_vao->EnableAttrib(4,1,0x1406,false,sizeof(QuadVertex),offsetof(QuadVertex,tiling));
-    m_vao->Unbind();
+  // CPU staging
+  s_CPUBuffer.clear();
+  s_CPUBuffer.resize(MaxVertices);
 
-    m_white = Factory::CreateTexture2D();
-    const std::uint32_t white = 0xFFFFFFFFu;
-    m_white->Create(1,1,4,&white);
+  // GPU buffers
+  s_VBO->SetData(nullptr, sizeof(QuadVertex) * MaxVertices, /*dynamic*/true);
 
-    s_ready = true;
-    ResetStats();
-    startBatch();
-    return true;
+  // Build index buffer once
+  std::vector<uint32_t> indices(MaxIndices);
+  uint32_t offset = 0;
+  for (uint32_t i = 0; i < MaxIndices; i += 6) {
+    indices[i + 0] = offset + 0;
+    indices[i + 1] = offset + 1;
+    indices[i + 2] = offset + 2;
+    indices[i + 3] = offset + 0;
+    indices[i + 4] = offset + 2;
+    indices[i + 5] = offset + 3;
+    offset += 4;
+  }
+  s_IBO->SetData(indices.data(), indices.size() * sizeof(uint32_t), /*dynamic*/false);
+
+  // Vertex layout (Hazel order)
+  s_VAO->Bind();
+  s_VBO->Bind();
+  s_IBO->Bind(); // bind EBO while VAO bound (critical)
+  // aPos (vec3)
+  s_VAO->EnableAttrib(0, 3, 0x1406/*GL_FLOAT*/, false, sizeof(QuadVertex), offsetof(QuadVertex, Position));
+  // aColor (vec4)
+  s_VAO->EnableAttrib(1, 4, 0x1406/*GL_FLOAT*/, false, sizeof(QuadVertex), offsetof(QuadVertex, Color));
+  // aUV (vec2)
+  s_VAO->EnableAttrib(2, 2, 0x1406/*GL_FLOAT*/, false, sizeof(QuadVertex), offsetof(QuadVertex, TexCoord));
+  // aTexIndex (float)
+  s_VAO->EnableAttrib(3, 1, 0x1406/*GL_FLOAT*/, false, sizeof(QuadVertex), offsetof(QuadVertex, TexIndex));
+  // aTiling (float)
+  s_VAO->EnableAttrib(4, 1, 0x1406/*GL_FLOAT*/, false, sizeof(QuadVertex), offsetof(QuadVertex, Tiling));
+  s_VAO->Unbind();
+
+  // 1x1 white texture in slot 0
+  s_WhiteTexture = Factory::CreateTexture2D();
+  const uint32_t white = 0xFFFFFFFFu;
+  s_WhiteTexture->Create(1, 1, 4, &white);
+
+  ResetStats();
+  StartBatch();
+
+  s_Initialized = true;
+  return true;
 }
 
-void Render2D::BeginScene(const glm::mat4& viewProj, int fbW, int fbH){
-    (void)fbW; (void)fbH; // optional: RenderCommand::SetViewport(0,0,fbW,fbH);
-    m_viewProj = viewProj;
-    startBatch();
+void Render2D::Shutdown() {
+  Flush(); // draw what’s left
+  s_Shader.reset();
+  s_VAO.reset();
+  s_VBO.reset();
+  s_IBO.reset();
+  s_WhiteTexture.reset();
+  s_CPUBuffer.clear();
+  s_QuadCount = 0;
+  s_TextureSlotCount = 0;
+  s_Initialized = false;
 }
 
-void Render2D::EndScene(){ flush(); }
+void Render2D::BeginScene(const Camera2D& cam) { BeginScene(cam.ViewProj()); }
 
-void Render2D::Clear(float r,float g,float b,float a){
-    RenderCommand::SetClearColor(r,g,b,a);
-    RenderCommand::Clear();
+void Render2D::BeginScene(const glm::mat4 &viewProj) {
+  s_ViewProj = viewProj;
+  s_Shader->Bind();
+  s_Shader->SetMat4("uViewProj", s_ViewProj);
+  StartBatch();
 }
 
-void Render2D::startBatch(){
-    m_quadCount=0; m_texCount=0;
-    std::memset(m_texSlots,0,sizeof(m_texSlots));
-    m_texSlots[m_texCount++] = m_white.get();
+void Render2D::EndScene() { Flush(); }
+
+void Render2D::Flush() {
+  if (s_QuadCount == 0) return;
+
+  const uint32_t vertCount  = s_QuadCount * 4;
+  const uint32_t indexCount = s_QuadCount * 6;
+
+  // Upload vertices
+  s_VBO->UpdateSubData(0, s_CPUBuffer.data(), sizeof(QuadVertex) * vertCount);
+
+  // Bind textures used this batch
+  for (uint32_t i = 0; i < s_TextureSlotCount; ++i) {
+    s_TextureSlots[i]->Bind((int)i);
+    s_Stats.TextureBinds++;
+  }
+
+  // Draw
+  s_VAO->Bind();     // ensure VAO (with attached EBO/attribs) is current
+  s_Shader->Bind();
+  s_Shader->SetMat4("uViewProj", s_ViewProj);
+  RenderCommand::DrawIndexed(*s_VAO, (int)indexCount);
+
+  s_Stats.DrawCalls++;
+  StartBatch();
 }
 
-void Render2D::flush(){
-    if(m_quadCount==0) return;
+void Render2D::ResetStats() { s_Stats = {}; }
+Render2D::Statistics Render2D::GetStats() { return s_Stats; }
 
-    const uint32_t vcount = m_quadCount*4;
-    m_vbo->UpdateSubData(0, m_cpu.data(), sizeof(QuadVertex)*vcount);
+// ==================== Draw API ====================
 
-    for(uint32_t i=0;i<m_texCount;i++) m_texSlots[i]->Bind(i);
-
-    m_shader->Bind();
-    m_shader->SetMat4("uViewProj", m_viewProj);
-
-    RenderCommand::DrawIndexed(*m_vao, m_quadCount * 6);
-
-    m_stats.drawCalls++;
-    startBatch();
+void Render2D::DrawQuad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color) {
+  DrawQuad(glm::vec3(pos, 0.0f), size, color);
 }
 
-int Render2D::getTextureSlot(ITexture2D* t){
-    for(uint32_t i=0;i<m_texCount;i++) if(m_texSlots[i]==t) return (int)i;
-    if(m_texCount>=MaxTexSlots) flush();
-    m_texSlots[m_texCount]=t; return (int)m_texCount++;
+void Render2D::DrawQuad(const glm::vec3& pos, const glm::vec2& size, const glm::vec4& color) {
+  glm::mat4 transform =
+    glm::translate(glm::mat4(1.0f), pos) *
+    glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
+  DrawQuad(transform, color);
 }
 
-void Render2D::submitQuad(float x,float y,float w,float h,const float c[4],int slot,
-                          float u0,float v0,float u1,float v1,float tiling){
-    if(m_quadCount>=MaxQuads) flush();
-    const float x0=x,y0=y,x1=x+w,y1=y+h;
-    auto* v = &m_cpu[m_quadCount*4];
-    v[0] = {x0,y0, c[0],c[1],c[2],c[3], u0,v0,(float)slot,tiling};
-    v[1] = {x0,y1, c[0],c[1],c[2],c[3], u0,v1,(float)slot,tiling};
-    v[2] = {x1,y1, c[0],c[1],c[2],c[3], u1,v1,(float)slot,tiling};
-    v[3] = {x1,y0, c[0],c[1],c[2],c[3], u1,v0,(float)slot,tiling};
-    m_quadCount++; m_stats.quadCount++;
+void Render2D::DrawQuad(const glm::vec2& pos, const glm::vec2& size, const Ref<ITexture2D>& tex,
+                        float tilingFactor, const glm::vec4& tint) {
+  DrawQuad(glm::vec3(pos, 0.0f), size, tex, tilingFactor, tint);
 }
 
-void Render2D::DrawQuad(float x,float y,float w,float h,float r,float g,float b,float a){
-    const float c[4]={r,g,b,a}; submitQuad(x,y,w,h,c, 0, 0,0,1,1, 1.0f);
+void Render2D::DrawQuad(const glm::vec3& pos, const glm::vec2& size, const Ref<ITexture2D>& tex,
+                        float tilingFactor, const glm::vec4& tint) {
+  glm::mat4 transform =
+    glm::translate(glm::mat4(1.0f), pos) *
+    glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
+  DrawQuad(transform, tex, tilingFactor, tint);
 }
-void Render2D::DrawQuad(float x,float y,float w,float h,ITexture2D* tex,
-                        float tr,float tg,float tb,float ta,
-                        float u0,float v0,float u1,float v1,float tiling){
-    const float c[4]={tr,tg,tb,ta}; int slot=getTextureSlot(tex);
-    submitQuad(x,y,w,h,c, slot, u0,v0,u1,v1, tiling);
+
+void Render2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color) {
+  if (s_QuadCount >= MaxQuads) NextBatch();
+  PushQuad(transform, color, /*texIndex*/ 0.0f, /*tiling*/ 1.0f);
+}
+
+void Render2D::DrawQuad(const glm::mat4& transform, const Ref<ITexture2D>& tex,
+                        float tilingFactor, const glm::vec4& tint) {
+  if (s_QuadCount >= MaxQuads) NextBatch();
+  float texIndex = GetTextureIndexOrAppend(tex ? tex : s_WhiteTexture);
+  PushQuad(transform, tint, texIndex, tilingFactor);
+}
+
+// ==================== Internals ====================
+
+void Render2D::StartBatch() {
+  s_QuadCount = 0;
+  s_TextureSlotCount = 0;
+  std::memset(s_TextureSlots, 0, sizeof(s_TextureSlots));
+  s_TextureSlots[s_TextureSlotCount++] = s_WhiteTexture; // slot 0
+}
+
+void Render2D::NextBatch() {
+  Flush();
+}
+
+float Render2D::GetTextureIndexOrAppend(const Ref<ITexture2D>& texture) {
+  // Look for existing
+  for (uint32_t i = 0; i < s_TextureSlotCount; ++i) {
+    if (s_TextureSlots[i] == texture) return (float)i;
+  }
+  // Need a new slot
+  if (s_TextureSlotCount >= MaxTexSlots) {
+    Flush();
+  }
+  s_TextureSlots[s_TextureSlotCount] = texture;
+  return (float)(s_TextureSlotCount++);
+}
+
+void Render2D::PushQuad(const glm::mat4& transform,
+                        const glm::vec4& color,
+                        float texIndex,
+                        float tiling) {
+  // Quad in local space (Hazel canonical order)
+  static const glm::vec4 kPositions[4] = {
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 1.0f, 0.0f, 1.0f },
+    { 1.0f, 1.0f, 0.0f, 1.0f },
+    { 1.0f, 0.0f, 0.0f, 1.0f },
+  };
+  static const glm::vec2 kUV[4] = {
+    { 0.0f, 0.0f },
+    { 0.0f, 1.0f },
+    { 1.0f, 1.0f },
+    { 1.0f, 0.0f },
+  };
+
+  const uint32_t base = s_QuadCount * 4;
+  if (base + 3 >= s_CPUBuffer.size()) {
+    // extremely defensive; should not happen with correct MaxVerts
+    Flush();
+  }
+
+  QuadVertex* v = s_CPUBuffer.data() + base;
+  for (int i = 0; i < 4; ++i) {
+    glm::vec4 p = transform * kPositions[i];
+    v[i].Position = glm::vec3(p.x, p.y, p.z);
+    v[i].Color    = color;
+    v[i].TexCoord = kUV[i];
+    v[i].TexIndex = texIndex;
+    v[i].Tiling   = tiling;
+  }
+
+  s_QuadCount++;
+  s_Stats.QuadCount++;
 }

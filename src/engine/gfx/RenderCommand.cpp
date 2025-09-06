@@ -10,6 +10,7 @@ void RenderCommand::Init(std::unique_ptr<RendererAPI> api) {
     Render2D::Initialize();
 }
 
+void RenderCommand::Shutdown(){ Render2D::Shutdown(); s_API.reset();}
 void RenderCommand::SetViewport(int x,int y,int w,int h) { s_API->SetViewport(x,y,w,h); }
 void RenderCommand::SetClearColor(float r,float g,float b,float a){ s_API->SetClearColor(r,g,b,a); }
 void RenderCommand::Clear(){ s_API->Clear(); }

@@ -1,43 +1,91 @@
 [
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/App.cpp.o -c /home/nephilim/Projects/kasino/src/engine/App.cpp",
-  "file": "/home/nephilim/Projects/kasino/src/engine/App.cpp",
-  "output": "CMakeFiles/engine.dir/src/engine/App.cpp.o"
-},
-{
-  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/Factory.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Factory.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/Factory.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Factory.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/Factory.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/Factory.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o -c /home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/app/Game.cpp.o -c /home/nephilim/Projects/kasino/src/engine/app/Game.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/app/Game.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/app/Game.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o -c /home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/gfx/Camera2D.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/Camera2D.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/gfx/Camera2D.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/gfx/Camera2D.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/gfx/Render2D.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/Render2D.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/gfx/Render2D.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/gfx/Render2D.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/gfx/RenderCommand.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/RenderCommand.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/engine/gfx/RenderCommand.cpp",
+  "output": "CMakeFiles/engine.dir/src/engine/gfx/RenderCommand.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o -c /home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o -c /home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
   "file": "/home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
   "output": "CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/gfx/glad/GLDevice.cpp.o -c /home/nephilim/Projects/kasino/src/gfx/glad/GLDevice.cpp",
-  "file": "/home/nephilim/Projects/kasino/src/gfx/glad/GLDevice.cpp",
-  "output": "CMakeFiles/engine.dir/src/gfx/glad/GLDevice.cpp.o"
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLBuffer.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLBuffer.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/glad/GLBuffer.cpp",
+  "output": "CMakeFiles/engine.dir/src/glad/GLBuffer.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/main.cpp.o -c /home/nephilim/Projects/kasino/src/main.cpp",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLDevice.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLDevice.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/glad/GLDevice.cpp",
+  "output": "CMakeFiles/engine.dir/src/glad/GLDevice.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLRendererAPI.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLRendererAPI.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/glad/GLRendererAPI.cpp",
+  "output": "CMakeFiles/engine.dir/src/glad/GLRendererAPI.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLShader.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLShader.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/glad/GLShader.cpp",
+  "output": "CMakeFiles/engine.dir/src/glad/GLShader.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLTexture2D.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLTexture2D.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/glad/GLTexture2D.cpp",
+  "output": "CMakeFiles/engine.dir/src/glad/GLTexture2D.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLVertexArray.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLVertexArray.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/glad/GLVertexArray.cpp",
+  "output": "CMakeFiles/engine.dir/src/glad/GLVertexArray.cpp.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/main.cpp.o -c /home/nephilim/Projects/kasino/src/main.cpp",
   "file": "/home/nephilim/Projects/kasino/src/main.cpp",
   "output": "CMakeFiles/Kasino.dir/src/main.cpp.o"
 },
