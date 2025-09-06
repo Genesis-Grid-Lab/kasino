@@ -117,9 +117,14 @@ endif()
 if (UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
     target_link_libraries(engine PUBLIC Threads::Threads dl X11 Xrandr Xi Xxf86vm Xcursor)
-endif()
+  endif()
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+file(GLOB_RECURSE Kasino ${CMAKE_CURRENT_SOURCE_DIR}/src/Kasino/*.cpp)  
+
+add_executable(${PROJECT_NAME}
+  src/main.cpp
+  ${Kasino}
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE engine)
 
