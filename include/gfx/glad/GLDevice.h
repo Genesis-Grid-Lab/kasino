@@ -8,7 +8,7 @@ class GLDevice : public IGraphicsDevice{
   explicit GLDevice(const FactoryDesc& desc);
   GraphicsAPI API() const override { return GraphicsAPI::OpenGL; }
   bool Initialize(IWindow& window) override;
-  void BeginFrame() override;
+  void BeginFrame(int fbWidth, int fbHeight) override;
   void EndFrame() override;
 
   void SetClearColor(glm::vec4 color) {

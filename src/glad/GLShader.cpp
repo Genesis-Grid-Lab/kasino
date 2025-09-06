@@ -67,3 +67,4 @@ int GLShader::uniformLoc(const char* name){
 void GLShader::SetFloat(const char* name,float v){ glUniform1f(uniformLoc(name),v); }
 void GLShader::SetVec2 (const char* name, const glm::vec2& v){ glUniform2f(uniformLoc(name),v.x,v.y); }
 void GLShader::SetMat4 (const char* name,const glm::mat4& v){ glUniformMatrix4fv(uniformLoc(name),1,GL_FALSE,glm::value_ptr(v)); }
+void GLShader::SetIntArray(const char* name, const int* v, int count) { glUniform1iv(uniformLoc(name), count, v); }

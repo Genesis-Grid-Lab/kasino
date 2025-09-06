@@ -15,6 +15,8 @@
 #include "gfx/glad/GLBuffer.h"
 #include "gfx/glad/GLShader.h"
 #include "gfx/glad/GLVertexArray.h"
+#include "gfx/glad/GLTexture2D.h"
+#include "gfx/glad/GLRendererAPI.h"
 
 // Scope<IWindow> CreateWindow(const WindowDesc& desc){
 // #if defined(WINDOW_BACKEND_GLFW)
@@ -82,4 +84,11 @@ Ref<IVertexArray> Factory::CreateVertexArray(){
   }
 
   return nullptr;
+}
+
+std::shared_ptr<ITexture2D>   Factory::CreateTexture2D()   { 
+  switch(s_Gapi){ case GraphicsAPI::OpenGL: return std::make_shared<GLTexture2D>(); default: return nullptr; } 
+}
+std::unique_ptr<RendererAPI>  Factory::CreateRendererAPI() { 
+  switch(s_Gapi){ case GraphicsAPI::OpenGL: return std::make_unique<GLRendererAPI>(); default: return nullptr; } 
 }

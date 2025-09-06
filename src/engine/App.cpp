@@ -8,6 +8,8 @@
 #include "gfx/IVertexArray.h"
 #include "gfx/IShader.h"
 #include "glad/glad.h"
+#include "gfx/Camera2D.h"
+#include "gfx/Render2D.h"
 
 struct Vtx { float x,y; float r,g,b; };
 
@@ -75,10 +77,19 @@ App::App(Scope<IWindow> window, Scope<IGraphicsDevice> device)
 
 int App::Run(){
 
+  Camera2D cam;
+  auto [lw, lh] = m_Window->GetLogicalSize();
+
+  cam.SetLogicalSize((float)lw, (float)lh);
+  cam.SetFlipY(false);
+  cam.Update();
+
   while (!m_Window->ShouldClose()) {
     // Update…
     m_Input->BeginFrame();
     m_Window->PollEvents();
+    
+    auto [fbw, fbh] = m_Window->GetFramebufferSize();
 
     if (m_Input->WasKeyPressed(Key::Escape)) {
       std::puts("[Input] Escape pressed (edge)");
@@ -88,16 +99,18 @@ int App::Run(){
     }
 
     if (m_Device) {
-      m_Device->BeginFrame();
+      m_Device->BeginFrame(fbw, fbh);
       
-      DrawTriangleViaFactory();
+      // DrawTriangleViaFactory();
+      Render2D::BeginScene(cam.ViewProj(),fbw ,fbh);
+      Render2D::DrawQuad(20,20,100,60, 0.2f,0.6f,1.0f,1.0f);
+      Render2D::EndScene(); 
 
       m_Device->EndFrame();
     } else {
       m_Window->SwapBuffers();
     }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    
   }
 
   return 0;

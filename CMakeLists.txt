@@ -48,7 +48,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad)
 
 file(GLOB_RECURSE source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
 file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
-file(GLOB gladFile ${CMAKE_CURRENT_SOURCE_DIR}/src/gfx/glad/*.cpp)
+file(GLOB gladFile ${CMAKE_CURRENT_SOURCE_DIR}/src/glad/*.cpp)
 
 add_library(engine
     ${source} ${headers}
@@ -63,6 +63,7 @@ target_include_directories(engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad/include
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/stb_image
 )
 
 # Backend selection

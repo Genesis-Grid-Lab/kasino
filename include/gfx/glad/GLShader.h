@@ -18,6 +18,8 @@ public:
   void SetVec2(const char *name, const glm::vec2 &v) override;
   void SetMat4(const char *name, const glm::mat4 &v) override;
 
+  void SetIntArray(const char* name, const int* v, int count) override;
+
 private:
   int uniformLoc(const char *name);
 

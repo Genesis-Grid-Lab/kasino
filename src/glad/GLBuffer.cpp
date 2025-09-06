@@ -16,3 +16,13 @@ void GLBuffer::SetData(const void* data,std::size_t bytes,bool dynamic){
     glBufferData(m_Type==BufferType::Vertex ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER,
                  (GLsizeiptr)bytes, data, dynamic?GL_DYNAMIC_DRAW:GL_STATIC_DRAW);
 }
+
+void GLBuffer::UpdateSubData(std::size_t off, const void* data, std::size_t bytes) {
+    Bind();
+    glBufferSubData(
+        m_Type == BufferType::Vertex ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER,
+        (GLintptr)off,
+        (GLsizeiptr)bytes,
+        data
+    );
+}

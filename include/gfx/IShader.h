@@ -16,6 +16,6 @@ public:
   // uniform helpers
   virtual void SetFloat(const char *name, float v) = 0;
   virtual void SetVec2(const char *name, const glm::vec2& v) = 0;
-  virtual void SetMat4(const char* name, const glm::mat4& v) = 0;
-  
+  virtual void SetMat4(const char* name, const glm::mat4& v) = 0;  
+  virtual void SetIntArray(const char* name, const int* v, int count) = 0;
 };

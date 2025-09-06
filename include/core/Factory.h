@@ -7,6 +7,8 @@
 #include "gfx/IShader.h"
 #include "gfx/IBuffer.h"
 #include "gfx/IVertexArray.h"
+#include "gfx/RendererAPI.h"
+#include "gfx/ITexture2D.h"
 
 class Factory {
 public:
@@ -21,6 +23,9 @@ public:
   static Ref<IShader> CreateShader();
   static Ref<IBuffer> CreateBuffer(BufferType type);
   static Ref<IVertexArray> CreateVertexArray();
+  static std::shared_ptr<ITexture2D>   CreateTexture2D();
+
+  static std::unique_ptr<RendererAPI>  CreateRendererAPI();
 
 private:
   static GraphicsAPI s_Gapi;

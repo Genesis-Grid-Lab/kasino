@@ -1,5 +1,7 @@
 #include "gfx/glad/GLDevice.h"
 #include "window/IWindow.h"
+#include "gfx/RenderCommand.h"
+#include "core/Factory.h"
 
 // GLAD
 #include "glad/glad.h"
@@ -41,17 +43,16 @@ bool GLDevice::Initialize(IWindow &window){
   // Enable/disable vsync on the active context
   m_Window->SetSwapInterval(m_Window->IsVsyncEnabled() ? 1 : 0);
 
+  RenderCommand::Init(Factory::CreateRendererAPI());
+
   m_Initialized = true;
   return true;
 }
 
-void GLDevice::BeginFrame() {
+void GLDevice::BeginFrame(int fbWidth, int fbHeight) {
     if (!m_Initialized) return;
 
-    auto [fbw, fbh] = m_Window->GetFramebufferSize();
-    glViewport(0, 0, fbw, fbh);
-    glClearColor(m_Clear.x , m_Clear.y, m_Clear.z, m_Clear.w);
-    glClear(GL_COLOR_BUFFER_BIT);
+    RenderCommand::SetViewport(0,0,fbWidth,fbHeight);
 }
 
 void GLDevice::EndFrame() {
