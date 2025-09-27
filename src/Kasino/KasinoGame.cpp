@@ -19,6 +19,8 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 KasinoGame::~KasinoGame() = default;
 
@@ -135,6 +137,20 @@ glm::vec2 measureText(const std::string &text, float scale) {
   }
 
   return {maxWidth, height};
+}
+
+glm::mat4 buildCardTransform(const KasinoGame::Rect &rect, float rotation) {
+  glm::vec2 size(rect.w, rect.h);
+  glm::vec2 pos(rect.x, rect.y);
+  glm::vec2 center = size * 0.5f;
+  glm::vec3 pos3(pos, 0.0f);
+  glm::vec3 center3(center, 0.0f);
+  glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos3);
+  transform = glm::translate(transform, center3);
+  transform = glm::rotate(transform, rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+  transform = glm::translate(transform, -center3);
+  transform = glm::scale(transform, glm::vec3(size, 1.0f));
+  return transform;
 }
 
 }  // namespace
@@ -1220,36 +1236,51 @@ void KasinoGame::OnUpdate(float dt) {
 void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
                               bool isCurrent, bool selected, bool legal,
                               bool hovered) {
+  drawCardFace(card, r, 0.f, isCurrent, selected, legal, hovered);
+}
+
+void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
+                              float rotation, bool isCurrent, bool selected,
+                              bool legal, bool hovered) {
+  Rect borderRect{r.x - 2.f, r.y - 2.f, r.w + 4.f, r.h + 4.f};
+  glm::mat4 borderTransform = buildCardTransform(borderRect, rotation);
+  glm::mat4 cardTransform = buildCardTransform(r, rotation);
+
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+<<<<<<< HEAD
+=======
+>>>>>>> 058718a52cbe457b4f23f9e4283e944567fabc59
 
   glm::vec4 baseTint(1.0f);
   if (!isCurrent) {
-    baseTint = glm::mix(glm::vec4(1.0f), glm::vec4(0.8f, 0.8f, 0.8f, 1.f), 0.35f);
+    baseTint =
+        glm::mix(glm::vec4(1.0f), glm::vec4(0.8f, 0.8f, 0.8f, 1.f), 0.35f);
   }
 
   bool drewTexture = false;
   auto textureIt = m_CardTextures.find(cardTextureKey(card));
   if (textureIt != m_CardTextures.end() && textureIt->second) {
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
-                       textureIt->second, 1.0f, baseTint);
+    Render2D::DrawQuad(cardTransform, textureIt->second, 1.0f, baseTint);
     drewTexture = true;
   } else {
-    Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
-		       glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseTint);
+<<<<<<< HEAD
+      Render2D::DrawQuad(borderTransform, borderColor);
+=======
+    Render2D::DrawQuad(cardTransform, baseTint);
+>>>>>>> 058718a52cbe457b4f23f9e4283e944567fabc59
   }
 
   if (legal)
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+    Render2D::DrawQuad(cardTransform,
                        glm::vec4(0.2f, 0.45f, 0.9f, 0.25f));
   if (hovered)
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+    Render2D::DrawQuad(cardTransform,
                        glm::vec4(0.95f, 0.55f, 0.25f, 0.4f));
   if (selected)
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+    Render2D::DrawQuad(cardTransform,
                        glm::vec4(0.95f, 0.85f, 0.2f, 0.45f));
 
-  if (!drewTexture) {
+  if (!drewTexture && rotation == 0.f) {
     auto rankString = [&]() {
       switch (card.rank) {
       case Casino::Rank::Ace:
@@ -1293,32 +1324,56 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
 }
 
 void KasinoGame::drawCardBack(const Rect &r, bool isCurrent) {
+  drawCardBack(r, isCurrent, 0.f);
+}
+
+void KasinoGame::drawCardBack(const Rect &r, bool isCurrent, float rotation) {
+  Rect borderRect{r.x - 2.f, r.y - 2.f, r.w + 4.f, r.h + 4.f};
+  glm::mat4 borderTransform = buildCardTransform(borderRect, rotation);
+  glm::mat4 cardTransform = buildCardTransform(r, rotation);
+
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 058718a52cbe457b4f23f9e4283e944567fabc59
 
   if (m_CardBackTexture) {
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
-                       m_CardBackTexture, 1.0f, glm::vec4(1.0f));
+    Render2D::DrawQuad(cardTransform, m_CardBackTexture, 1.0f,
+                       glm::vec4(1.0f));
     if (isCurrent) {
-      Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+      Render2D::DrawQuad(cardTransform,
                          glm::vec4(0.95f, 0.75f, 0.35f, 0.35f));
     }
   } else {
-    Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
-		       glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
+      Render2D::DrawQuad(borderTransform, borderColor);
     glm::vec4 baseColor = glm::vec4(0.15f, 0.25f, 0.45f, 1.0f);
     if (isCurrent) {
-      baseColor = glm::mix(baseColor, glm::vec4(0.9f, 0.6f, 0.2f, 1.0f), 0.35f);
+      baseColor =
+          glm::mix(baseColor, glm::vec4(0.9f, 0.6f, 0.2f, 1.0f), 0.35f);
     }
 
-    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseColor);
+    Render2D::DrawQuad(cardTransform, baseColor);
 
-    glm::vec4 innerColor = glm::vec4(0.25f, 0.35f, 0.55f, 1.0f);
-    Render2D::DrawQuad(glm::vec2{r.x + 6.f, r.y + 6.f},
-                       glm::vec2{r.w - 12.f, r.h - 12.f}, innerColor);
+    if (r.w > 0.f && r.h > 0.f) {
+      auto drawInset = [&](float offsetX, float offsetY, float width,
+                           float height, const glm::vec4 &color) {
+        if (width <= 0.f || height <= 0.f) {
+          return;
+        }
+        glm::mat4 local = glm::translate(glm::mat4(1.0f),
+                                         glm::vec3(offsetX / r.w, offsetY / r.h,
+                                                   0.0f));
+        local = glm::scale(local, glm::vec3(width / r.w, height / r.h, 1.0f));
+        Render2D::DrawQuad(cardTransform * local, color);
+      };
 
-    glm::vec4 accentColor = glm::vec4(0.85f, 0.85f, 0.9f, 0.35f);
-    Render2D::DrawQuad(glm::vec2{r.x + r.w * 0.25f, r.y + 10.f},
-                       glm::vec2{r.w * 0.5f, r.h - 20.f}, accentColor);
+      glm::vec4 innerColor = glm::vec4(0.25f, 0.35f, 0.55f, 1.0f);
+      drawInset(6.f, 6.f, r.w - 12.f, r.h - 12.f, innerColor);
+
+      glm::vec4 accentColor = glm::vec4(0.85f, 0.85f, 0.9f, 0.35f);
+      drawInset(r.w * 0.25f, 10.f, r.w * 0.5f, r.h - 20.f, accentColor);
+    }
   }
 }
 
@@ -1417,10 +1472,31 @@ void KasinoGame::drawHands() {
   for (int p = 0; p < m_State.numPlayers; ++p) {
     const auto &hand = m_State.players[p].hand;
     const auto &rects = m_PlayerHandRects[p];
+    const auto &layout = m_PlayerSeatLayouts[p];
+    bool verticalSeat = layout.orientation == SeatOrientation::Vertical;
+    float rotation = 0.f;
+    if (verticalSeat) {
+      bool isLeftSeat = layout.anchor.x < m_TableRect.x;
+      rotation = isLeftSeat ? glm::half_pi<float>() : -glm::half_pi<float>();
+    }
+
     for (size_t i = 0; i < hand.size(); ++i) {
-      if (i >= rects.size() || !inViewport(rects[i])) {
+      if (i >= rects.size()) {
         continue;
       }
+
+      Rect drawRect = rects[i];
+      if (verticalSeat) {
+        glm::vec2 center = rects[i].Center();
+        drawRect = {center.x - m_CardWidth * 0.5f,
+                    center.y - m_CardHeight * 0.5f, m_CardWidth, m_CardHeight};
+      }
+
+      Rect viewportRect = verticalSeat ? rects[i] : drawRect;
+      if (!inViewport(viewportRect)) {
+        continue;
+      }
+
       bool isCurrent = (p == m_State.current);
       bool isAI = (p < static_cast<int>(m_IsAiPlayer.size()) &&
                    m_IsAiPlayer[p]);
@@ -1430,13 +1506,25 @@ void KasinoGame::drawHands() {
       bool animatingCard =
           (isPendingCard && m_PendingAiMove && m_AiDecisionTimer <= 0.f &&
            m_AiAnimProgress > 0.f);
+
+      auto drawOverlay = [&](const glm::vec4 &color) {
+        if (verticalSeat) {
+          Render2D::DrawQuad(buildCardTransform(drawRect, rotation), color);
+        } else {
+          Render2D::DrawQuad(glm::vec2{drawRect.x, drawRect.y},
+                             glm::vec2{drawRect.w, drawRect.h}, color);
+        }
+      };
+
       if (isAI) {
         if (!animatingCard) {
-          drawCardBack(rects[i], isCurrent);
+          if (verticalSeat) {
+            drawCardBack(drawRect, isCurrent, rotation);
+          } else {
+            drawCardBack(drawRect, isCurrent);
+          }
           if (isPendingCard) {
-            Render2D::DrawQuad(glm::vec2{rects[i].x, rects[i].y},
-                               glm::vec2{rects[i].w, rects[i].h},
-                               glm::vec4(0.95f, 0.85f, 0.2f, 0.35f));
+            drawOverlay(glm::vec4(0.95f, 0.85f, 0.2f, 0.35f));
           }
         }
       } else {
@@ -1445,11 +1533,15 @@ void KasinoGame::drawHands() {
              *m_Selection.handIndex == static_cast<int>(i));
         bool hideDuringAnim = animatingCard;
         if (!hideDuringAnim) {
-          drawCardFace(hand[i], rects[i], isCurrent, selected, false, false);
+          if (verticalSeat) {
+            drawCardFace(hand[i], drawRect, rotation, isCurrent, selected,
+                         false, false);
+          } else {
+            drawCardFace(hand[i], drawRect, isCurrent, selected, false,
+                         false);
+          }
           if (isPendingCard) {
-            Render2D::DrawQuad(glm::vec2{rects[i].x, rects[i].y},
-                               glm::vec2{rects[i].w, rects[i].h},
-                               glm::vec4(0.95f, 0.85f, 0.2f, 0.35f));
+            drawOverlay(glm::vec4(0.95f, 0.85f, 0.2f, 0.35f));
           }
         }
       }
