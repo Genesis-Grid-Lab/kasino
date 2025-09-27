@@ -106,6 +106,7 @@ bool KasinoGame::OnStart() {
   updateMenuHumanCounts();
   m_HumanSeatCount = m_MenuSelectedHumans;
   m_SeatIsAI.clear();
+  m_IsAiPlayer.clear();
 
   m_State.numPlayers = m_MenuSelectedPlayers;
   m_State.players.resize(m_State.numPlayers);
@@ -121,6 +122,20 @@ void KasinoGame::OnStop() {
 }
 
 void KasinoGame::startNewMatch() {
+  m_IsAiPlayer.assign(m_State.numPlayers, true);
+  for (int i = 0; i < m_State.numPlayers; ++i) {
+    bool isAi = true;
+    if (i < static_cast<int>(m_SeatIsAI.size())) {
+      isAi = m_SeatIsAI[i];
+    } else if (i == 0) {
+      isAi = false;
+    }
+    m_IsAiPlayer[i] = isAi;
+  }
+  if (!m_IsAiPlayer.empty()) {
+    m_IsAiPlayer[0] = false;
+  }
+
   m_TotalScores.assign(m_State.numPlayers, 0);
   m_RoundNumber = 1;
   m_WinningPlayer = -1;
@@ -557,6 +572,12 @@ void KasinoGame::processInput(float mx, float my) {
 
   if (m_Phase != Phase::Playing) return;
 
+  if (m_State.current >= 0 &&
+      m_State.current < static_cast<int>(m_IsAiPlayer.size()) &&
+      m_IsAiPlayer[m_State.current]) {
+    return;
+  }
+
   // Action entries
   for (size_t i = 0; i < m_ActionEntries.size(); ++i) {
     if (m_ActionEntries[i].rect.Contains(mx, my)) {
@@ -574,6 +595,8 @@ void KasinoGame::processInput(float mx, float my) {
 
   // Hand cards
   for (int p = 0; p < m_State.numPlayers; ++p) {
+    if (p >= static_cast<int>(m_IsAiPlayer.size())) continue;
+    if (m_IsAiPlayer[p]) continue;
     const auto &rects = m_PlayerHandRects[p];
     for (size_t i = 0; i < rects.size(); ++i) {
       if (rects[i].Contains(mx, my)) {
@@ -603,6 +626,43 @@ void KasinoGame::processInput(float mx, float my) {
   m_Selection.Clear();
   m_ActionEntries.clear();
   refreshHighlights();
+}
+
+bool KasinoGame::playAiTurn() {
+  if (m_Phase != Phase::Playing) return false;
+  if (m_State.RoundOver()) return false;
+  if (m_State.current < 0 || m_State.current >= m_State.numPlayers) return false;
+  if (m_State.current >= static_cast<int>(m_IsAiPlayer.size())) return false;
+  if (!m_IsAiPlayer[m_State.current]) return false;
+
+  if (m_LegalMoves.empty()) {
+    updateLegalMoves();
+  }
+  if (m_LegalMoves.empty()) return false;
+
+  const Casino::Move *selected = nullptr;
+  const Casino::Move *trailMove = nullptr;
+  for (const auto &mv : m_LegalMoves) {
+    if (mv.type == Casino::MoveType::Capture) {
+      selected = &mv;
+      break;
+    }
+    if (!trailMove && mv.type == Casino::MoveType::Trail) {
+      trailMove = &mv;
+    }
+  }
+
+  if (!selected) {
+    if (trailMove) {
+      selected = trailMove;
+    } else {
+      selected = &m_LegalMoves.front();
+    }
+  }
+
+  Casino::Move chosen = *selected;
+  applyMove(chosen);
+  return true;
 }
 
 void KasinoGame::processMainMenuInput(float mx, float my) {
@@ -773,6 +833,16 @@ void KasinoGame::OnUpdate(float dt) {
     refreshHighlights();
   }
 
+  if (!m_ShowPrompt && m_Phase == Phase::Playing) {
+    while (!m_ShowPrompt && m_Phase == Phase::Playing &&
+           m_State.current >= 0 &&
+           m_State.current < m_State.numPlayers &&
+           m_State.current < static_cast<int>(m_IsAiPlayer.size()) &&
+           m_IsAiPlayer[m_State.current] && !m_State.RoundOver()) {
+      if (!playAiTurn()) break;
+    }
+  }
+
   float mx = m_Input->MouseX();
   float my = m_Input->MouseY();
   m_LastMousePos = {mx, my};
@@ -864,6 +934,26 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
            glm::vec2{r.x + 6.f, r.y + 6.f + 6.f * scale}, scale, textColor);
 }
 
+void KasinoGame::drawCardBack(const Rect &r, bool isCurrent) {
+  glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+  glm::vec4 baseColor = glm::vec4(0.15f, 0.25f, 0.45f, 1.0f);
+  if (isCurrent) {
+    baseColor = glm::mix(baseColor, glm::vec4(0.9f, 0.6f, 0.2f, 1.0f), 0.35f);
+  }
+
+  Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
+                     glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
+  Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseColor);
+
+  glm::vec4 innerColor = glm::vec4(0.25f, 0.35f, 0.55f, 1.0f);
+  Render2D::DrawQuad(glm::vec2{r.x + 6.f, r.y + 6.f},
+                     glm::vec2{r.w - 12.f, r.h - 12.f}, innerColor);
+
+  glm::vec4 accentColor = glm::vec4(0.85f, 0.85f, 0.9f, 0.35f);
+  Render2D::DrawQuad(glm::vec2{r.x + r.w * 0.25f, r.y + 10.f},
+                     glm::vec2{r.w * 0.5f, r.h - 20.f}, accentColor);
+}
+
 void KasinoGame::drawBuildFace(const Casino::Build &build, const Rect &r,
                                bool legal, bool hovered, bool selected) {
   int ownerIndex = build.ownerPlayer >= 0 ? build.ownerPlayer : 0;
@@ -933,10 +1023,16 @@ void KasinoGame::drawHands() {
     const auto &rects = m_PlayerHandRects[p];
     for (size_t i = 0; i < hand.size(); ++i) {
       bool isCurrent = (p == m_State.current);
-      bool selected =
-          (isCurrent && m_Selection.handIndex &&
-           *m_Selection.handIndex == static_cast<int>(i));
-      drawCardFace(hand[i], rects[i], isCurrent, selected, false, false);
+      bool isAI = (p < static_cast<int>(m_IsAiPlayer.size()) &&
+                   m_IsAiPlayer[p]);
+      if (isAI) {
+        drawCardBack(rects[i], isCurrent);
+      } else {
+        bool selected =
+            (isCurrent && m_Selection.handIndex &&
+             *m_Selection.handIndex == static_cast<int>(i));
+        drawCardFace(hand[i], rects[i], isCurrent, selected, false, false);
+      }
     }
   }
 }

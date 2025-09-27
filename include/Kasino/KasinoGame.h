@@ -66,6 +66,7 @@ class KasinoGame : public Game {
   void refreshHighlights();
   void processMainMenuInput(float mx, float my);
   void processInput(float mx, float my);
+  bool playAiTurn();
   bool handlePromptInput(float mx, float my);
   void selectHandCard(int player, int index);
   void toggleLooseCard(int idx);
@@ -84,6 +85,7 @@ class KasinoGame : public Game {
 
   void drawCardFace(const Casino::Card &card, const Rect &r, bool isCurrent,
                     bool selected, bool legal, bool hovered);
+  void drawCardBack(const Rect &r, bool isCurrent);
   void drawBuildFace(const Casino::Build &build, const Rect &r, bool legal,
                      bool hovered, bool selected);
   void drawText(const std::string &text, glm::vec2 pos, float scale,
@@ -112,6 +114,7 @@ class KasinoGame : public Game {
   std::vector<Rect> m_MenuSeatToggleRects;
   int m_HumanSeatCount = 1;
   std::vector<bool> m_SeatIsAI;
+  std::vector<bool> m_IsAiPlayer;
   glm::vec2 m_LastMousePos{0.f, 0.f};
 
   std::vector<int> m_TotalScores;
