@@ -78,6 +78,42 @@ const Glyph &glyphFor(char c) {
   return font.at('?');
 }
 
+struct PreviewScoreResult {
+  std::vector<Casino::ScoreLine> lines;
+  bool includeMajorities = false;
+};
+
+PreviewScoreResult computePreviewScores(const Casino::GameState &state) {
+  PreviewScoreResult result;
+  result.includeMajorities = state.RoundOver();
+  Casino::GameState previewState = state;
+  result.lines = Casino::ScoreRound(previewState);
+  if (!result.includeMajorities) {
+    for (auto &line : result.lines) {
+      line.total -= line.mostCards;
+      line.total -= line.mostSpades;
+    }
+  }
+  return result;
+}
+
+float measureTextWidth(const std::string &text, float scale) {
+  float maxWidth = 0.f;
+  float currentWidth = 0.f;
+  for (char ch : text) {
+    if (ch == '\n') {
+      maxWidth = std::max(maxWidth, currentWidth);
+      currentWidth = 0.f;
+      continue;
+    }
+    const Glyph &g = glyphFor(ch);
+    currentWidth += (float)g.width * scale + scale * 0.5f;
+  }
+  maxWidth = std::max(maxWidth, currentWidth);
+  if (maxWidth > 0.f) maxWidth -= scale * 0.5f;
+  return maxWidth;
+}
+
 }  // namespace
 
 bool KasinoGame::Rect::Contains(float px, float py) const {
@@ -267,8 +303,22 @@ void KasinoGame::updateRoundScorePreview() {
     return;
   }
 
-  Casino::GameState previewState = m_State;
-  m_CurrentRoundScores = Casino::ScoreRound(previewState);
+  PreviewScoreResult preview = computePreviewScores(m_State);
+  m_CurrentRoundScores.clear();
+  m_CurrentRoundScores.reserve(preview.lines.size());
+
+  for (const auto &line : preview.lines) {
+    RunningScore running;
+    running.line = line;
+    running.potentialMajorities = line.mostCards + line.mostSpades;
+    running.securedPoints =
+        line.aces + line.bigCasino + line.littleCasino + line.sweeps;
+    running.showMajorityBonuses = preview.includeMajorities;
+    if (!preview.includeMajorities) {
+      running.line.total = running.securedPoints;
+    }
+    m_CurrentRoundScores.push_back(running);
+  }
 }
 
 void KasinoGame::updateLegalMoves() {
@@ -1182,12 +1232,32 @@ void KasinoGame::drawScoreboard() {
     drawText("PLAYER " + std::to_string(p + 1), glm::vec2{offsetX, 44.f}, 3.5f,
              color);
     int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
+    bool showPotential = false;
+    int potentialPoints = 0;
     if (m_Phase == Phase::Playing &&
         p < static_cast<int>(m_CurrentRoundScores.size())) {
-      total += m_CurrentRoundScores[p].total;
+      const auto &running = m_CurrentRoundScores[p];
+      int roundPoints = running.securedPoints;
+      if (running.showMajorityBonuses) {
+        roundPoints += running.potentialMajorities;
+      } else if (running.potentialMajorities > 0) {
+        showPotential = true;
+        potentialPoints = running.potentialMajorities;
+      }
+      total += roundPoints;
     }
-    drawText("TOTAL " + std::to_string(total), glm::vec2{offsetX, 64.f}, 3.f,
-             glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+    glm::vec2 totalPos{offsetX, 64.f};
+    glm::vec4 totalColor(0.95f, 0.95f, 0.95f, 1.0f);
+    std::string totalText = "TOTAL " + std::to_string(total);
+    drawText(totalText, totalPos, 3.f, totalColor);
+    if (showPotential && potentialPoints > 0) {
+      float baseWidth = measureTextWidth(totalText, 3.f);
+      std::string potentialText = " +" + std::to_string(potentialPoints);
+      glm::vec4 potentialColor(totalColor.r, totalColor.g, totalColor.b, 0.6f);
+      drawText(potentialText,
+               glm::vec2{totalPos.x + baseWidth, totalPos.y}, 3.f,
+               potentialColor);
+    }
     drawText("SWEEPS " + std::to_string(m_State.players[p].sweeps),
              glm::vec2{offsetX + 120.f, 64.f}, 3.f,
              glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
