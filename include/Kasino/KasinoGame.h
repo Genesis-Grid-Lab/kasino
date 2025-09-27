@@ -4,6 +4,7 @@
 #include "Kasino/GameLogic.h"
 #include "Kasino/Scoring.h"
 #include "input/InputSystem.h"
+#include "gfx/ITexture2D.h"
 
 #include <array>
 #include <memory>
@@ -11,6 +12,7 @@
 #include <random>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -93,6 +95,11 @@ class KasinoGame : public Game {
 
   std::string moveLabel(const Casino::Move &mv) const;
   bool selectionCompatible(const Casino::Move &mv) const;
+  void loadCardTextures();
+  std::string cardTextureKey(const Casino::Card &card) const;
+  std::string cardTexturePath(const Casino::Card &card) const;
+  std::string cardRankString(Casino::Rank rank) const;
+  std::string cardSuitFolder(Casino::Suit suit) const;
 
   std::unique_ptr<InputSystem> m_Input;
   Casino::GameState m_State;
@@ -156,5 +163,8 @@ class KasinoGame : public Game {
       glm::vec4(0.25f, 0.55f, 0.95f, 1.0f),
       glm::vec4(0.35f, 0.80f, 0.45f, 1.0f),
       glm::vec4(0.90f, 0.70f, 0.25f, 1.0f)};
+
+  std::unordered_map<std::string, Ref<ITexture2D>> m_CardTextures;
+  Ref<ITexture2D> m_CardBackTexture;
 };
 

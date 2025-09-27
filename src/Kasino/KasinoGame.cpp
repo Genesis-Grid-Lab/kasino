@@ -1,6 +1,7 @@
 #include "Kasino/KasinoGame.h"
 
 #include "app/Game.h"
+#include "core/Factory.h"
 #include "gfx/Render2D.h"
 #include "input/InputSystem.h"
 #include "Kasino/GameLogic.h"
@@ -93,6 +94,8 @@ void KasinoGame::Selection::Clear() {
 bool KasinoGame::OnStart() {
   if (!Render2D::Initialize()) return false;
 
+  loadCardTextures();
+
   m_Window->SetResizeCallback([this](int fbW, int fbH, float) {
     (void)fbW;
     (void)fbH;
@@ -116,8 +119,82 @@ bool KasinoGame::OnStart() {
   return true;
 }
 
+void KasinoGame::loadCardTextures() {
+  m_CardTextures.clear();
+
+  const std::array<Casino::Suit, 4> suits = {Casino::Suit::Clubs,
+                                             Casino::Suit::Diamonds,
+                                             Casino::Suit::Hearts,
+                                             Casino::Suit::Spades};
+
+  for (Casino::Suit suit : suits) {
+    for (int value = Casino::RankValue(Casino::Rank::Ace);
+         value <= Casino::RankValue(Casino::Rank::King); ++value) {
+      Casino::Rank rank = static_cast<Casino::Rank>(value);
+      Casino::Card card(rank, suit);
+      auto texture = Factory::CreateTexture2D();
+      if (!texture) continue;
+
+      std::string path = cardTexturePath(card);
+      if (texture->LoadFromFile(path.c_str(), true)) {
+        m_CardTextures[cardTextureKey(card)] = texture;
+      }
+    }
+  }
+
+  const std::string backPath =
+      "Resources/Cards/Standard/rect_cards/individual/card back/card_back_rect_1.png";
+  auto backTexture = Factory::CreateTexture2D();
+  if (backTexture && backTexture->LoadFromFile(backPath.c_str(), true)) {
+    m_CardBackTexture = backTexture;
+  } else {
+    m_CardBackTexture.reset();
+  }
+}
+
+std::string KasinoGame::cardTextureKey(const Casino::Card &card) const {
+  return card.ToString();
+}
+
+std::string KasinoGame::cardTexturePath(const Casino::Card &card) const {
+  std::string folder = cardSuitFolder(card.suit);
+  return "Resources/Cards/Standard/rect_cards/individual/" + folder + "/" +
+         cardRankString(card.rank) + folder + ".png";
+}
+
+std::string KasinoGame::cardRankString(Casino::Rank rank) const {
+  switch (rank) {
+  case Casino::Rank::Ace:
+    return "A";
+  case Casino::Rank::Jack:
+    return "J";
+  case Casino::Rank::Queen:
+    return "Q";
+  case Casino::Rank::King:
+    return "K";
+  default:
+    return std::to_string(Casino::RankValue(rank));
+  }
+}
+
+std::string KasinoGame::cardSuitFolder(Casino::Suit suit) const {
+  switch (suit) {
+  case Casino::Suit::Clubs:
+    return "club";
+  case Casino::Suit::Diamonds:
+    return "diamond";
+  case Casino::Suit::Hearts:
+    return "heart";
+  case Casino::Suit::Spades:
+    return "spade";
+  }
+  return "";
+}
+
 void KasinoGame::OnStop() {
   m_Input.reset();
+  m_CardTextures.clear();
+  m_CardBackTexture.reset();
   Render2D::Shutdown();
 }
 
@@ -875,13 +952,22 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
                               bool isCurrent, bool selected, bool legal,
                               bool hovered) {
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
-  glm::vec4 faceColor = glm::vec4(1.0f);
-  if (!isCurrent) {
-    faceColor = glm::mix(faceColor, glm::vec4(0.8f, 0.8f, 0.8f, 1.f), 0.35f);
-  }
   Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
                      glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
-  Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, faceColor);
+  glm::vec4 baseTint(1.0f);
+  if (!isCurrent) {
+    baseTint = glm::mix(glm::vec4(1.0f), glm::vec4(0.8f, 0.8f, 0.8f, 1.f), 0.35f);
+  }
+
+  bool drewTexture = false;
+  auto textureIt = m_CardTextures.find(cardTextureKey(card));
+  if (textureIt != m_CardTextures.end() && textureIt->second) {
+    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+                       textureIt->second, 1.0f, baseTint);
+    drewTexture = true;
+  } else {
+    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseTint);
+  }
 
   if (legal)
     Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
@@ -893,65 +979,77 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
     Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
                        glm::vec4(0.95f, 0.85f, 0.2f, 0.45f));
 
-  auto rankString = [&]() {
-    switch (card.rank) {
-    case Casino::Rank::Ace:
-      return std::string("A");
-    case Casino::Rank::Jack:
-      return std::string("J");
-    case Casino::Rank::Queen:
-      return std::string("Q");
-    case Casino::Rank::King:
-      return std::string("K");
-    default:
-      return std::to_string(Casino::RankValue(card.rank));
-    }
-  }();
+  if (!drewTexture) {
+    auto rankString = [&]() {
+      switch (card.rank) {
+      case Casino::Rank::Ace:
+        return std::string("A");
+      case Casino::Rank::Jack:
+        return std::string("J");
+      case Casino::Rank::Queen:
+        return std::string("Q");
+      case Casino::Rank::King:
+        return std::string("K");
+      default:
+        return std::to_string(Casino::RankValue(card.rank));
+      }
+    }();
 
-  auto suitString = [&]() {
-    switch (card.suit) {
-    case Casino::Suit::Clubs:
-      return std::string("C");
-    case Casino::Suit::Diamonds:
-      return std::string("D");
-    case Casino::Suit::Hearts:
-      return std::string("H");
-    case Casino::Suit::Spades:
-      return std::string("S");
-    }
-    return std::string("?");
-  }();
+    auto suitString = [&]() {
+      switch (card.suit) {
+      case Casino::Suit::Clubs:
+        return std::string("C");
+      case Casino::Suit::Diamonds:
+        return std::string("D");
+      case Casino::Suit::Hearts:
+        return std::string("H");
+      case Casino::Suit::Spades:
+        return std::string("S");
+      }
+      return std::string("?");
+    }();
 
-  glm::vec4 textColor =
-      (card.suit == Casino::Suit::Hearts ||
-       card.suit == Casino::Suit::Diamonds)
-          ? glm::vec4(0.80f, 0.1f, 0.1f, 1.0f)
-          : glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+    glm::vec4 textColor =
+        (card.suit == Casino::Suit::Hearts ||
+         card.suit == Casino::Suit::Diamonds)
+            ? glm::vec4(0.80f, 0.1f, 0.1f, 1.0f)
+            : glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
-  float scale = r.w / 10.f;
-  drawText(rankString, glm::vec2{r.x + 6.f, r.y + 6.f}, scale, textColor);
-  drawText(suitString,
-           glm::vec2{r.x + 6.f, r.y + 6.f + 6.f * scale}, scale, textColor);
+    float scale = r.w / 10.f;
+    drawText(rankString, glm::vec2{r.x + 6.f, r.y + 6.f}, scale, textColor);
+    drawText(suitString,
+             glm::vec2{r.x + 6.f, r.y + 6.f + 6.f * scale}, scale, textColor);
+  }
 }
 
 void KasinoGame::drawCardBack(const Rect &r, bool isCurrent) {
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
-  glm::vec4 baseColor = glm::vec4(0.15f, 0.25f, 0.45f, 1.0f);
-  if (isCurrent) {
-    baseColor = glm::mix(baseColor, glm::vec4(0.9f, 0.6f, 0.2f, 1.0f), 0.35f);
-  }
-
   Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
                      glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
-  Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseColor);
 
-  glm::vec4 innerColor = glm::vec4(0.25f, 0.35f, 0.55f, 1.0f);
-  Render2D::DrawQuad(glm::vec2{r.x + 6.f, r.y + 6.f},
-                     glm::vec2{r.w - 12.f, r.h - 12.f}, innerColor);
+  if (m_CardBackTexture) {
+    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+                       m_CardBackTexture, 1.0f, glm::vec4(1.0f));
+    if (isCurrent) {
+      Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
+                         glm::vec4(0.95f, 0.75f, 0.35f, 0.35f));
+    }
+  } else {
+    glm::vec4 baseColor = glm::vec4(0.15f, 0.25f, 0.45f, 1.0f);
+    if (isCurrent) {
+      baseColor = glm::mix(baseColor, glm::vec4(0.9f, 0.6f, 0.2f, 1.0f), 0.35f);
+    }
 
-  glm::vec4 accentColor = glm::vec4(0.85f, 0.85f, 0.9f, 0.35f);
-  Render2D::DrawQuad(glm::vec2{r.x + r.w * 0.25f, r.y + 10.f},
-                     glm::vec2{r.w * 0.5f, r.h - 20.f}, accentColor);
+    Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseColor);
+
+    glm::vec4 innerColor = glm::vec4(0.25f, 0.35f, 0.55f, 1.0f);
+    Render2D::DrawQuad(glm::vec2{r.x + 6.f, r.y + 6.f},
+                       glm::vec2{r.w - 12.f, r.h - 12.f}, innerColor);
+
+    glm::vec4 accentColor = glm::vec4(0.85f, 0.85f, 0.9f, 0.35f);
+    Render2D::DrawQuad(glm::vec2{r.x + r.w * 0.25f, r.y + 10.f},
+                       glm::vec2{r.w * 0.5f, r.h - 20.f}, accentColor);
+  }
 }
 
 void KasinoGame::drawBuildFace(const Casino::Build &build, const Rect &r,
