@@ -55,6 +55,13 @@ class KasinoGame : public Game {
     Rect rect;
   };
 
+  struct RunningScore {
+    Casino::ScoreLine line;
+    int securedPoints = 0;
+    int potentialMajorities = 0;
+    bool showMajorityBonuses = false;
+  };
+
   void startNewMatch();
   void startNextRound();
   void updateRoundScorePreview();
@@ -126,7 +133,7 @@ class KasinoGame : public Game {
   glm::vec2 m_LastMousePos{0.f, 0.f};
 
   std::vector<int> m_TotalScores;
-  std::vector<Casino::ScoreLine> m_CurrentRoundScores;
+  std::vector<RunningScore> m_CurrentRoundScores;
   std::vector<Casino::ScoreLine> m_LastRoundScores;
   int m_TargetScore = 21;
   int m_RoundNumber = 1;
