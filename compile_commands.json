@@ -96,6 +96,12 @@
   "output": "CMakeFiles/Kasino.dir/src/Kasino/GameLogic.cpp.o"
 },
 {
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug",
+  "command": "/usr/bin/c++ -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/Kasino/KasinoGame.cpp.o -c /home/nephilim/Projects/kasino/src/Kasino/KasinoGame.cpp",
+  "file": "/home/nephilim/Projects/kasino/src/Kasino/KasinoGame.cpp",
+  "output": "CMakeFiles/Kasino.dir/src/Kasino/KasinoGame.cpp.o"
+},
+{
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/glad",
   "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/glad/include -g -fPIC -o CMakeFiles/glad.dir/src/glad.c.o -c /home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
   "file": "/home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
