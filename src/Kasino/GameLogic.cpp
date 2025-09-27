@@ -88,16 +88,32 @@ std::vector<Move> Casino::LegalMoves(const GameState& gs){
     std::vector<std::vector<int>> combos; std::vector<int> cur;
     genSumCombos(L, hv, 0, cur, combos);
 
+    // Cassino rule: if capturing with a card, you must also take every
+    // loose card of the same rank. Track their indices so we can append
+    // them to every capture option that we emit.
+    std::vector<int> equalRankIdx;
+    for (size_t li = 0; li < L.size(); ++li) {
+      if (L[li].rank == hand.rank) equalRankIdx.push_back((int)li);
+    }
+
     // Equal-rank singles are combos too (handled by genSumCombos for singletons), but ensure build captures included.
     // For each combo, create a capture move that also includes all builds matching hv.
     std::vector<int> matchingBuildIdx;
     for (size_t bi=0; bi<B.size(); ++bi) if (B[bi].value == hv) matchingBuildIdx.push_back((int)bi);
 
-    if (!combos.empty() || !matchingBuildIdx.empty()) {
-      if (combos.empty()) combos.push_back({}); // allow capturing just builds with matching hand
-      for (auto& looseIdx : combos) {
-	Move mv; mv.type=MoveType::Capture; mv.handCard=hand; mv.captureLooseIdx=looseIdx; mv.captureBuildIdx=matchingBuildIdx;
-	out.push_back(std::move(mv));
+    bool canCapture = !combos.empty() || !matchingBuildIdx.empty() || !equalRankIdx.empty();
+    if (canCapture) {
+      if (combos.empty()) combos.push_back({}); // allow capturing just builds/equal-rank cards
+
+      std::set<std::vector<int>> seen;
+      for (auto looseIdx : combos) {
+        looseIdx.insert(looseIdx.end(), equalRankIdx.begin(), equalRankIdx.end());
+        std::sort(looseIdx.begin(), looseIdx.end());
+        looseIdx.erase(std::unique(looseIdx.begin(), looseIdx.end()), looseIdx.end());
+        if (!seen.insert(looseIdx).second) continue; // avoid duplicate capture variants
+
+        Move mv; mv.type=MoveType::Capture; mv.handCard=hand; mv.captureLooseIdx=looseIdx; mv.captureBuildIdx=matchingBuildIdx;
+        out.push_back(std::move(mv));
       }
     }
 
