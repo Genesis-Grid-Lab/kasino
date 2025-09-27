@@ -121,6 +121,7 @@ void KasinoGame::startNewMatch() {
   m_ActionEntries.clear();
   m_LastRoundScores.clear();
   m_ShowPrompt = false;
+  updateLayout();
   refreshHighlights();
 }
 
@@ -133,6 +134,7 @@ void KasinoGame::startNextRound() {
   m_LastRoundScores.clear();
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
+  updateLayout();  
   refreshHighlights();
 }
 
@@ -247,7 +249,10 @@ void KasinoGame::updateLayout() {
 void KasinoGame::layoutActionEntries() {
   float buttonHeight = 40.f;
   float x = m_ActionPanelRect.x + 12.f;
-  float y = m_ActionPanelRect.y + 12.f;
+  float labelScale = 3.f;
+  float labelTop = m_ActionPanelRect.y + 6.f;
+  float labelHeight = 5.f * labelScale;
+  float y = labelTop + labelHeight + 8.f;
   float w = m_ActionPanelRect.w - 24.f;
   for (auto &entry : m_ActionEntries) {
     entry.rect = {x, y, w, buttonHeight};
@@ -506,9 +511,13 @@ void KasinoGame::applyMove(const Casino::Move &mv) {
   m_ActionEntries.clear();
   updateLegalMoves();
   layoutActionEntries();
+  updateLayout();
+  refreshHighlights();
 
   if (m_State.RoundOver()) {
     handleRoundEnd();
+    updateLayout();
+    refreshHighlights();
   }
 }
 
