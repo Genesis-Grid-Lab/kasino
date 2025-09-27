@@ -18,10 +18,11 @@ class InputSystem;
 
 class KasinoGame : public Game {
  public:
-  bool OnStart() override;
-  void OnUpdate(float dt) override;
-  void OnRender() override;
-  void OnStop() override;
+ bool OnStart() override;
+ void OnUpdate(float dt) override;
+ void OnRender() override;
+ void OnStop() override;
+ ~KasinoGame();
 
  private:
   enum class Phase { Playing, RoundSummary, MatchSummary };
