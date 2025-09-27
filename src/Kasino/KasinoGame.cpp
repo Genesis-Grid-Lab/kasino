@@ -32,6 +32,17 @@ struct Glyph {
 constexpr float kAiDecisionDelay = 0.5f;
 constexpr float kAiAnimDuration = 0.3f;
 
+const std::string kMainMenuTitleText = "KASINO";
+const std::string kMainMenuSubtitleText = "CLASSIC TABLE PLAY";
+const std::string kMainMenuFooterText = "CHOOSE AN OPTION TO BEGIN";
+constexpr float kMainMenuTitleScale = 6.5f;
+constexpr float kMainMenuSubtitleScale = 3.2f;
+constexpr float kMainMenuFooterScale = 3.f;
+constexpr float kTitleSubtitleSpacingFactor = 1.2f;
+constexpr float kSubtitleButtonsSpacingFactor = 3.0f;
+constexpr float kButtonsFooterSpacingFactor = 2.4f;
+constexpr float kButtonVerticalSpacingFactor = 1.75f;
+
 const Glyph &glyphFor(char c) {
   static const std::unordered_map<char, Glyph> font = {
       {'0', {3, {"###", "# #", "# #", "# #", "###"}}},
@@ -97,21 +108,33 @@ PreviewScoreResult computePreviewScores(const Casino::GameState &state) {
   return result;
 }
 
-float measureTextWidth(const std::string &text, float scale) {
+glm::vec2 measureText(const std::string &text, float scale) {
   float maxWidth = 0.f;
   float currentWidth = 0.f;
+  int lineCount = 1;
+  bool hasGlyph = false;
   for (char ch : text) {
     if (ch == '\n') {
       maxWidth = std::max(maxWidth, currentWidth);
       currentWidth = 0.f;
+      ++lineCount;
       continue;
     }
     const Glyph &g = glyphFor(ch);
     currentWidth += (float)g.width * scale + scale * 0.5f;
+    hasGlyph = true;
   }
   maxWidth = std::max(maxWidth, currentWidth);
-  if (maxWidth > 0.f) maxWidth -= scale * 0.5f;
-  return maxWidth;
+  if (hasGlyph && maxWidth > 0.f) {
+    maxWidth -= scale * 0.5f;
+  }
+
+  float height = 0.f;
+  if (hasGlyph) {
+    height = scale * 5.f + static_cast<float>(lineCount - 1) * scale * 6.f;
+  }
+
+  return {maxWidth, height};
 }
 
 }  // namespace
@@ -338,14 +361,24 @@ void KasinoGame::updateLegalMoves() {
 void KasinoGame::updateMainMenuLayout() {
   float width = m_Camera.LogicalWidth();
   float height = m_Camera.LogicalHeight();
+  glm::vec2 titleMetrics = measureText(kMainMenuTitleText, kMainMenuTitleScale);
+  glm::vec2 subtitleMetrics =
+      measureText(kMainMenuSubtitleText, kMainMenuSubtitleScale);
+  float titleTop = height * 0.25f - titleMetrics.y;
+  float titleToSubtitleSpacing = titleMetrics.y * kTitleSubtitleSpacingFactor;
+  float subtitleTop = titleTop + titleMetrics.y + titleToSubtitleSpacing;
+  float subtitleToButtonsSpacing =
+      subtitleMetrics.y * kSubtitleButtonsSpacingFactor;
+  float buttonsTop = subtitleTop + subtitleMetrics.y + subtitleToButtonsSpacing;
+  float buttonSpacing = subtitleMetrics.y * kButtonVerticalSpacingFactor;
   float buttonWidth = std::min(width * 0.45f, 280.f);
   float buttonHeight = 60.f;
   float startX = width * 0.5f - buttonWidth * 0.5f;
-  float startY = height * 0.5f - buttonHeight - 24.f;
+  float startY = buttonsTop;
 
   m_MainMenuStartButtonRect = {startX, startY, buttonWidth, buttonHeight};
   m_MainMenuSettingsButtonRect =
-      {startX, startY + buttonHeight + 28.f, buttonWidth, buttonHeight};
+      {startX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight};
 
   updatePromptLayout();
 }
@@ -1682,15 +1715,31 @@ void KasinoGame::drawScene() {
 void KasinoGame::drawMainMenu() {
   float width = m_Camera.LogicalWidth();
   float height = m_Camera.LogicalHeight();
+  float centerX = width * 0.5f;
+
+  glm::vec2 titleMetrics = measureText(kMainMenuTitleText, kMainMenuTitleScale);
+  glm::vec2 subtitleMetrics =
+      measureText(kMainMenuSubtitleText, kMainMenuSubtitleScale);
+  glm::vec2 footerMetrics =
+      measureText(kMainMenuFooterText, kMainMenuFooterScale);
+
+  float titleY = height * 0.25f - titleMetrics.y;
+  float titleToSubtitleSpacing = titleMetrics.y * kTitleSubtitleSpacingFactor;
+  float subtitleY = titleY + titleMetrics.y + titleToSubtitleSpacing;
+  float buttonsToFooterSpacing =
+      footerMetrics.y * kButtonsFooterSpacingFactor;
 
   Render2D::DrawQuad(glm::vec2{0.f, 0.f}, glm::vec2{width, height},
                      glm::vec4(0.06f, 0.12f, 0.15f, 1.0f));
 
-  drawText("KASINO", glm::vec2{width * 0.5f - 90.f, height * 0.25f - 40.f}, 6.5f,
+  drawText(kMainMenuTitleText,
+           glm::vec2{centerX - titleMetrics.x * 0.5f, titleY},
+           kMainMenuTitleScale,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-  drawText("CLASSIC TABLE PLAY", glm::vec2{width * 0.5f - 140.f,
-                                          height * 0.25f + 32.f},
-           3.2f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
+  drawText(kMainMenuSubtitleText,
+           glm::vec2{centerX - subtitleMetrics.x * 0.5f, subtitleY},
+           kMainMenuSubtitleScale,
+           glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
 
   auto drawButton = [&](const Rect &rect, const std::string &label,
                         bool hovered) {
@@ -1701,8 +1750,9 @@ void KasinoGame::drawMainMenu() {
                        glm::vec4(0.03f, 0.05f, 0.06f, 1.0f));
     Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
                        baseColor);
-    float textX = rect.x + rect.w * 0.5f - (float)label.size() * 3.f;
-    float textY = rect.y + rect.h * 0.5f - 12.f;
+    glm::vec2 labelMetrics = measureText(label, 4.f);
+    float textX = rect.x + rect.w * 0.5f - labelMetrics.x * 0.5f;
+    float textY = rect.y + rect.h * 0.5f - labelMetrics.y * 0.5f;
     drawText(label, glm::vec2{textX, textY}, 4.f,
              glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
   };
@@ -1711,11 +1761,12 @@ void KasinoGame::drawMainMenu() {
   drawButton(m_MainMenuSettingsButtonRect, "SETTINGS",
              m_MainMenuSettingsHovered);
 
-  drawText("CHOOSE AN OPTION TO BEGIN",
-           glm::vec2{width * 0.5f - 160.f,
-                     m_MainMenuSettingsButtonRect.y +
-                         m_MainMenuSettingsButtonRect.h + 36.f},
-           3.f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
+  float footerY = m_MainMenuSettingsButtonRect.y +
+                  m_MainMenuSettingsButtonRect.h + buttonsToFooterSpacing;
+  drawText(kMainMenuFooterText,
+           glm::vec2{centerX - footerMetrics.x * 0.5f, footerY},
+           kMainMenuFooterScale,
+           glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
 }
 
 void KasinoGame::OnRender() { drawScene(); }
