@@ -3,6 +3,7 @@
 #include "app/Game.h"
 #include "Kasino/GameLogic.h"
 #include "Kasino/Scoring.h"
+#include "input/InputSystem.h"
 
 #include <array>
 #include <memory>
@@ -14,7 +15,7 @@
 
 #include <glm/glm.hpp>
 
-class InputSystem;
+// class InputSystem;
 
 class KasinoGame : public Game {
  public:
