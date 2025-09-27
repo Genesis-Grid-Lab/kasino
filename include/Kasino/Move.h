@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+namespace Casino {
+
 // A build on table (value + owner). Owner may be -1 (unowned) but normally the player who created/last extended it.
 struct Build {
   int value = 0;                  // 2..13 typically; A=1
@@ -39,3 +41,5 @@ inline std::string Move::Debug() const {
   }();
   return mt;
 }
+
+} // namespace Casino

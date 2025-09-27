@@ -1,12 +1,13 @@
 #pragma once
 #include "GameLogic.h"
 
+namespace Casino {
+
 // shared helpers (inline so multiple includes are fine)
 inline bool IsAce(const Card& c)         { return c.rank == Rank::Ace; }
 inline bool IsBigCasino(const Card& c)   { return c.rank == Rank::Two && c.suit == Suit::Spades; }     // 2♠
 inline bool IsLittleCasino(const Card& c){ return c.rank == Rank::Ten && c.suit == Suit::Diamonds; }  // 10♦
 
-namespace Casino {
   inline std::vector<ScoreLine> ScoreRound(GameState& gs) {
     std::vector<ScoreLine> score(gs.numPlayers);
 
@@ -44,4 +45,5 @@ namespace Casino {
     }
     return score;
   }
-}
+
+} // namespace Casino

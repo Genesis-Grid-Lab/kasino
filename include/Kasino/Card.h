@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <string>
 
+namespace Casino {
+
 enum class Suit : uint8_t { Clubs, Diamonds, Hearts, Spades };
 enum class Rank : uint8_t { Ace=1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack=11, Queen=12, King=13 };
 
@@ -12,7 +14,7 @@ struct Card {
   Suit suit{};
 
   Card() = default;
-Card(Rank r, Suit s): rank(r), suit(s) {}
+  Card(Rank r, Suit s) : rank(r), suit(s) {}
 
   bool operator==(const Card& o) const { return rank==o.rank && suit==o.suit; }
   bool operator!=(const Card& o) const { return !(*this==o); }
@@ -23,3 +25,5 @@ Card(Rank r, Suit s): rank(r), suit(s) {}
     return std::string(R[RankValue(rank)]) + S[static_cast<int>(suit)];
   }
 };
+
+} // namespace Casino
