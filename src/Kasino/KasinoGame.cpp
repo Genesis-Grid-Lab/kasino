@@ -29,6 +29,9 @@ struct Glyph {
   std::array<const char *, 5> rows{};
 };
 
+constexpr float kAiDecisionDelay = 0.5f;
+constexpr float kAiAnimDuration = 0.3f;
+
 const Glyph &glyphFor(char c) {
   static const std::unordered_map<char, Glyph> font = {
       {'0', {3, {"###", "# #", "# #", "# #", "###"}}},
@@ -221,6 +224,13 @@ void KasinoGame::startNewMatch() {
   m_Selection.Clear();
   m_ActionEntries.clear();
   m_LastRoundScores.clear();
+  m_PendingAiMove.reset();
+  m_PendingLooseHighlights.clear();
+  m_PendingBuildHighlights.clear();
+  m_AiDecisionTimer = 0.f;
+  m_AiAnimProgress = 0.f;
+  m_PendingAiPlayer = -1;
+  m_PendingAiHandIndex = -1;
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
   m_PromptMode = PromptMode::None;
@@ -236,6 +246,13 @@ void KasinoGame::startNextRound() {
   m_Selection.Clear();
   m_ActionEntries.clear();
   m_LastRoundScores.clear();
+  m_PendingAiMove.reset();
+  m_PendingLooseHighlights.clear();
+  m_PendingBuildHighlights.clear();
+  m_AiDecisionTimer = 0.f;
+  m_AiAnimProgress = 0.f;
+  m_PendingAiPlayer = -1;
+  m_PendingAiHandIndex = -1;
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
   m_PromptMode = PromptMode::None;
@@ -711,6 +728,7 @@ bool KasinoGame::playAiTurn() {
   if (m_State.current < 0 || m_State.current >= m_State.numPlayers) return false;
   if (m_State.current >= static_cast<int>(m_IsAiPlayer.size())) return false;
   if (!m_IsAiPlayer[m_State.current]) return false;
+  if (m_PendingAiMove) return false;
 
   if (m_LegalMoves.empty()) {
     updateLegalMoves();
@@ -738,8 +756,49 @@ bool KasinoGame::playAiTurn() {
   }
 
   Casino::Move chosen = *selected;
-  applyMove(chosen);
+  beginAiMove(chosen);
   return true;
+}
+
+void KasinoGame::beginAiMove(const Casino::Move &mv) {
+  m_PendingAiMove = mv;
+  m_AiDecisionTimer = kAiDecisionDelay;
+  m_AiAnimProgress = 0.f;
+  m_PendingAiPlayer = m_State.current;
+  m_PendingAiHandIndex = -1;
+
+  m_PendingLooseHighlights.assign(m_LooseRects.size(), false);
+  m_PendingBuildHighlights.assign(m_BuildRects.size(), false);
+
+  if (m_PendingAiPlayer >= 0 &&
+      m_PendingAiPlayer < static_cast<int>(m_State.players.size())) {
+    const auto &hand = m_State.players[m_PendingAiPlayer].hand;
+    for (size_t i = 0; i < hand.size(); ++i) {
+      if (hand[i] == mv.handCard) {
+        m_PendingAiHandIndex = static_cast<int>(i);
+        break;
+      }
+    }
+  }
+
+  auto markHighlights = [](const std::vector<int> &indices,
+                           std::vector<bool> &flags) {
+    for (int idx : indices) {
+      if (idx >= 0 && idx < static_cast<int>(flags.size())) {
+        flags[idx] = true;
+      }
+    }
+  };
+
+  if (mv.type == Casino::MoveType::Capture) {
+    markHighlights(mv.captureLooseIdx, m_PendingLooseHighlights);
+    markHighlights(mv.captureBuildIdx, m_PendingBuildHighlights);
+  } else if (mv.type == Casino::MoveType::Build) {
+    markHighlights(mv.buildUseLooseIdx, m_PendingLooseHighlights);
+  } else if (mv.type == Casino::MoveType::ExtendBuild) {
+    markHighlights(mv.buildUseLooseIdx, m_PendingLooseHighlights);
+    markHighlights(mv.captureBuildIdx, m_PendingBuildHighlights);
+  }
 }
 
 void KasinoGame::processMainMenuInput(float mx, float my) {
@@ -900,8 +959,32 @@ void KasinoGame::handlePrompt() {
 }
 
 void KasinoGame::OnUpdate(float dt) {
-  (void)dt;
   if (!m_Input) return;
+
+  if (m_PendingAiMove) {
+    if (m_AiDecisionTimer > 0.f) {
+      m_AiDecisionTimer = std::max(0.f, m_AiDecisionTimer - dt);
+    } else {
+      if (kAiAnimDuration > 0.f) {
+        m_AiAnimProgress =
+            std::min(1.f, m_AiAnimProgress + dt / kAiAnimDuration);
+      } else {
+        m_AiAnimProgress = 1.f;
+      }
+
+      if (m_AiAnimProgress >= 1.f && m_PendingAiMove) {
+        Casino::Move move = *m_PendingAiMove;
+        m_PendingAiMove.reset();
+        m_AiAnimProgress = 0.f;
+        m_AiDecisionTimer = 0.f;
+        m_PendingAiPlayer = -1;
+        m_PendingAiHandIndex = -1;
+        m_PendingLooseHighlights.clear();
+        m_PendingBuildHighlights.clear();
+        applyMove(move);
+      }
+    }
+  }
 
   if (m_Phase == Phase::MainMenu) {
     updateMainMenuLayout();
@@ -911,12 +994,12 @@ void KasinoGame::OnUpdate(float dt) {
   }
 
   if (!m_ShowPrompt && m_Phase == Phase::Playing) {
-    while (!m_ShowPrompt && m_Phase == Phase::Playing &&
-           m_State.current >= 0 &&
-           m_State.current < m_State.numPlayers &&
-           m_State.current < static_cast<int>(m_IsAiPlayer.size()) &&
-           m_IsAiPlayer[m_State.current] && !m_State.RoundOver()) {
-      if (!playAiTurn()) break;
+    bool aiTurn = (m_State.current >= 0 &&
+                   m_State.current < m_State.numPlayers &&
+                   m_State.current < static_cast<int>(m_IsAiPlayer.size()) &&
+                   m_IsAiPlayer[m_State.current] && !m_State.RoundOver());
+    if (aiTurn && !m_PendingAiMove) {
+      playAiTurn();
     }
   }
 
@@ -1123,13 +1206,34 @@ void KasinoGame::drawHands() {
       bool isCurrent = (p == m_State.current);
       bool isAI = (p < static_cast<int>(m_IsAiPlayer.size()) &&
                    m_IsAiPlayer[p]);
+      bool isPendingCard =
+          (m_PendingAiMove && p == m_PendingAiPlayer &&
+           m_PendingAiHandIndex == static_cast<int>(i));
+      bool animatingCard =
+          (isPendingCard && m_PendingAiMove && m_AiDecisionTimer <= 0.f &&
+           m_AiAnimProgress > 0.f);
       if (isAI) {
-        drawCardBack(rects[i], isCurrent);
+        if (!animatingCard) {
+          drawCardBack(rects[i], isCurrent);
+          if (isPendingCard) {
+            Render2D::DrawQuad(glm::vec2{rects[i].x, rects[i].y},
+                               glm::vec2{rects[i].w, rects[i].h},
+                               glm::vec4(0.95f, 0.85f, 0.2f, 0.35f));
+          }
+        }
       } else {
         bool selected =
             (isCurrent && m_Selection.handIndex &&
              *m_Selection.handIndex == static_cast<int>(i));
-        drawCardFace(hand[i], rects[i], isCurrent, selected, false, false);
+        bool hideDuringAnim = animatingCard;
+        if (!hideDuringAnim) {
+          drawCardFace(hand[i], rects[i], isCurrent, selected, false, false);
+          if (isPendingCard) {
+            Render2D::DrawQuad(glm::vec2{rects[i].x, rects[i].y},
+                               glm::vec2{rects[i].w, rects[i].h},
+                               glm::vec4(0.95f, 0.85f, 0.2f, 0.35f));
+          }
+        }
       }
     }
   }
@@ -1147,16 +1251,76 @@ void KasinoGame::drawTable() {
   for (size_t i = 0; i < loose.size(); ++i) {
     bool selected = m_Selection.loose.count(static_cast<int>(i)) != 0;
     bool legal = i < m_LooseHighlights.size() ? m_LooseHighlights[i] : false;
+    bool pending =
+        i < m_PendingLooseHighlights.size() ? m_PendingLooseHighlights[i] : false;
     bool hovered = m_HoveredLoose.count(static_cast<int>(i)) != 0;
-    drawCardFace(loose[i], m_LooseRects[i], true, selected, legal, hovered);
+    drawCardFace(loose[i], m_LooseRects[i], true, selected, legal || pending,
+                 hovered);
   }
 
   const auto &builds = m_State.table.builds;
   for (size_t i = 0; i < builds.size(); ++i) {
     bool selected = m_Selection.builds.count(static_cast<int>(i)) != 0;
     bool legal = i < m_BuildHighlights.size() ? m_BuildHighlights[i] : false;
+    bool pending =
+        i < m_PendingBuildHighlights.size() ? m_PendingBuildHighlights[i] : false;
     bool hovered = m_HoveredBuilds.count(static_cast<int>(i)) != 0;
-    drawBuildFace(builds[i], m_BuildRects[i], legal, hovered, selected);
+    drawBuildFace(builds[i], m_BuildRects[i], legal || pending, hovered,
+                  selected);
+  }
+
+  if (m_PendingAiMove && m_PendingAiPlayer >= 0 &&
+      m_PendingAiHandIndex >= 0 && m_AiDecisionTimer <= 0.f &&
+      m_AiAnimProgress > 0.f) {
+    if (m_PendingAiPlayer < static_cast<int>(m_PlayerHandRects.size()) &&
+        m_PendingAiHandIndex <
+            static_cast<int>(m_PlayerHandRects[m_PendingAiPlayer].size())) {
+      const Rect &startRect =
+          m_PlayerHandRects[m_PendingAiPlayer][m_PendingAiHandIndex];
+      glm::vec2 startCenter = startRect.Center();
+      std::vector<glm::vec2> targetCenters;
+
+      auto addLooseCenters = [&](const std::vector<int> &indices) {
+        for (int idx : indices) {
+          if (idx >= 0 && idx < static_cast<int>(m_LooseRects.size())) {
+            targetCenters.push_back(m_LooseRects[idx].Center());
+          }
+        }
+      };
+      auto addBuildCenters = [&](const std::vector<int> &indices) {
+        for (int idx : indices) {
+          if (idx >= 0 && idx < static_cast<int>(m_BuildRects.size())) {
+            targetCenters.push_back(m_BuildRects[idx].Center());
+          }
+        }
+      };
+
+      if (m_PendingAiMove->type == Casino::MoveType::Capture) {
+        addLooseCenters(m_PendingAiMove->captureLooseIdx);
+        addBuildCenters(m_PendingAiMove->captureBuildIdx);
+      } else if (m_PendingAiMove->type == Casino::MoveType::Build) {
+        addLooseCenters(m_PendingAiMove->buildUseLooseIdx);
+      } else if (m_PendingAiMove->type == Casino::MoveType::ExtendBuild) {
+        addLooseCenters(m_PendingAiMove->buildUseLooseIdx);
+        addBuildCenters(m_PendingAiMove->captureBuildIdx);
+      }
+
+      if (targetCenters.empty()) {
+        targetCenters.push_back(m_TableRect.Center());
+      }
+
+      glm::vec2 targetCenter(0.f);
+      for (const auto &pt : targetCenters) targetCenter += pt;
+      targetCenter /= static_cast<float>(targetCenters.size());
+
+      float t = std::clamp(m_AiAnimProgress, 0.f, 1.f);
+      glm::vec2 currentCenter = glm::mix(startCenter, targetCenter, t);
+      Rect cardRect{currentCenter.x - m_CardWidth * 0.5f,
+                    currentCenter.y - m_CardHeight * 0.5f, m_CardWidth,
+                    m_CardHeight};
+      drawCardFace(m_PendingAiMove->handCard, cardRect, false, false, false,
+                   false);
+    }
   }
 }
 
