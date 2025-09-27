@@ -74,6 +74,7 @@ class KasinoGame : public Game {
   void toggleLooseCard(int idx);
   void toggleBuild(int idx);
   void applyMove(const Casino::Move &mv);
+  void beginAiMove(const Casino::Move &mv);
   void handleRoundEnd();
   void handlePrompt();
 
@@ -149,6 +150,14 @@ class KasinoGame : public Game {
 
   std::vector<bool> m_LooseHighlights;
   std::vector<bool> m_BuildHighlights;
+
+  std::optional<Casino::Move> m_PendingAiMove;
+  float m_AiDecisionTimer = 0.f;
+  float m_AiAnimProgress = 0.f;
+  int m_PendingAiPlayer = -1;
+  int m_PendingAiHandIndex = -1;
+  std::vector<bool> m_PendingLooseHighlights;
+  std::vector<bool> m_PendingBuildHighlights;
 
   int m_HoveredAction = -1;
   std::set<int> m_HoveredLoose;
