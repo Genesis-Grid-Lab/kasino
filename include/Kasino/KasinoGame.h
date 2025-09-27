@@ -26,7 +26,9 @@ class KasinoGame : public Game {
  ~KasinoGame();
 
  private:
-  enum class Phase { Playing, RoundSummary, MatchSummary };
+  enum class Phase { MainMenu, Playing, RoundSummary, MatchSummary };
+
+  enum class PromptMode { None, RoundSummary, MatchSummary, PlayerSetup, Settings };
 
   struct Rect {
     float x = 0.f;
@@ -55,11 +57,16 @@ class KasinoGame : public Game {
   void startNextRound();
   void updateRoundScorePreview();
   void updateLegalMoves();
+  void updateMainMenuLayout();
   void updateLayout();
+  void updatePromptLayout();
+  void updateMenuHumanCounts();
   void layoutActionEntries();
   void updateHoveredAction(float mx, float my);
   void refreshHighlights();
+  void processMainMenuInput(float mx, float my);
   void processInput(float mx, float my);
+  bool handlePromptInput(float mx, float my);
   void selectHandCard(int player, int index);
   void toggleLooseCard(int idx);
   void toggleBuild(int idx);
@@ -68,6 +75,7 @@ class KasinoGame : public Game {
   void handlePrompt();
 
   void drawScene();
+  void drawMainMenu();
   void drawScoreboard();
   void drawHands();
   void drawTable();
@@ -89,7 +97,22 @@ class KasinoGame : public Game {
   std::vector<Casino::Move> m_LegalMoves;
   std::vector<ActionEntry> m_ActionEntries;
   Selection m_Selection;
-  Phase m_Phase = Phase::Playing;
+  Phase m_Phase = Phase::MainMenu;
+  PromptMode m_PromptMode = PromptMode::None;
+
+  Rect m_MainMenuStartButtonRect{};
+  Rect m_MainMenuSettingsButtonRect{};
+  bool m_MainMenuStartHovered = false;
+  bool m_MainMenuSettingsHovered = false;
+
+  int m_MenuSelectedPlayers = 2;
+  int m_MenuSelectedHumans = 1;
+  std::array<bool, 4> m_MenuSeatIsAI{false, true, true, true};
+  std::vector<Rect> m_MenuPlayerCountRects;
+  std::vector<Rect> m_MenuSeatToggleRects;
+  int m_HumanSeatCount = 1;
+  std::vector<bool> m_SeatIsAI;
+  glm::vec2 m_LastMousePos{0.f, 0.f};
 
   std::vector<int> m_TotalScores;
   std::vector<Casino::ScoreLine> m_CurrentRoundScores;

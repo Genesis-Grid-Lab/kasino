@@ -101,8 +101,17 @@ bool KasinoGame::OnStart() {
 
   m_Input = std::make_unique<InputSystem>(m_Window->Events());
 
-  m_State.numPlayers = 2;
-  startNewMatch();
+  m_MenuSeatIsAI = {false, true, true, true};
+  m_MenuSelectedPlayers = 2;
+  updateMenuHumanCounts();
+  m_HumanSeatCount = m_MenuSelectedHumans;
+  m_SeatIsAI.clear();
+
+  m_State.numPlayers = m_MenuSelectedPlayers;
+  m_State.players.resize(m_State.numPlayers);
+  m_Phase = Phase::MainMenu;
+  m_PromptMode = PromptMode::None;
+  m_ShowPrompt = false;
   return true;
 }
 
@@ -122,6 +131,7 @@ void KasinoGame::startNewMatch() {
   m_LastRoundScores.clear();
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
+  m_PromptMode = PromptMode::None;
   updateRoundScorePreview();
   updateLayout();
   refreshHighlights();
@@ -136,6 +146,7 @@ void KasinoGame::startNextRound() {
   m_LastRoundScores.clear();
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
+  m_PromptMode = PromptMode::None;
   updateRoundScorePreview();
   updateLayout();
   refreshHighlights();
@@ -163,6 +174,21 @@ void KasinoGame::updateLegalMoves() {
     }
   }
   refreshHighlights();
+}
+
+void KasinoGame::updateMainMenuLayout() {
+  float width = m_Camera.LogicalWidth();
+  float height = m_Camera.LogicalHeight();
+  float buttonWidth = std::min(width * 0.45f, 280.f);
+  float buttonHeight = 60.f;
+  float startX = width * 0.5f - buttonWidth * 0.5f;
+  float startY = height * 0.5f - buttonHeight - 24.f;
+
+  m_MainMenuStartButtonRect = {startX, startY, buttonWidth, buttonHeight};
+  m_MainMenuSettingsButtonRect =
+      {startX, startY + buttonHeight + 28.f, buttonWidth, buttonHeight};
+
+  updatePromptLayout();
 }
 
 void KasinoGame::updateLayout() {
@@ -249,13 +275,82 @@ void KasinoGame::updateLayout() {
                         m_ActionPanelRect.y + m_ActionPanelRect.h - buttonHeight - 12.f,
                         m_ActionPanelRect.w - 24.f, buttonHeight};
 
-  if (m_ShowPrompt) {
-    float boxWidth = width * 0.75f;
-    float boxHeight = (m_Phase == Phase::RoundSummary ? 260.f : 200.f);
-    m_PromptBoxRect = {width * 0.5f - boxWidth * 0.5f,
-                       height * 0.5f - boxHeight * 0.5f, boxWidth, boxHeight};
-    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - 180.f) * 0.5f,
-                          m_PromptBoxRect.y + boxHeight - 56.f, 180.f, 40.f};
+  updatePromptLayout();
+}
+
+void KasinoGame::updatePromptLayout() {
+  if (!m_ShowPrompt) {
+    m_MenuPlayerCountRects.clear();
+    m_MenuSeatToggleRects.clear();
+    return;
+  }
+
+  float width = m_Camera.LogicalWidth();
+  float height = m_Camera.LogicalHeight();
+  float boxWidth = width * 0.75f;
+  float boxHeight = 220.f;
+
+  switch (m_PromptMode) {
+  case PromptMode::RoundSummary:
+    boxHeight = 260.f;
+    break;
+  case PromptMode::MatchSummary:
+    boxHeight = 220.f;
+    break;
+  case PromptMode::PlayerSetup: {
+    float seatBlock = static_cast<float>(m_MenuSelectedPlayers) * 44.f;
+    boxHeight = std::max(320.f, 260.f + seatBlock);
+  } break;
+  case PromptMode::Settings:
+    boxHeight = 240.f;
+    break;
+  case PromptMode::None:
+    break;
+  }
+
+  m_PromptBoxRect = {width * 0.5f - boxWidth * 0.5f,
+                     height * 0.5f - boxHeight * 0.5f, boxWidth, boxHeight};
+  m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - 180.f) * 0.5f,
+                        m_PromptBoxRect.y + boxHeight - 56.f, 180.f, 40.f};
+
+  if (m_PromptMode == PromptMode::PlayerSetup) {
+    m_MenuPlayerCountRects.clear();
+    m_MenuPlayerCountRects.reserve(4);
+    float optionWidth = 60.f;
+    float optionHeight = 40.f;
+    float optionSpacing = 16.f;
+    float totalWidth = optionWidth * 4.f + optionSpacing * 3.f;
+    float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
+    float optionY = m_PromptBoxRect.y + 90.f;
+    for (int i = 0; i < 4; ++i) {
+      m_MenuPlayerCountRects.push_back(
+          {startX + (float)i * (optionWidth + optionSpacing), optionY,
+           optionWidth, optionHeight});
+    }
+
+    m_MenuSeatToggleRects.clear();
+    float seatWidth = boxWidth - 48.f;
+    float seatHeight = 32.f;
+    float seatY = optionY + optionHeight + 60.f;
+    for (int i = 0; i < m_MenuSelectedPlayers; ++i) {
+      m_MenuSeatToggleRects.push_back(
+          {m_PromptBoxRect.x + 24.f, seatY, seatWidth, seatHeight});
+      seatY += seatHeight + 12.f;
+    }
+  } else {
+    m_MenuPlayerCountRects.clear();
+    m_MenuSeatToggleRects.clear();
+  }
+}
+
+void KasinoGame::updateMenuHumanCounts() {
+  m_MenuSelectedHumans = 0;
+  for (int i = 0; i < m_MenuSelectedPlayers && i < 4; ++i) {
+    if (!m_MenuSeatIsAI[i]) ++m_MenuSelectedHumans;
+  }
+  if (m_MenuSelectedHumans == 0 && m_MenuSelectedPlayers > 0) {
+    m_MenuSeatIsAI[0] = false;
+    m_MenuSelectedHumans = 1;
   }
 }
 
@@ -460,13 +555,6 @@ void KasinoGame::processInput(float mx, float my) {
   bool click = m_Input->WasMousePressed(MouseButton::Left);
   if (!click) return;
 
-  if (m_ShowPrompt) {
-    if (m_PromptButtonRect.Contains(mx, my)) {
-      handlePrompt();
-    }
-    return;
-  }
-
   if (m_Phase != Phase::Playing) return;
 
   // Action entries
@@ -517,6 +605,81 @@ void KasinoGame::processInput(float mx, float my) {
   refreshHighlights();
 }
 
+void KasinoGame::processMainMenuInput(float mx, float my) {
+  if (!m_Input) return;
+  bool click = m_Input->WasMousePressed(MouseButton::Left);
+  if (!click) return;
+
+  if (m_MainMenuStartButtonRect.Contains(mx, my)) {
+    m_ShowPrompt = true;
+    m_PromptMode = PromptMode::PlayerSetup;
+    m_PromptHeader = "START NEW MATCH";
+    m_PromptButtonLabel = "START MATCH";
+    updatePromptLayout();
+  } else if (m_MainMenuSettingsButtonRect.Contains(mx, my)) {
+    m_ShowPrompt = true;
+    m_PromptMode = PromptMode::Settings;
+    m_PromptHeader = "SETTINGS";
+    m_PromptButtonLabel = "CLOSE";
+    updatePromptLayout();
+  }
+}
+
+bool KasinoGame::handlePromptInput(float mx, float my) {
+  if (!m_ShowPrompt || !m_Input) return false;
+
+  bool click = m_Input->WasMousePressed(MouseButton::Left);
+  bool handled = false;
+
+  if (m_PromptMode == PromptMode::PlayerSetup) {
+    if (click) {
+      for (size_t i = 0; i < m_MenuPlayerCountRects.size(); ++i) {
+        if (m_MenuPlayerCountRects[i].Contains(mx, my)) {
+          int newCount = static_cast<int>(i) + 1;
+          newCount = std::clamp(newCount, 1, 4);
+          if (newCount != m_MenuSelectedPlayers) {
+            m_MenuSelectedPlayers = newCount;
+            for (int seat = m_MenuSelectedPlayers; seat < 4; ++seat)
+              m_MenuSeatIsAI[seat] = true;
+            if (m_MenuSelectedPlayers > 0)
+              m_MenuSeatIsAI[0] = false;
+            updateMenuHumanCounts();
+            updatePromptLayout();
+          }
+          handled = true;
+          break;
+        }
+      }
+
+      if (!handled) {
+        for (size_t i = 0; i < m_MenuSeatToggleRects.size(); ++i) {
+          if (!m_MenuSeatToggleRects[i].Contains(mx, my)) continue;
+          int seat = static_cast<int>(i);
+          if (seat < m_MenuSelectedPlayers) {
+            if (m_MenuSeatIsAI[seat]) {
+              m_MenuSeatIsAI[seat] = false;
+            } else {
+              if (m_MenuSelectedHumans > 1) {
+                m_MenuSeatIsAI[seat] = true;
+              }
+            }
+            updateMenuHumanCounts();
+            handled = true;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  if (click && m_PromptButtonRect.Contains(mx, my)) {
+    handlePrompt();
+    handled = true;
+  }
+
+  return handled;
+}
+
 void KasinoGame::applyMove(const Casino::Move &mv) {
   if (!Casino::ApplyMove(m_State, mv)) return;
 
@@ -556,6 +719,7 @@ void KasinoGame::handleRoundEnd() {
   m_CurrentRoundScores.clear();
 
   m_Phase = hasWinner ? Phase::MatchSummary : Phase::RoundSummary;
+  m_PromptMode = hasWinner ? PromptMode::MatchSummary : PromptMode::RoundSummary;
   m_ShowPrompt = true;
   if (hasWinner) {
     m_PromptHeader = "PLAYER " + std::to_string(m_WinningPlayer + 1) +
@@ -565,13 +729,36 @@ void KasinoGame::handleRoundEnd() {
     m_PromptHeader = "ROUND " + std::to_string(m_RoundNumber) + " COMPLETE";
     m_PromptButtonLabel = "NEXT ROUND";
   }
+  updatePromptLayout();
 }
 
 void KasinoGame::handlePrompt() {
-  if (m_Phase == Phase::MatchSummary) {
+  switch (m_PromptMode) {
+  case PromptMode::MatchSummary:
     startNewMatch();
-  } else if (m_Phase == Phase::RoundSummary) {
+    break;
+  case PromptMode::RoundSummary:
     startNextRound();
+    break;
+  case PromptMode::PlayerSetup: {
+    updateMenuHumanCounts();
+    if (m_MenuSelectedHumans <= 0 || m_MenuSelectedPlayers <= 0) return;
+    m_State.numPlayers = m_MenuSelectedPlayers;
+    m_State.players.resize(m_State.numPlayers);
+    m_SeatIsAI.assign(m_State.numPlayers, false);
+    for (int i = 0; i < m_State.numPlayers && i < 4; ++i) {
+      m_SeatIsAI[i] = m_MenuSeatIsAI[i];
+    }
+    m_HumanSeatCount = m_MenuSelectedHumans;
+    startNewMatch();
+  } break;
+  case PromptMode::Settings:
+    m_ShowPrompt = false;
+    m_PromptMode = PromptMode::None;
+    break;
+  case PromptMode::None:
+    m_ShowPrompt = false;
+    break;
   }
 }
 
@@ -579,15 +766,36 @@ void KasinoGame::OnUpdate(float dt) {
   (void)dt;
   if (!m_Input) return;
 
-  updateLayout();
-  refreshHighlights();
+  if (m_Phase == Phase::MainMenu) {
+    updateMainMenuLayout();
+  } else {
+    updateLayout();
+    refreshHighlights();
+  }
+
   float mx = m_Input->MouseX();
   float my = m_Input->MouseY();
-  updateHoveredAction(mx, my);
-  processInput(mx, my);
+  m_LastMousePos = {mx, my};
 
-  if (m_Phase == Phase::Playing && m_State.RoundOver()) {
-    handleRoundEnd();
+  if (m_Phase == Phase::MainMenu) {
+    m_MainMenuStartHovered = m_MainMenuStartButtonRect.Contains(mx, my);
+    m_MainMenuSettingsHovered =
+        m_MainMenuSettingsButtonRect.Contains(mx, my);
+  } else {
+    updateHoveredAction(mx, my);
+    m_MainMenuStartHovered = false;
+    m_MainMenuSettingsHovered = false;
+  }
+
+  if (m_ShowPrompt) {
+    handlePromptInput(mx, my);
+  } else if (m_Phase == Phase::MainMenu) {
+    processMainMenuInput(mx, my);
+  } else {
+    processInput(mx, my);
+    if (m_Phase == Phase::Playing && m_State.RoundOver()) {
+      handleRoundEnd();
+    }
   }
 
   m_Input->BeginFrame();
@@ -813,28 +1021,101 @@ void KasinoGame::drawPromptOverlay() {
            glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 20.f}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
-  if (!m_LastRoundScores.empty()) {
-    float lineY = m_PromptBoxRect.y + 60.f;
-    for (int p = 0; p < m_State.numPlayers; ++p) {
-      if (p >= (int)m_LastRoundScores.size()) break;
-      const auto &line = m_LastRoundScores[p];
-      int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
-      std::string text = "P" + std::to_string(p + 1) + " ROUND " +
-                         std::to_string(line.total) + " TOTAL " +
-                         std::to_string(total);
-      drawText(text, glm::vec2{m_PromptBoxRect.x + 16.f, lineY}, 3.2f,
-               glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-      lineY += 24.f;
+  if (m_PromptMode == PromptMode::RoundSummary ||
+      m_PromptMode == PromptMode::MatchSummary) {
+    if (!m_LastRoundScores.empty()) {
+      float lineY = m_PromptBoxRect.y + 60.f;
+      for (int p = 0; p < m_State.numPlayers; ++p) {
+        if (p >= (int)m_LastRoundScores.size()) break;
+        const auto &line = m_LastRoundScores[p];
+        int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
+        std::string text = "P" + std::to_string(p + 1) + " ROUND " +
+                           std::to_string(line.total) + " TOTAL " +
+                           std::to_string(total);
+        drawText(text, glm::vec2{m_PromptBoxRect.x + 16.f, lineY}, 3.2f,
+                 glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+        lineY += 24.f;
+      }
     }
+  } else if (m_PromptMode == PromptMode::PlayerSetup) {
+    drawText("SELECT TOTAL PLAYERS", glm::vec2{m_PromptBoxRect.x + 16.f,
+                                              m_PromptBoxRect.y + 64.f},
+             3.f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
+    for (size_t i = 0; i < m_MenuPlayerCountRects.size(); ++i) {
+      const Rect &rect = m_MenuPlayerCountRects[i];
+      bool selected = (static_cast<int>(i) + 1) == m_MenuSelectedPlayers;
+      bool hovered = rect.Contains(m_LastMousePos.x, m_LastMousePos.y);
+      glm::vec4 color = selected ? glm::vec4(0.28f, 0.58f, 0.38f, 1.0f)
+                                 : glm::vec4(0.2f, 0.3f, 0.35f, 1.0f);
+      if (hovered) {
+        color = glm::mix(color, glm::vec4(0.9f, 0.7f, 0.35f, 1.0f), 0.35f);
+      }
+      Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
+                         color);
+      std::string label = std::to_string(static_cast<int>(i) + 1);
+      float textX = rect.x + rect.w * 0.5f - (float)label.size() * 3.f;
+      drawText(label, glm::vec2{textX, rect.y + 10.f}, 3.2f,
+               glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+    }
+
+    drawText("ASSIGN SEAT ROLES", glm::vec2{m_PromptBoxRect.x + 16.f,
+                                            m_PromptBoxRect.y + 160.f},
+             3.f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
+    for (size_t i = 0; i < m_MenuSeatToggleRects.size(); ++i) {
+      const Rect &rect = m_MenuSeatToggleRects[i];
+      bool isAI = m_MenuSeatIsAI[i];
+      bool hovered = rect.Contains(m_LastMousePos.x, m_LastMousePos.y);
+      glm::vec4 color = isAI ? glm::vec4(0.25f, 0.28f, 0.36f, 1.0f)
+                             : glm::vec4(0.25f, 0.55f, 0.38f, 1.0f);
+      if (hovered) {
+        color = glm::mix(color, glm::vec4(0.85f, 0.65f, 0.3f, 1.0f), 0.25f);
+      }
+      Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
+                         color);
+      std::string label = "SEAT " + std::to_string(static_cast<int>(i) + 1) +
+                          " - " + (isAI ? "AI" : "HUMAN");
+      drawText(label, glm::vec2{rect.x + 12.f, rect.y + 8.f}, 3.f,
+               glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+    }
+
+    int aiCount = std::max(0, m_MenuSelectedPlayers - m_MenuSelectedHumans);
+    drawText("HUMANS " + std::to_string(m_MenuSelectedHumans) + " | AI " +
+                 std::to_string(aiCount),
+             glm::vec2{m_PromptBoxRect.x + 16.f,
+                       m_PromptButtonRect.y - 48.f},
+             3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
+    drawText("CLICK TO TOGGLE HUMAN / AI",
+             glm::vec2{m_PromptBoxRect.x + 16.f,
+                       m_PromptButtonRect.y - 24.f},
+             2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
+  } else if (m_PromptMode == PromptMode::Settings) {
+    drawText("OPTIONS COMING SOON",
+             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 64.f},
+             3.2f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
+    drawText("AUDIO, RULES, AND MORE WILL LIVE HERE",
+             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 96.f},
+             3.f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
   }
 
-  Render2D::DrawQuad(glm::vec2{m_PromptButtonRect.x, m_PromptButtonRect.y},
-                     glm::vec2{m_PromptButtonRect.w, m_PromptButtonRect.h},
-                     glm::vec4(0.25f, 0.55f, 0.85f, 1.0f));
-  drawText(m_PromptButtonLabel,
-           glm::vec2{m_PromptButtonRect.x + 12.f,
-                     m_PromptButtonRect.y + 10.f},
-           3.2f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
+  if (!m_PromptButtonLabel.empty()) {
+    bool hovered = m_PromptButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y);
+    bool enabled = true;
+    if (m_PromptMode == PromptMode::PlayerSetup) {
+      enabled = m_MenuSelectedHumans > 0 && m_MenuSelectedPlayers > 0;
+    }
+    glm::vec4 baseColor = enabled ? glm::vec4(0.25f, 0.55f, 0.85f, 1.0f)
+                                  : glm::vec4(0.2f, 0.2f, 0.22f, 1.0f);
+    if (hovered && enabled) {
+      baseColor = glm::vec4(0.35f, 0.65f, 0.95f, 1.0f);
+    }
+    Render2D::DrawQuad(glm::vec2{m_PromptButtonRect.x, m_PromptButtonRect.y},
+                       glm::vec2{m_PromptButtonRect.w, m_PromptButtonRect.h},
+                       baseColor);
+    drawText(m_PromptButtonLabel,
+             glm::vec2{m_PromptButtonRect.x + 12.f,
+                       m_PromptButtonRect.y + 10.f},
+             3.2f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
+  }
 }
 
 void KasinoGame::drawText(const std::string &text, glm::vec2 pos, float scale,
@@ -862,11 +1143,54 @@ void KasinoGame::drawText(const std::string &text, glm::vec2 pos, float scale,
 }
 
 void KasinoGame::drawScene() {
-  drawScoreboard();
-  drawHands();
-  drawTable();
-  drawActionPanel();
+  if (m_Phase == Phase::MainMenu) {
+    drawMainMenu();
+  } else {
+    drawScoreboard();
+    drawHands();
+    drawTable();
+    drawActionPanel();
+  }
   drawPromptOverlay();
+}
+
+void KasinoGame::drawMainMenu() {
+  float width = m_Camera.LogicalWidth();
+  float height = m_Camera.LogicalHeight();
+
+  Render2D::DrawQuad(glm::vec2{0.f, 0.f}, glm::vec2{width, height},
+                     glm::vec4(0.06f, 0.12f, 0.15f, 1.0f));
+
+  drawText("KASINO", glm::vec2{width * 0.5f - 90.f, height * 0.25f - 40.f}, 6.5f,
+           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+  drawText("CLASSIC TABLE PLAY", glm::vec2{width * 0.5f - 140.f,
+                                          height * 0.25f + 32.f},
+           3.2f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
+
+  auto drawButton = [&](const Rect &rect, const std::string &label,
+                        bool hovered) {
+    glm::vec4 baseColor = hovered ? glm::vec4(0.30f, 0.55f, 0.78f, 1.0f)
+                                  : glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
+    Render2D::DrawQuad(glm::vec2{rect.x - 4.f, rect.y - 4.f},
+                       glm::vec2{rect.w + 8.f, rect.h + 8.f},
+                       glm::vec4(0.03f, 0.05f, 0.06f, 1.0f));
+    Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
+                       baseColor);
+    float textX = rect.x + rect.w * 0.5f - (float)label.size() * 3.f;
+    float textY = rect.y + rect.h * 0.5f - 12.f;
+    drawText(label, glm::vec2{textX, textY}, 4.f,
+             glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+  };
+
+  drawButton(m_MainMenuStartButtonRect, "START", m_MainMenuStartHovered);
+  drawButton(m_MainMenuSettingsButtonRect, "SETTINGS",
+             m_MainMenuSettingsHovered);
+
+  drawText("CHOOSE AN OPTION TO BEGIN",
+           glm::vec2{width * 0.5f - 160.f,
+                     m_MainMenuSettingsButtonRect.y +
+                         m_MainMenuSettingsButtonRect.h + 36.f},
+           3.f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
 }
 
 void KasinoGame::OnRender() { drawScene(); }
