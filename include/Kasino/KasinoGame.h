@@ -69,6 +69,9 @@ class KasinoGame : public Game {
     bool showMajorityBonuses = false;
   };
 
+  // tmp
+  glm::mat4 buildCardTransform(const KasinoGame::Rect &rect, float rotation);
+
   void startNewMatch();
   void startNextRound();
   void updateRoundScorePreview();

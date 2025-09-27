@@ -139,7 +139,9 @@ glm::vec2 measureText(const std::string &text, float scale) {
   return {maxWidth, height};
 }
 
-glm::mat4 buildCardTransform(const KasinoGame::Rect &rect, float rotation) {
+
+}  // namespace
+glm::mat4 KasinoGame::buildCardTransform(const KasinoGame::Rect &rect, float rotation) {
   glm::vec2 size(rect.w, rect.h);
   glm::vec2 pos(rect.x, rect.y);
   glm::vec2 center = size * 0.5f;
@@ -152,8 +154,6 @@ glm::mat4 buildCardTransform(const KasinoGame::Rect &rect, float rotation) {
   transform = glm::scale(transform, glm::vec3(size, 1.0f));
   return transform;
 }
-
-}  // namespace
 
 bool KasinoGame::Rect::Contains(float px, float py) const {
   return px >= x && px <= x + w && py >= y && py <= y + h;
@@ -1247,9 +1247,6 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
   glm::mat4 cardTransform = buildCardTransform(r, rotation);
 
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
-<<<<<<< HEAD
-=======
->>>>>>> 058718a52cbe457b4f23f9e4283e944567fabc59
 
   glm::vec4 baseTint(1.0f);
   if (!isCurrent) {
@@ -1263,11 +1260,9 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
     Render2D::DrawQuad(cardTransform, textureIt->second, 1.0f, baseTint);
     drewTexture = true;
   } else {
-<<<<<<< HEAD
+
       Render2D::DrawQuad(borderTransform, borderColor);
-=======
     Render2D::DrawQuad(cardTransform, baseTint);
->>>>>>> 058718a52cbe457b4f23f9e4283e944567fabc59
   }
 
   if (legal)
@@ -1333,10 +1328,6 @@ void KasinoGame::drawCardBack(const Rect &r, bool isCurrent, float rotation) {
   glm::mat4 cardTransform = buildCardTransform(r, rotation);
 
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
-<<<<<<< HEAD
-=======
-
->>>>>>> 058718a52cbe457b4f23f9e4283e944567fabc59
 
   if (m_CardBackTexture) {
     Render2D::DrawQuad(cardTransform, m_CardBackTexture, 1.0f,
