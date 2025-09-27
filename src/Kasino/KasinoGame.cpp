@@ -120,7 +120,9 @@ void KasinoGame::startNewMatch() {
   m_Selection.Clear();
   m_ActionEntries.clear();
   m_LastRoundScores.clear();
+  m_Phase = Phase::Playing;
   m_ShowPrompt = false;
+  updateRoundScorePreview();
   updateLayout();
   refreshHighlights();
 }
@@ -134,8 +136,19 @@ void KasinoGame::startNextRound() {
   m_LastRoundScores.clear();
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
-  updateLayout();  
+  updateRoundScorePreview();
+  updateLayout();
   refreshHighlights();
+}
+
+void KasinoGame::updateRoundScorePreview() {
+  if (m_State.numPlayers <= 0) {
+    m_CurrentRoundScores.clear();
+    return;
+  }
+
+  Casino::GameState previewState = m_State;
+  m_CurrentRoundScores = Casino::ScoreRound(previewState);
 }
 
 void KasinoGame::updateLegalMoves() {
@@ -518,6 +531,8 @@ void KasinoGame::applyMove(const Casino::Move &mv) {
     handleRoundEnd();
     updateLayout();
     refreshHighlights();
+  } else {
+    updateRoundScorePreview();
   }
 }
 
@@ -537,6 +552,8 @@ void KasinoGame::handleRoundEnd() {
       }
     }
   }
+
+  m_CurrentRoundScores.clear();
 
   m_Phase = hasWinner ? Phase::MatchSummary : Phase::RoundSummary;
   m_ShowPrompt = true;
@@ -686,6 +703,10 @@ void KasinoGame::drawScoreboard() {
     drawText("PLAYER " + std::to_string(p + 1), glm::vec2{offsetX, 44.f}, 3.5f,
              color);
     int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
+    if (m_Phase == Phase::Playing &&
+        p < static_cast<int>(m_CurrentRoundScores.size())) {
+      total += m_CurrentRoundScores[p].total;
+    }
     drawText("TOTAL " + std::to_string(total), glm::vec2{offsetX, 64.f}, 3.f,
              glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
     drawText("SWEEPS " + std::to_string(m_State.players[p].sweeps),
