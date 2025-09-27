@@ -123,6 +123,7 @@ file(GLOB_RECURSE Kasino ${CMAKE_CURRENT_SOURCE_DIR}/src/Kasino/*.cpp)
 
 add_executable(${PROJECT_NAME}
   src/main.cpp
+  # src/testing.cpp
   ${Kasino}
 )
 
