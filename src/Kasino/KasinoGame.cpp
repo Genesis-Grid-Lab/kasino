@@ -1096,7 +1096,23 @@ void KasinoGame::handlePrompt() {
 }
 
 void KasinoGame::OnUpdate(float dt) {
-  if (!m_Input) return;
+  if (!m_Input)
+    return;
+
+  bool escapePressed = m_Input->WasKeyPressed(Key::Escape);
+  if (escapePressed) {
+    if (m_ShowPrompt && m_PromptMode == PromptMode::Settings) {
+      m_ShowPrompt = false;
+      m_PromptMode = PromptMode::None;
+      updatePromptLayout();
+    } else if (!m_ShowPrompt) {
+      m_ShowPrompt = true;
+      m_PromptMode = PromptMode::Settings;
+      m_PromptHeader = "SETTINGS";
+      m_PromptButtonLabel = "CLOSE";
+      updatePromptLayout();
+    }
+  }  
 
   if (m_PendingAiMove) {
     if (m_AiDecisionTimer > 0.f) {

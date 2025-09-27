@@ -139,4 +139,16 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/Data)
     )
 else()
     message(WARNING "[WARNING] no data directory!")
+  endif()
+
+# copy data
+if(EXISTS ${CMAKE_SOURCE_DIR}/Resources)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND 
+        ${CMAKE_COMMAND} -E copy_directory 
+        ${CMAKE_SOURCE_DIR}/Resources
+        ${EXECUTABLE_OUTPUT_PATH}/Resources
+    )
+else()
+    message(WARNING "[WARNING] no resources directory!")
 endif()
+
