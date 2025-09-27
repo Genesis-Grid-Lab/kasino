@@ -4,6 +4,8 @@
 #include <random>
 #include <algorithm>
 
+namespace Casino {
+
 struct Deck {
   std::vector<Card> cards;
 
@@ -11,7 +13,7 @@ struct Deck {
     cards.clear();
     for (int s=0; s<4; ++s)
       for (int r=1; r<=13; ++r)
-	cards.emplace_back(static_cast<Rank>(r), static_cast<Suit>(s));
+        cards.emplace_back(static_cast<Rank>(r), static_cast<Suit>(s));
   }
 
   void Shuffle(uint32_t seed=0) {
@@ -30,3 +32,5 @@ struct Deck {
     }
   }
 };
+
+} // namespace Casino
