@@ -1221,8 +1221,7 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
                               bool isCurrent, bool selected, bool legal,
                               bool hovered) {
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
-  Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
-                     glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
+
   glm::vec4 baseTint(1.0f);
   if (!isCurrent) {
     baseTint = glm::mix(glm::vec4(1.0f), glm::vec4(0.8f, 0.8f, 0.8f, 1.f), 0.35f);
@@ -1235,6 +1234,8 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
                        textureIt->second, 1.0f, baseTint);
     drewTexture = true;
   } else {
+    Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
+		       glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
     Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h}, baseTint);
   }
 
@@ -1293,8 +1294,6 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
 
 void KasinoGame::drawCardBack(const Rect &r, bool isCurrent) {
   glm::vec4 borderColor = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
-  Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
-                     glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
 
   if (m_CardBackTexture) {
     Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
@@ -1304,6 +1303,8 @@ void KasinoGame::drawCardBack(const Rect &r, bool isCurrent) {
                          glm::vec4(0.95f, 0.75f, 0.35f, 0.35f));
     }
   } else {
+    Render2D::DrawQuad(glm::vec2{r.x - 2.f, r.y - 2.f},
+		       glm::vec2{r.w + 4.f, r.h + 4.f}, borderColor);
     glm::vec4 baseColor = glm::vec4(0.15f, 0.25f, 0.45f, 1.0f);
     if (isCurrent) {
       baseColor = glm::mix(baseColor, glm::vec4(0.9f, 0.6f, 0.2f, 1.0f), 0.35f);
@@ -1387,7 +1388,8 @@ void KasinoGame::drawScoreboard() {
     std::string totalText = "TOTAL " + std::to_string(total);
     drawText(totalText, totalPos, 3.f, totalColor);
     if (showPotential && potentialPoints > 0) {
-      float baseWidth = measureTextWidth(totalText, 3.f);
+      // float baseWidth = measureTextWidth(totalText, 3.f);
+      float baseWidth = measureText(totalText, 3.f).x;      
       std::string potentialText = " +" + std::to_string(potentialPoints);
       glm::vec4 potentialColor(totalColor.r, totalColor.g, totalColor.b, 0.6f);
       drawText(potentialText,
