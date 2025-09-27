@@ -55,6 +55,13 @@ class KasinoGame : public Game {
     Rect rect;
   };
 
+  enum class SeatOrientation { Horizontal, Vertical };
+
+  struct SeatLayout {
+    Rect anchor;
+    SeatOrientation orientation = SeatOrientation::Horizontal;
+  };
+
   struct RunningScore {
     Casino::ScoreLine line;
     int securedPoints = 0;
@@ -149,9 +156,10 @@ class KasinoGame : public Game {
   Rect m_PromptBoxRect{};
   Rect m_PromptButtonRect{};
   Rect m_CancelButtonRect{};
-  float m_ScoreboardHeight = 100.f;
+  float m_ScoreboardHeight = 120.f;
 
   std::vector<std::vector<Rect>> m_PlayerHandRects;
+  std::vector<SeatLayout> m_PlayerSeatLayouts;
   std::vector<Rect> m_LooseRects;
   std::vector<Rect> m_BuildRects;
 

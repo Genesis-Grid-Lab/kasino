@@ -353,43 +353,130 @@ void KasinoGame::updateMainMenuLayout() {
 void KasinoGame::updateLayout() {
   float width = m_Camera.LogicalWidth();
   float height = m_Camera.LogicalHeight();
-  float margin = 12.f;
-  float panelWidth = 150.f;
+  float margin = 16.f;
+  float panelWidth = 160.f;
 
-  m_TableRect.x = margin;
-  m_TableRect.y = m_ScoreboardHeight + margin * 2.f + m_CardHeight + 24.f;
-  m_TableRect.w = width - panelWidth - margin * 3.f;
-  float bottomLimit = height - m_CardHeight - margin * 2.f - 32.f;
-  m_TableRect.h = std::max(120.f, bottomLimit - m_TableRect.y);
+  bool hasLeftSeat = m_State.numPlayers >= 3;
+  bool hasRightSeat = m_State.numPlayers >= 4;
+  bool hasTopSeat = m_State.numPlayers >= 2;
+  float sideSeatWidth = m_CardHeight + margin * 2.f;
 
-  m_ActionPanelRect.x = m_TableRect.x + m_TableRect.w + margin;
+  float actionPanelX = width - panelWidth - margin;
+  float tableLeft = margin + (hasLeftSeat ? (sideSeatWidth + margin) : 0.f);
+  float tableRightLimit = actionPanelX - margin;
+  if (hasRightSeat) {
+    tableRightLimit -= (sideSeatWidth + margin);
+  }
+  if (tableRightLimit <= tableLeft) {
+    tableRightLimit = tableLeft + 160.f;
+  }
+
+  m_TableRect.x = tableLeft;
+  m_TableRect.w = tableRightLimit - tableLeft;
+  if (m_TableRect.w < 0.f) {
+    m_TableRect.w = 0.f;
+  }
+
+  float tableTop = m_ScoreboardHeight + margin + (hasTopSeat ? (m_CardHeight + margin) : 0.f);
+  float bottomSeatPadding = m_CardHeight + margin * 2.f;
+  float tableBottomLimit = height - bottomSeatPadding;
+  if (tableBottomLimit <= tableTop + 160.f) {
+    tableBottomLimit = tableTop + 160.f;
+  }
+  m_TableRect.y = tableTop;
+  m_TableRect.h = tableBottomLimit - tableTop;
+  if (m_TableRect.h < 0.f) {
+    m_TableRect.h = 0.f;
+  }
+
+  m_ActionPanelRect.x = actionPanelX;
   m_ActionPanelRect.y = m_TableRect.y;
   m_ActionPanelRect.w = panelWidth;
   m_ActionPanelRect.h = m_TableRect.h;
 
-  // Layout hands
+  // Seat anchors and hand rects
+  m_PlayerSeatLayouts.assign(m_State.numPlayers, {});
   m_PlayerHandRects.assign(m_State.numPlayers, {});
+
+  auto buildHorizontalSeat = [&](int playerIndex, float y) {
+    SeatLayout layout;
+    layout.orientation = SeatOrientation::Horizontal;
+    layout.anchor = {m_TableRect.x, y, m_TableRect.w, m_CardHeight};
+    m_PlayerSeatLayouts[playerIndex] = layout;
+  };
+
+  if (m_State.numPlayers > 0) {
+    float desiredBottomY = height - margin - m_CardHeight;
+    float bottomY = std::max(desiredBottomY, m_TableRect.y + m_TableRect.h + margin);
+    if (bottomY + m_CardHeight > height - margin) {
+      bottomY = height - margin - m_CardHeight;
+    }
+    buildHorizontalSeat(0, bottomY);
+  }
+
+  if (hasTopSeat) {
+    float topY = m_TableRect.y - m_CardHeight - margin;
+    topY = std::max(topY, m_ScoreboardHeight + margin);
+    buildHorizontalSeat(1, topY);
+  }
+
+  if (hasLeftSeat) {
+    SeatLayout layout;
+    layout.orientation = SeatOrientation::Vertical;
+    layout.anchor = {margin, m_TableRect.y, sideSeatWidth, m_TableRect.h};
+    m_PlayerSeatLayouts[2] = layout;
+  }
+
+  if (hasRightSeat) {
+    SeatLayout layout;
+    layout.orientation = SeatOrientation::Vertical;
+    layout.anchor = {m_ActionPanelRect.x - margin - sideSeatWidth, m_TableRect.y,
+                     sideSeatWidth, m_TableRect.h};
+    m_PlayerSeatLayouts[3] = layout;
+  }
+
   for (int p = 0; p < m_State.numPlayers; ++p) {
     const auto &hand = m_State.players[p].hand;
     auto &rects = m_PlayerHandRects[p];
     rects.clear();
     rects.reserve(hand.size());
 
-    float spacing = m_CardWidth * 0.2f;
-    float totalWidth = hand.empty()
-                           ? 0.f
-                           : (float)hand.size() * m_CardWidth +
-                                 (float)(hand.size() - 1) * spacing;
-    float startX = std::max(margin, (width - totalWidth) * 0.5f);
-    float y = (p == 0) ? (height - m_CardHeight - margin)
-                       : (m_ScoreboardHeight + margin);
-    if (p > 1) {
-      // additional players could be stacked above table; offset slightly
-      y = m_TableRect.y - (float)(p) * (m_CardHeight + 16.f);
+    const auto &layout = m_PlayerSeatLayouts[p];
+    if (layout.anchor.w <= 0.f || layout.anchor.h <= 0.f) {
+      continue;
     }
-    for (size_t i = 0; i < hand.size(); ++i) {
-      rects.push_back(Rect{startX + (float)i * (m_CardWidth + spacing), y,
-                           m_CardWidth, m_CardHeight});
+
+    if (layout.orientation == SeatOrientation::Horizontal) {
+      float spacing = m_CardWidth * 0.2f;
+      float totalWidth = hand.empty()
+                             ? 0.f
+                             : (float)hand.size() * m_CardWidth +
+                                   (float)(hand.size() - 1) * spacing;
+      float startX = layout.anchor.x;
+      if (layout.anchor.w > totalWidth) {
+        startX += (layout.anchor.w - totalWidth) * 0.5f;
+      }
+      for (size_t i = 0; i < hand.size(); ++i) {
+        rects.push_back(Rect{startX + (float)i * (m_CardWidth + spacing),
+                             layout.anchor.y, m_CardWidth, m_CardHeight});
+      }
+    } else {
+      float cardW = m_CardHeight;
+      float cardH = m_CardWidth;
+      float spacing = cardH * 0.2f;
+      float totalHeight = hand.empty()
+                              ? 0.f
+                              : (float)hand.size() * cardH +
+                                    (float)(hand.size() - 1) * spacing;
+      float startY = layout.anchor.y;
+      if (layout.anchor.h > totalHeight) {
+        startY += (layout.anchor.h - totalHeight) * 0.5f;
+      }
+      float x = layout.anchor.x + (layout.anchor.w - cardW) * 0.5f;
+      for (size_t i = 0; i < hand.size(); ++i) {
+        rects.push_back(Rect{x, startY + (float)i * (cardH + spacing), cardW,
+                             cardH});
+      }
     }
   }
 
@@ -1269,10 +1356,20 @@ void KasinoGame::drawScoreboard() {
 }
 
 void KasinoGame::drawHands() {
+  float viewWidth = m_Camera.LogicalWidth();
+  float viewHeight = m_Camera.LogicalHeight();
+  auto inViewport = [&](const Rect &r) {
+    return !(r.x > viewWidth || r.y > viewHeight || (r.x + r.w) < 0.f ||
+             (r.y + r.h) < 0.f);
+  };
+
   for (int p = 0; p < m_State.numPlayers; ++p) {
     const auto &hand = m_State.players[p].hand;
     const auto &rects = m_PlayerHandRects[p];
     for (size_t i = 0; i < hand.size(); ++i) {
+      if (i >= rects.size() || !inViewport(rects[i])) {
+        continue;
+      }
       bool isCurrent = (p == m_State.current);
       bool isAI = (p < static_cast<int>(m_IsAiPlayer.size()) &&
                    m_IsAiPlayer[p]);
