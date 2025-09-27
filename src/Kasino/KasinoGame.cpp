@@ -19,6 +19,8 @@
 
 #include <glm/glm.hpp>
 
+KasinoGame::~KasinoGame() = default;
+
 namespace {
 
 struct Glyph {
