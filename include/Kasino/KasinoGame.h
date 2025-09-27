@@ -102,7 +102,10 @@ class KasinoGame : public Game {
 
   void drawCardFace(const Casino::Card &card, const Rect &r, bool isCurrent,
                     bool selected, bool legal, bool hovered);
+  void drawCardFace(const Casino::Card &card, const Rect &r, float rotation,
+                    bool isCurrent, bool selected, bool legal, bool hovered);
   void drawCardBack(const Rect &r, bool isCurrent);
+  void drawCardBack(const Rect &r, bool isCurrent, float rotation);
   void drawBuildFace(const Casino::Build &build, const Rect &r, bool legal,
                      bool hovered, bool selected);
   void drawText(const std::string &text, glm::vec2 pos, float scale,
