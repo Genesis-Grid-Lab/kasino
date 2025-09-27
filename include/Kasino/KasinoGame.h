@@ -53,6 +53,7 @@ class KasinoGame : public Game {
 
   void startNewMatch();
   void startNextRound();
+  void updateRoundScorePreview();
   void updateLegalMoves();
   void updateLayout();
   void layoutActionEntries();
@@ -91,6 +92,7 @@ class KasinoGame : public Game {
   Phase m_Phase = Phase::Playing;
 
   std::vector<int> m_TotalScores;
+  std::vector<Casino::ScoreLine> m_CurrentRoundScores;
   std::vector<Casino::ScoreLine> m_LastRoundScores;
   int m_TargetScore = 21;
   int m_RoundNumber = 1;
