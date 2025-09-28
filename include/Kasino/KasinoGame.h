@@ -77,12 +77,21 @@ class KasinoGame : public Game {
     bool showMajorityBonuses = false;
   };
 
+  struct DealAnim {
+    int player = -1;
+    int handIndex = -1;
+    Casino::Card card{};
+    float delay = 0.f;
+    float progress = 0.f;
+  };
+
   // tmp
   glm::mat4 buildCardTransform(const KasinoGame::Rect &rect, float rotation);
 
   void startNewMatch();
   void startNextRound();
   void updateRoundScorePreview();
+  void beginDealAnimation();  
   void updateLegalMoves();
   void updateMainMenuLayout();
   void updateLayout();
@@ -195,6 +204,11 @@ class KasinoGame : public Game {
   bool m_ShowPrompt = false;
   std::string m_PromptHeader;
   std::string m_PromptButtonLabel;
+
+  std::vector<DealAnim> m_DealQueue;
+  std::vector<int> m_DealtCounts;
+  bool m_IsDealing = false;
+  glm::vec2 m_DeckOrigin{0.f, 0.f};  
 
   const std::array<glm::vec4, 4> m_PlayerColors = {
       glm::vec4(0.85f, 0.35f, 0.30f, 1.0f),

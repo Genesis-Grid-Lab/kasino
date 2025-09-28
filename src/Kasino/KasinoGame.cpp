@@ -33,6 +33,8 @@ struct Glyph {
 
 constexpr float kAiDecisionDelay = 0.5f;
 constexpr float kAiAnimDuration = 0.3f;
+constexpr float kDealAnimDuration = 0.35f;
+constexpr float kDealDelayStep = 0.12f;
 
 const std::string kMainMenuTitleText = "KASINO";
 const std::string kMainMenuSubtitleText = "CLASSIC TABLE PLAY";
@@ -311,7 +313,10 @@ void KasinoGame::startNewMatch() {
   m_PromptMode = PromptMode::None;
   updateRoundScorePreview();
   updateLayout();
-  refreshHighlights();
+  beginDealAnimation();
+  if (!m_IsDealing) {
+    refreshHighlights();
+  }
 }
 
 void KasinoGame::startNextRound() {
@@ -357,6 +362,55 @@ void KasinoGame::updateRoundScorePreview() {
       running.line.total = running.securedPoints;
     }
     m_CurrentRoundScores.push_back(running);
+  }
+}
+
+void KasinoGame::beginDealAnimation() {
+  m_DealQueue.clear();
+  m_DealtCounts.assign(m_State.numPlayers, 0);
+  m_IsDealing = false;
+
+  float width = m_Camera.LogicalWidth();
+  float deckX = width - m_CardWidth * 0.5f - 32.f;
+  float deckY = m_ScoreboardHeight * 0.5f;
+  m_DeckOrigin = glm::vec2(deckX, deckY);
+
+  size_t maxHandSize = 0;
+  for (const auto &player : m_State.players) {
+    maxHandSize = std::max(maxHandSize, player.hand.size());
+  }
+
+  float currentDelay = 0.f;
+  for (size_t cardIndex = 0; cardIndex < maxHandSize; ++cardIndex) {
+    for (int p = 0; p < m_State.numPlayers; ++p) {
+      const auto &hand = m_State.players[p].hand;
+      if (cardIndex >= hand.size()) {
+        continue;
+      }
+
+      DealAnim anim;
+      anim.player = p;
+      anim.handIndex = static_cast<int>(cardIndex);
+      anim.card = hand[cardIndex];
+      anim.delay = currentDelay;
+      anim.progress = 0.f;
+      m_DealQueue.push_back(anim);
+      currentDelay += kDealDelayStep;
+    }
+  }
+
+  if (!m_DealQueue.empty()) {
+    m_IsDealing = true;
+    m_Selection.Clear();
+    m_ActionEntries.clear();
+    layoutActionEntries();
+    m_HoveredAction = -1;
+  } else {
+    for (int p = 0; p < m_State.numPlayers; ++p) {
+      if (p < static_cast<int>(m_State.players.size())) {
+        m_DealtCounts[p] = static_cast<int>(m_State.players[p].hand.size());
+      }
+    }
   }
 }
 
@@ -864,7 +918,11 @@ void KasinoGame::processInput(float mx, float my) {
   bool click = m_Input->WasMousePressed(MouseButton::Left);
   if (!click) return;
 
-  if (m_Phase != Phase::Playing) return;
+  if (m_Phase != Phase::Playing)
+    return;
+
+  if (m_IsDealing)
+    return;  
 
   if (m_State.current >= 0 &&
       m_State.current < static_cast<int>(m_IsAiPlayer.size()) &&
@@ -1185,11 +1243,18 @@ void KasinoGame::handlePrompt() {
       refreshHighlights();
       break;
     }
-    updateLegalMoves();
+    // updateLegalMoves();
+    m_LegalMoves = Casino::LegalMoves(m_State);
+    m_Selection.Clear();
+    m_ActionEntries.clear();
     layoutActionEntries();
     updateLayout();
-    refreshHighlights();
+    // refreshHighlights();
+    beginDealAnimation();
     updateRoundScorePreview();
+    if (!m_IsDealing) {
+      refreshHighlights();
+    }    
   } break;
   case PromptMode::PlayerSetup: {
     updateMenuHumanCounts();
@@ -1230,7 +1295,63 @@ void KasinoGame::OnUpdate(float dt) {
       m_PromptButtonLabel = "CLOSE";
       updatePromptLayout();
     }
-  }  
+  }
+
+  bool dealFinishedThisFrame = false;
+  if (!m_DealQueue.empty()) {
+    for (auto it = m_DealQueue.begin(); it != m_DealQueue.end();) {
+      DealAnim &anim = *it;
+      if (anim.delay > 0.f) {
+        anim.delay = std::max(0.f, anim.delay - dt);
+        ++it;
+        continue;
+      }
+
+      if (kDealAnimDuration > 0.f) {
+        anim.progress =
+	  std::min(1.f, anim.progress + dt / kDealAnimDuration);
+      } else {
+        anim.progress = 1.f;
+      }
+
+      if (anim.progress >= 1.f) {
+        if (anim.player >= 0 &&
+            anim.player < static_cast<int>(m_DealtCounts.size()) &&
+            anim.player < static_cast<int>(m_State.players.size())) {
+          int &count = m_DealtCounts[anim.player];
+          int handSize =
+	    static_cast<int>(m_State.players[anim.player].hand.size());
+          if (count < handSize) {
+            ++count;
+          }
+        }
+        it = m_DealQueue.erase(it);
+      } else {
+        ++it;
+      }
+    }
+
+    if (m_DealQueue.empty()) {
+      dealFinishedThisFrame = true;
+    } else {
+      m_IsDealing = true;
+    }
+  } else if (m_IsDealing) {
+    dealFinishedThisFrame = true;
+  }
+
+  if (dealFinishedThisFrame) {
+    m_IsDealing = false;
+    for (int p = 0; p < m_State.numPlayers; ++p) {
+      if (p < static_cast<int>(m_State.players.size())) {
+        m_DealtCounts[p] = static_cast<int>(m_State.players[p].hand.size());
+      }
+    }
+    if (m_Phase == Phase::Playing) {
+      updateLegalMoves();
+      layoutActionEntries();
+    }
+  }
 
   if (m_PendingAiMove) {
     if (m_AiDecisionTimer > 0.f) {
@@ -1261,10 +1382,12 @@ void KasinoGame::OnUpdate(float dt) {
     updateMainMenuLayout();
   } else {
     updateLayout();
-    refreshHighlights();
+    if (!m_IsDealing) {
+      refreshHighlights();
+    }
   }
 
-  if (!m_ShowPrompt && m_Phase == Phase::Playing) {
+  if (!m_ShowPrompt && m_Phase == Phase::Playing && !m_IsDealing) {
     bool aiTurn = (m_State.current >= 0 &&
                    m_State.current < m_State.numPlayers &&
                    m_State.current < static_cast<int>(m_IsAiPlayer.size()) &&
@@ -1557,11 +1680,28 @@ void KasinoGame::drawHands() {
         continue;
       }
 
+      bool cardRevealed =
+          (p < static_cast<int>(m_DealtCounts.size()) &&
+           static_cast<int>(i) < m_DealtCounts[p]);
+
+      const DealAnim *anim = nullptr;
+      for (const auto &deal : m_DealQueue) {
+        if (deal.player == p && deal.handIndex == static_cast<int>(i) &&
+            deal.delay <= 0.f) {
+          anim = &deal;
+          break;
+        }
+      }
+
+      if (!cardRevealed && !anim) {
+        continue;
+      }
+
       bool isCurrent = (p == m_State.current);
       bool isAI = (p < static_cast<int>(m_IsAiPlayer.size()) &&
                    m_IsAiPlayer[p]);
       bool isPendingCard =
-          (m_PendingAiMove && p == m_PendingAiPlayer &&
+          (cardRevealed && m_PendingAiMove && p == m_PendingAiPlayer &&
            m_PendingAiHandIndex == static_cast<int>(i));
       bool animatingCard =
           (isPendingCard && m_PendingAiMove && m_AiDecisionTimer <= 0.f &&
@@ -1575,6 +1715,35 @@ void KasinoGame::drawHands() {
                              glm::vec2{drawRect.w, drawRect.h}, color);
         }
       };
+
+      if (anim) {
+        float t = anim->progress;
+        if (t < 0.f)
+          t = 0.f;
+        if (t > 1.f)
+          t = 1.f;
+        glm::vec2 targetCenter = drawRect.Center();
+        glm::vec2 currentCenter = glm::mix(m_DeckOrigin, targetCenter, t);
+        Rect animRect{currentCenter.x - m_CardWidth * 0.5f,
+                      currentCenter.y - m_CardHeight * 0.5f, m_CardWidth,
+                      m_CardHeight};
+        if (verticalSeat) {
+          if (isAI) {
+            drawCardBack(animRect, isCurrent, rotation);
+          } else {
+            drawCardFace(anim->card, animRect, rotation, isCurrent, false,
+                         false, false);
+          }
+        } else {
+          if (isAI) {
+            drawCardBack(animRect, isCurrent);
+          } else {
+            drawCardFace(anim->card, animRect, isCurrent, false, false,
+                         false);
+          }
+        }
+        continue;
+      }
 
       if (isAI) {
         if (!animatingCard) {
@@ -1591,8 +1760,7 @@ void KasinoGame::drawHands() {
         bool selected =
             (isCurrent && m_Selection.handIndex &&
              *m_Selection.handIndex == static_cast<int>(i));
-        bool hideDuringAnim = animatingCard;
-        if (!hideDuringAnim) {
+        if (!animatingCard) {
           if (verticalSeat) {
             drawCardFace(hand[i], drawRect, rotation, isCurrent, selected,
                          false, false);
@@ -1874,9 +2042,9 @@ void KasinoGame::drawScene() {
   if (m_Phase == Phase::MainMenu) {
     drawMainMenu();
   } else {
-    drawHands();
     drawTable();
     drawActionPanel();
+    drawHands();
     drawScoreboard();
   }
   drawPromptOverlay();
