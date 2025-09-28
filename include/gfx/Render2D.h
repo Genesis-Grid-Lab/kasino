@@ -12,6 +12,16 @@
 template<typename T> using Ref = std::shared_ptr<T>;
 class Camera2D;
 
+struct Rect {
+  float x = 0.f;
+  float y = 0.f;
+  float w = 0.f;
+  float h = 0.f;
+
+  bool Contains(float px, float py) const;
+  glm::vec2 Center() const;
+};
+
 class Render2D {
 public:
   struct Statistics {

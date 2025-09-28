@@ -94,15 +94,15 @@ const Glyph &glyphFor(char c) {
 }
 
 struct PreviewScoreResult {
-  std::vector<Casino::ScoreLine> lines;
+  std::vector<ScoreLine> lines;
   bool includeMajorities = false;
 };
 
-PreviewScoreResult computePreviewScores(const Casino::GameState &state) {
+PreviewScoreResult computePreviewScores(const GameState &state) {
   PreviewScoreResult result;
   result.includeMajorities = state.RoundOver();
-  Casino::GameState previewState = state;
-  result.lines = Casino::ScoreRound(previewState);
+  GameState previewState = state;
+  result.lines = ScoreRound(previewState);
   if (!result.includeMajorities) {
     for (auto &line : result.lines) {
       line.total -= line.mostCards;
@@ -143,7 +143,7 @@ glm::vec2 measureText(const std::string &text, float scale) {
 
 
 }  // namespace
-glm::mat4 KasinoGame::buildCardTransform(const KasinoGame::Rect &rect, float rotation) {
+glm::mat4 KasinoGame::buildCardTransform(const Rect &rect, float rotation) {
   glm::vec2 size(rect.w, rect.h);
   glm::vec2 pos(rect.x, rect.y);
   glm::vec2 center = size * 0.5f;
@@ -155,20 +155,6 @@ glm::mat4 KasinoGame::buildCardTransform(const KasinoGame::Rect &rect, float rot
   transform = glm::translate(transform, -center3);
   transform = glm::scale(transform, glm::vec3(size, 1.0f));
   return transform;
-}
-
-bool KasinoGame::Rect::Contains(float px, float py) const {
-  return px >= x && px <= x + w && py >= y && py <= y + h;
-}
-
-glm::vec2 KasinoGame::Rect::Center() const {
-  return {x + w * 0.5f, y + h * 0.5f};
-}
-
-void KasinoGame::Selection::Clear() {
-  handIndex.reset();
-  loose.clear();
-  builds.clear();
 }
 
 bool KasinoGame::OnStart() {
@@ -202,16 +188,16 @@ bool KasinoGame::OnStart() {
 void KasinoGame::loadCardTextures() {
   m_CardTextures.clear();
 
-  const std::array<Casino::Suit, 4> suits = {Casino::Suit::Clubs,
-                                             Casino::Suit::Diamonds,
-                                             Casino::Suit::Hearts,
-                                             Casino::Suit::Spades};
+  const std::array<Suit, 4> suits = {Suit::Clubs,
+				     Suit::Diamonds,
+				     Suit::Hearts,
+				     Suit::Spades};
 
-  for (Casino::Suit suit : suits) {
-    for (int value = Casino::RankValue(Casino::Rank::Ace);
-         value <= Casino::RankValue(Casino::Rank::King); ++value) {
-      Casino::Rank rank = static_cast<Casino::Rank>(value);
-      Casino::Card card(rank, suit);
+  for (Suit suit : suits) {
+    for (int value = RankValue(Rank::Ace);
+         value <= RankValue(Rank::King); ++value) {
+      Rank rank = static_cast<Rank>(value);
+      Card card(rank, suit);
       auto texture = Factory::CreateTexture2D();
       if (!texture) continue;
 
@@ -232,40 +218,40 @@ void KasinoGame::loadCardTextures() {
   }
 }
 
-std::string KasinoGame::cardTextureKey(const Casino::Card &card) const {
+std::string KasinoGame::cardTextureKey(const Card &card) const {
   return card.ToString();
 }
 
-std::string KasinoGame::cardTexturePath(const Casino::Card &card) const {
+std::string KasinoGame::cardTexturePath(const Card &card) const {
   std::string folder = cardSuitFolder(card.suit);
   return "Resources/Cards/Standard/rect_cards/individual/" + folder + "/" +
          cardRankString(card.rank) + folder + ".png";
 }
 
-std::string KasinoGame::cardRankString(Casino::Rank rank) const {
+std::string KasinoGame::cardRankString(Rank rank) const {
   switch (rank) {
-  case Casino::Rank::Ace:
+  case Rank::Ace:
     return "A";
-  case Casino::Rank::Jack:
+  case Rank::Jack:
     return "J";
-  case Casino::Rank::Queen:
+  case Rank::Queen:
     return "Q";
-  case Casino::Rank::King:
+  case Rank::King:
     return "K";
   default:
-    return std::to_string(Casino::RankValue(rank));
+    return std::to_string(RankValue(rank));
   }
 }
 
-std::string KasinoGame::cardSuitFolder(Casino::Suit suit) const {
+std::string KasinoGame::cardSuitFolder(Suit suit) const {
   switch (suit) {
-  case Casino::Suit::Clubs:
+  case Suit::Clubs:
     return "club";
-  case Casino::Suit::Diamonds:
+  case Suit::Diamonds:
     return "diamond";
-  case Casino::Suit::Hearts:
+  case Suit::Hearts:
     return "heart";
-  case Casino::Suit::Spades:
+  case Suit::Spades:
     return "spade";
   }
   return "";
@@ -296,8 +282,8 @@ void KasinoGame::startNewMatch() {
   m_TotalScores.assign(m_State.numPlayers, 0);
   m_RoundNumber = 1;
   m_WinningPlayer = -1;
-  Casino::StartRound(m_State, m_State.numPlayers, m_Rng());
-  m_LegalMoves = Casino::LegalMoves(m_State);
+  StartRound(m_State, m_State.numPlayers, m_Rng());
+  m_LegalMoves = LegalMoves(m_State);
   m_Selection.Clear();
   m_ActionEntries.clear();
   m_LastRoundScores.clear();
@@ -317,8 +303,8 @@ void KasinoGame::startNewMatch() {
 
 void KasinoGame::startNextRound() {
   ++m_RoundNumber;
-  Casino::StartRound(m_State, m_State.numPlayers, m_Rng());
-  m_LegalMoves = Casino::LegalMoves(m_State);
+  StartRound(m_State, m_State.numPlayers, m_Rng());
+  m_LegalMoves = LegalMoves(m_State);
   m_Selection.Clear();
   m_ActionEntries.clear();
   m_LastRoundScores.clear();
@@ -407,7 +393,7 @@ void KasinoGame::beginDealAnimation() {
 }
 
 void KasinoGame::updateLegalMoves() {
-  m_LegalMoves = Casino::LegalMoves(m_State);
+  m_LegalMoves = LegalMoves(m_State);
   if (m_Selection.handIndex) {
     // Ensure the selected index is still valid; otherwise clear selection.
     auto &hand = m_State.players[m_State.current].hand;
@@ -735,18 +721,18 @@ void KasinoGame::refreshHighlights() {
       continue;
     if (!selectionCompatible(mv)) continue;
 
-    if (mv.type == Casino::MoveType::Capture) {
+    if (mv.type == MoveType::Capture) {
       for (int idx : mv.captureLooseIdx)
         if (idx >= 0 && idx < (int)m_LooseHighlights.size())
           m_LooseHighlights[idx] = true;
       for (int idx : mv.captureBuildIdx)
         if (idx >= 0 && idx < (int)m_BuildHighlights.size())
           m_BuildHighlights[idx] = true;
-    } else if (mv.type == Casino::MoveType::Build) {
+    } else if (mv.type == MoveType::Build) {
       for (int idx : mv.buildUseLooseIdx)
         if (idx >= 0 && idx < (int)m_LooseHighlights.size())
           m_LooseHighlights[idx] = true;
-    } else if (mv.type == Casino::MoveType::ExtendBuild) {
+    } else if (mv.type == MoveType::ExtendBuild) {
       for (int idx : mv.captureBuildIdx)
         if (idx >= 0 && idx < (int)m_BuildHighlights.size())
           m_BuildHighlights[idx] = true;
@@ -754,7 +740,7 @@ void KasinoGame::refreshHighlights() {
   }
 }
 
-bool KasinoGame::selectionCompatible(const Casino::Move &mv) const {
+bool KasinoGame::selectionCompatible(const Move &mv) const {
   if (!m_Selection.handIndex) return false;
 
   auto subset = [](const std::set<int> &selected,
@@ -768,25 +754,25 @@ bool KasinoGame::selectionCompatible(const Casino::Move &mv) const {
   };
 
   switch (mv.type) {
-  case Casino::MoveType::Capture:
+  case MoveType::Capture:
     return subset(m_Selection.loose, mv.captureLooseIdx) &&
            subset(m_Selection.builds, mv.captureBuildIdx);
-  case Casino::MoveType::Build:
+  case MoveType::Build:
     return m_Selection.builds.empty() &&
            subset(m_Selection.loose, mv.buildUseLooseIdx);
-  case Casino::MoveType::ExtendBuild:
+  case MoveType::ExtendBuild:
     return m_Selection.loose.empty() &&
            subset(m_Selection.builds, mv.captureBuildIdx);
-  case Casino::MoveType::Trail:
+  case MoveType::Trail:
     return m_Selection.loose.empty() && m_Selection.builds.empty();
   }
   return false;
 }
 
-std::string KasinoGame::moveLabel(const Casino::Move &mv) const {
+std::string KasinoGame::moveLabel(const Move &mv) const {
   std::ostringstream oss;
   switch (mv.type) {
-  case Casino::MoveType::Capture: {
+  case MoveType::Capture: {
     oss << "CAPTURE";
     for (int idx : mv.captureLooseIdx) {
       if (idx >= 0 && idx < (int)m_State.table.loose.size())
@@ -796,20 +782,20 @@ std::string KasinoGame::moveLabel(const Casino::Move &mv) const {
       oss << " B" << (idx + 1);
     }
   } break;
-  case Casino::MoveType::Build: {
+  case MoveType::Build: {
     oss << "BUILD TO " << mv.buildTargetValue;
     for (int idx : mv.buildUseLooseIdx) {
       if (idx >= 0 && idx < (int)m_State.table.loose.size())
         oss << ' ' << m_State.table.loose[idx].ToString();
     }
   } break;
-  case Casino::MoveType::ExtendBuild: {
+  case MoveType::ExtendBuild: {
     oss << "RAISE TO " << mv.buildTargetValue;
     for (int idx : mv.captureBuildIdx) {
       oss << " B" << (idx + 1);
     }
   } break;
-  case Casino::MoveType::Trail:
+  case MoveType::Trail:
     oss << "TRAIL";
     break;
   }
@@ -992,14 +978,14 @@ bool KasinoGame::playAiTurn() {
   }
   if (m_LegalMoves.empty()) return false;
 
-  const Casino::Move *selected = nullptr;
-  const Casino::Move *trailMove = nullptr;
+  const Move *selected = nullptr;
+  const Move *trailMove = nullptr;
   for (const auto &mv : m_LegalMoves) {
-    if (mv.type == Casino::MoveType::Capture) {
+    if (mv.type == MoveType::Capture) {
       selected = &mv;
       break;
     }
-    if (!trailMove && mv.type == Casino::MoveType::Trail) {
+    if (!trailMove && mv.type == MoveType::Trail) {
       trailMove = &mv;
     }
   }
@@ -1012,12 +998,12 @@ bool KasinoGame::playAiTurn() {
     }
   }
 
-  Casino::Move chosen = *selected;
+  Move chosen = *selected;
   beginPendingMove(chosen, m_State.current, -1, kAiDecisionDelay);
   return true;
 }
 
-void KasinoGame::beginPendingMove(const Casino::Move &mv, int player,
+void KasinoGame::beginPendingMove(const Move &mv, int player,
                                   int handIndex, float delay) {
   PendingMove pending;
   pending.move = mv;
@@ -1054,12 +1040,12 @@ void KasinoGame::beginPendingMove(const Casino::Move &mv, int player,
     }
   };
 
-  if (mv.type == Casino::MoveType::Capture) {
+  if (mv.type == MoveType::Capture) {
     markHighlights(mv.captureLooseIdx, m_PendingLooseHighlights);
     markHighlights(mv.captureBuildIdx, m_PendingBuildHighlights);
-  } else if (mv.type == Casino::MoveType::Build) {
+  } else if (mv.type == MoveType::Build) {
     markHighlights(mv.buildUseLooseIdx, m_PendingLooseHighlights);
-  } else if (mv.type == Casino::MoveType::ExtendBuild) {
+  } else if (mv.type == MoveType::ExtendBuild) {
     markHighlights(mv.buildUseLooseIdx, m_PendingLooseHighlights);
     markHighlights(mv.captureBuildIdx, m_PendingBuildHighlights);
   }
@@ -1139,9 +1125,9 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
 
   return handled;
 }
-
-void KasinoGame::applyMove(const Casino::Move &mv) {
-  if (!Casino::ApplyMove(m_State, mv)) return;
+ 
+void KasinoGame::applyMove(const Move &mv) {
+  if (!ApplyMove(m_State, mv)) return;
 
   m_Selection.Clear();
   m_ActionEntries.clear();
@@ -1167,7 +1153,7 @@ void KasinoGame::applyMove(const Casino::Move &mv) {
 }
 
 void KasinoGame::handleRoundEnd() {
-  m_LastRoundScores = Casino::ScoreRound(m_State);
+  m_LastRoundScores = ScoreRound(m_State);
   if (m_TotalScores.size() != static_cast<size_t>(m_State.numPlayers))
     m_TotalScores.assign(m_State.numPlayers, 0);
 
@@ -1243,14 +1229,14 @@ void KasinoGame::handlePrompt() {
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
     m_Phase = Phase::Playing; // tmpish
-    if (!Casino::DealNextHands(m_State)) {
+    if (!DealNextHands(m_State)) {
       handleRoundEnd();
       updateLayout();
       refreshHighlights();
       break;
     }
     // updateLegalMoves();
-    m_LegalMoves = Casino::LegalMoves(m_State);
+    m_LegalMoves = LegalMoves(m_State);
     m_Selection.Clear();
     m_ActionEntries.clear();
     layoutActionEntries();
@@ -1372,7 +1358,7 @@ void KasinoGame::OnUpdate(float dt) {
       }
 
       if (m_PendingMove->progress >= 1.f) {
-        Casino::Move move = m_PendingMove->move;
+        Move move = m_PendingMove->move;
         m_PendingMove.reset();
         m_PendingLooseHighlights.clear();
         m_PendingBuildHighlights.clear();
@@ -1428,13 +1414,13 @@ void KasinoGame::OnUpdate(float dt) {
   m_Input->BeginFrame();
 }
 
-void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
+void KasinoGame::drawCardFace(const Card &card, const Rect &r,
                               bool isCurrent, bool selected, bool legal,
                               bool hovered) {
   drawCardFace(card, r, 0.f, isCurrent, selected, legal, hovered);
 }
 
-void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
+void KasinoGame::drawCardFace(const Card &card, const Rect &r,
                               float rotation, bool isCurrent, bool selected,
                               bool legal, bool hovered) {
   Rect borderRect{r.x - 2.f, r.y - 2.f, r.w + 4.f, r.h + 4.f};
@@ -1473,36 +1459,36 @@ void KasinoGame::drawCardFace(const Casino::Card &card, const Rect &r,
   if (!drewTexture && rotation == 0.f) {
     auto rankString = [&]() {
       switch (card.rank) {
-      case Casino::Rank::Ace:
+      case Rank::Ace:
         return std::string("A");
-      case Casino::Rank::Jack:
+      case Rank::Jack:
         return std::string("J");
-      case Casino::Rank::Queen:
+      case Rank::Queen:
         return std::string("Q");
-      case Casino::Rank::King:
+      case Rank::King:
         return std::string("K");
       default:
-        return std::to_string(Casino::RankValue(card.rank));
+        return std::to_string(RankValue(card.rank));
       }
     }();
 
     auto suitString = [&]() {
       switch (card.suit) {
-      case Casino::Suit::Clubs:
+      case Suit::Clubs:
         return std::string("C");
-      case Casino::Suit::Diamonds:
+      case Suit::Diamonds:
         return std::string("D");
-      case Casino::Suit::Hearts:
+      case Suit::Hearts:
         return std::string("H");
-      case Casino::Suit::Spades:
+      case Suit::Spades:
         return std::string("S");
       }
       return std::string("?");
     }();
 
     glm::vec4 textColor =
-        (card.suit == Casino::Suit::Hearts ||
-         card.suit == Casino::Suit::Diamonds)
+        (card.suit == Suit::Hearts ||
+         card.suit == Suit::Diamonds)
             ? glm::vec4(0.80f, 0.1f, 0.1f, 1.0f)
             : glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -1563,7 +1549,7 @@ void KasinoGame::drawCardBack(const Rect &r, bool isCurrent, float rotation) {
   }
 }
 
-void KasinoGame::drawBuildFace(const Casino::Build &build, const Rect &r,
+void KasinoGame::drawBuildFace(const Build &build, const Rect &r,
                                bool legal, bool hovered, bool selected) {
   int ownerIndex = build.ownerPlayer >= 0 ? build.ownerPlayer : 0;
   glm::vec4 ownerColor =
@@ -1835,12 +1821,12 @@ void KasinoGame::drawTable() {
         }
       };
 
-      if (m_PendingMove->move.type == Casino::MoveType::Capture) {
+      if (m_PendingMove->move.type == MoveType::Capture) {
         addLooseCenters(m_PendingMove->move.captureLooseIdx);
         addBuildCenters(m_PendingMove->move.captureBuildIdx);
-      } else if (m_PendingMove->move.type == Casino::MoveType::Build) {
+      } else if (m_PendingMove->move.type == MoveType::Build) {
         addLooseCenters(m_PendingMove->move.buildUseLooseIdx);
-      } else if (m_PendingMove->move.type == Casino::MoveType::ExtendBuild) {
+      } else if (m_PendingMove->move.type == MoveType::ExtendBuild) {
         addLooseCenters(m_PendingMove->move.buildUseLooseIdx);
         addBuildCenters(m_PendingMove->move.captureBuildIdx);
       }

@@ -4,8 +4,6 @@
 #include <vector>
 #include <optional>
 
-namespace Casino {
-
 struct PlayerState {
   std::vector<Card> hand;
   std::vector<Card> pile;   // captured
@@ -49,5 +47,3 @@ struct GameState {
     return HandsEmpty();
   }
 };
-
-} // namespace Casino

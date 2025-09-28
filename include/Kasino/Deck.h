@@ -4,7 +4,6 @@
 #include <random>
 #include <algorithm>
 
-namespace Casino {
 
 struct Deck {
   std::vector<Card> cards;
@@ -33,4 +32,3 @@ struct Deck {
   }
 };
 
-} // namespace Casino

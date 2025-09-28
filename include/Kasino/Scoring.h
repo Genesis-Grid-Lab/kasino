@@ -1,8 +1,6 @@
 #pragma once
 #include "GameLogic.h"
 
-namespace Casino {
-
 // shared helpers (inline so multiple includes are fine)
 inline bool IsAce(const Card& c)         { return c.rank == Rank::Ace; }
 inline bool IsBigCasino(const Card& c)   { return c.rank == Rank::Two && c.suit == Suit::Spades; }     // 2♠
@@ -46,4 +44,3 @@ inline bool IsLittleCasino(const Card& c){ return c.rank == Rank::Ten && c.suit 
     return score;
   }
 
-} // namespace Casino

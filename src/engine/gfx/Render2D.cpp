@@ -248,3 +248,11 @@ void Render2D::PushQuad(const glm::mat4& transform,
   s_QuadCount++;
   s_Stats.QuadCount++;
 }
+
+bool Rect::Contains(float px, float py) const {
+  return px >= x && px <= x + w && py >= y && py <= y + h;
+}
+
+glm::vec2 Rect::Center() const {
+  return {x + w * 0.5f, y + h * 0.5f};
+}

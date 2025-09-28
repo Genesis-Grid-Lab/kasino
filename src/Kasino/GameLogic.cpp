@@ -4,14 +4,12 @@
 #include <set>
 #include <cassert>
 
-using namespace Casino;
-
 // ---------- helpers
 static bool isBigCasino(const Card& c){ return c.rank==Rank::Two && c.suit==Suit::Spades; }
 static bool isLittleCasino(const Card& c){ return c.rank==Rank::Ten && c.suit==Suit::Diamonds; }
 static bool isAce(const Card& c){ return c.rank==Rank::Ace; }
 
-int Casino::CardSumValue(const std::vector<Card>& v){
+int CardSumValue(const std::vector<Card>& v){
   int s=0; for (auto& c: v) s += RankValue(c.rank); return s;
 }
 
@@ -41,7 +39,7 @@ static bool tableEmpty(const GameState& gs){ return gs.table.loose.empty() && gs
 
 // ---------- flow
 
-void Casino::StartRound(GameState& gs, int numPlayers, uint32_t shuffleSeed){
+void StartRound(GameState& gs, int numPlayers, uint32_t shuffleSeed){
   gs = {};
   gs.numPlayers = numPlayers;
   gs.players.resize(numPlayers);
@@ -57,20 +55,20 @@ void Casino::StartRound(GameState& gs, int numPlayers, uint32_t shuffleSeed){
   gs.current = 0;
 }
 
-bool Casino::DealNextHands(GameState& gs){
+bool DealNextHands(GameState& gs){
   if (gs.stock.size() < (size_t)(4*gs.numPlayers)) return false;
   for (int p=0; p<gs.numPlayers; ++p)
     for (int i=0;i<4;++i){ gs.players[p].hand.push_back(gs.stock.back()); gs.stock.pop_back(); }
   return true;
 }
 
-void Casino::AdvanceTurn(GameState& gs){
+void AdvanceTurn(GameState& gs){
   gs.current = (gs.current + 1) % gs.numPlayers;
 }
 
 // ---------- move gen
 
-std::vector<Move> Casino::LegalMoves(const GameState& gs){
+std::vector<Move> LegalMoves(const GameState& gs){
   std::vector<Move> out;
 
   const auto& P = gs.CurPlayer();
@@ -177,7 +175,7 @@ static void collectBuild(std::vector<Build>& builds, int idx, std::vector<Card>&
   builds.erase(builds.begin()+idx);
 }
 
-bool Casino::ApplyMove(GameState& gs, const Move& mv){
+bool ApplyMove(GameState& gs, const Move& mv){
   // find and remove the played hand card
   auto& hand = gs.CurPlayer().hand;
   auto it = std::find(hand.begin(), hand.end(), mv.handCard);
@@ -264,4 +262,11 @@ bool Casino::ApplyMove(GameState& gs, const Move& mv){
   // advance turn
   AdvanceTurn(gs);
   return true;
+}
+
+
+void Selection::Clear() {
+  handIndex.reset();
+  loose.clear();
+  builds.clear();
 }

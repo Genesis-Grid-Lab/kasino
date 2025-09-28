@@ -10,14 +10,11 @@
 #include <memory>
 #include <optional>
 #include <random>
-#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
-
-// class InputSystem;
 
 class KasinoGame : public Game {
  public:
@@ -37,56 +34,10 @@ class KasinoGame : public Game {
     HandSummary,
     PlayerSetup,
     Settings
-  };
-
-  struct Rect {
-    float x = 0.f;
-    float y = 0.f;
-    float w = 0.f;
-    float h = 0.f;
-
-    bool Contains(float px, float py) const;
-    glm::vec2 Center() const;
-  };
-
-  struct Selection {
-    std::optional<int> handIndex;
-    std::set<int> loose;
-    std::set<int> builds;
-    void Clear();
-  };
-
-  struct ActionEntry {
-    Casino::Move move;
-    std::string label;
-    Rect rect;
-  };
-
-  enum class SeatOrientation { Horizontal, Vertical };
-
-  struct SeatLayout {
-    Rect anchor;
-    SeatOrientation orientation = SeatOrientation::Horizontal;
-    float visibleFraction = 1.0f;
-  };
-
-  struct RunningScore {
-    Casino::ScoreLine line;
-    int securedPoints = 0;
-    int potentialMajorities = 0;
-    bool showMajorityBonuses = false;
-  };
-
-  struct DealAnim {
-    int player = -1;
-    int handIndex = -1;
-    Casino::Card card{};
-    float delay = 0.f;
-    float progress = 0.f;
-  };
+  };  
 
   // tmp
-  glm::mat4 buildCardTransform(const KasinoGame::Rect &rect, float rotation);
+  glm::mat4 buildCardTransform(const Rect &rect, float rotation);
 
   void startNewMatch();
   void startNextRound();
@@ -107,8 +58,8 @@ class KasinoGame : public Game {
   void selectHandCard(int player, int index);
   void toggleLooseCard(int idx);
   void toggleBuild(int idx);
-  void applyMove(const Casino::Move &mv);
-  void beginPendingMove(const Casino::Move &mv, int player, int handIndex,
+  void applyMove(const Move &mv);
+  void beginPendingMove(const Move &mv, int player, int handIndex,
                         float delay);
   void handleRoundEnd();
   void handlePrompt();
@@ -121,28 +72,28 @@ class KasinoGame : public Game {
   void drawActionPanel();
   void drawPromptOverlay();
 
-  void drawCardFace(const Casino::Card &card, const Rect &r, bool isCurrent,
+  void drawCardFace(const Card &card, const Rect &r, bool isCurrent,
                     bool selected, bool legal, bool hovered);
-  void drawCardFace(const Casino::Card &card, const Rect &r, float rotation,
+  void drawCardFace(const Card &card, const Rect &r, float rotation,
                     bool isCurrent, bool selected, bool legal, bool hovered);
   void drawCardBack(const Rect &r, bool isCurrent);
   void drawCardBack(const Rect &r, bool isCurrent, float rotation);
-  void drawBuildFace(const Casino::Build &build, const Rect &r, bool legal,
+  void drawBuildFace(const Build &build, const Rect &r, bool legal,
                      bool hovered, bool selected);
   void drawText(const std::string &text, glm::vec2 pos, float scale,
                 const glm::vec4 &color);
 
-  std::string moveLabel(const Casino::Move &mv) const;
-  bool selectionCompatible(const Casino::Move &mv) const;
+  std::string moveLabel(const Move &mv) const;
+  bool selectionCompatible(const Move &mv) const;
   void loadCardTextures();
-  std::string cardTextureKey(const Casino::Card &card) const;
-  std::string cardTexturePath(const Casino::Card &card) const;
-  std::string cardRankString(Casino::Rank rank) const;
-  std::string cardSuitFolder(Casino::Suit suit) const;
+  std::string cardTextureKey(const Card &card) const;
+  std::string cardTexturePath(const Card &card) const;
+  std::string cardRankString(Rank rank) const;
+  std::string cardSuitFolder(Suit suit) const;
 
   std::unique_ptr<InputSystem> m_Input;
-  Casino::GameState m_State;
-  std::vector<Casino::Move> m_LegalMoves;
+  GameState m_State;
+  std::vector<Move> m_LegalMoves;
   std::vector<ActionEntry> m_ActionEntries;
   Selection m_Selection;
   Phase m_Phase = Phase::MainMenu;
@@ -165,7 +116,7 @@ class KasinoGame : public Game {
 
   std::vector<int> m_TotalScores;
   std::vector<RunningScore> m_CurrentRoundScores;
-  std::vector<Casino::ScoreLine> m_LastRoundScores;
+  std::vector<ScoreLine> m_LastRoundScores;
   int m_TargetScore = 21;
   int m_RoundNumber = 1;
   int m_WinningPlayer = -1;
@@ -191,7 +142,7 @@ class KasinoGame : public Game {
   std::vector<bool> m_BuildHighlights;
 
   struct PendingMove {
-    Casino::Move move{};
+    Move move{};
     int player = -1;
     int handIndex = -1;
     float delay = 0.f;
