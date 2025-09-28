@@ -214,7 +214,7 @@ void KasinoGame::loadCardTextures() {
       if (!texture) continue;
 
       std::string path = cardTexturePath(card);
-      if (texture->LoadFromFile(path.c_str(), true)) {
+      if (texture->LoadFromFile(path.c_str(), false)) {
         m_CardTextures[cardTextureKey(card)] = texture;
       }
     }
@@ -1817,10 +1817,10 @@ void KasinoGame::drawScene() {
   if (m_Phase == Phase::MainMenu) {
     drawMainMenu();
   } else {
-    drawScoreboard();
     drawHands();
     drawTable();
     drawActionPanel();
+    drawScoreboard();
   }
   drawPromptOverlay();
 }
