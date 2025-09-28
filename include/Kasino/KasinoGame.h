@@ -30,7 +30,14 @@ class KasinoGame : public Game {
  private:
   enum class Phase { MainMenu, Playing, RoundSummary, MatchSummary };
 
-  enum class PromptMode { None, RoundSummary, MatchSummary, PlayerSetup, Settings };
+  enum class PromptMode {
+    None,
+    RoundSummary,
+    MatchSummary,
+    HandSummary,
+    PlayerSetup,
+    Settings
+  };
 
   struct Rect {
     float x = 0.f;
