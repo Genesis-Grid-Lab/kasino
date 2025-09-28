@@ -404,6 +404,8 @@ void KasinoGame::updateLayout() {
   float height = m_Camera.LogicalHeight();
   float margin = 16.f;
   float panelWidth = 160.f;
+  float sideSeatVisibleFraction = 0.2f;
+  float topSeatVisibleFraction = 0.2f;
 
   bool hasLeftSeat = m_State.numPlayers >= 3;
   bool hasRightSeat = m_State.numPlayers >= 4;
@@ -447,10 +449,12 @@ void KasinoGame::updateLayout() {
   m_PlayerSeatLayouts.assign(m_State.numPlayers, {});
   m_PlayerHandRects.assign(m_State.numPlayers, {});
 
-  auto buildHorizontalSeat = [&](int playerIndex, float y) {
+  auto buildHorizontalSeat = [&](int playerIndex, float y,
+                                 float visibleFraction) {
     SeatLayout layout;
     layout.orientation = SeatOrientation::Horizontal;
     layout.anchor = {m_TableRect.x, y, m_TableRect.w, m_CardHeight};
+    layout.visibleFraction = visibleFraction;
     m_PlayerSeatLayouts[playerIndex] = layout;
   };
 
@@ -460,19 +464,20 @@ void KasinoGame::updateLayout() {
     if (bottomY + m_CardHeight > height - margin) {
       bottomY = height - margin - m_CardHeight;
     }
-    buildHorizontalSeat(0, bottomY);
+    buildHorizontalSeat(0, bottomY, 1.f);
   }
 
   if (hasTopSeat) {
-    float topY = m_TableRect.y - m_CardHeight - margin;
-    topY = std::max(topY, m_ScoreboardHeight + margin);
-    buildHorizontalSeat(1, topY);
+    float topY =
+        m_ScoreboardHeight - m_CardHeight * (1.f - topSeatVisibleFraction);
+    buildHorizontalSeat(1, topY, topSeatVisibleFraction);
   }
 
   if (hasLeftSeat) {
     SeatLayout layout;
     layout.orientation = SeatOrientation::Vertical;
     layout.anchor = {margin, m_TableRect.y, sideSeatWidth, m_TableRect.h};
+    layout.visibleFraction = sideSeatVisibleFraction;
     m_PlayerSeatLayouts[2] = layout;
   }
 
@@ -481,6 +486,7 @@ void KasinoGame::updateLayout() {
     layout.orientation = SeatOrientation::Vertical;
     layout.anchor = {m_ActionPanelRect.x - margin - sideSeatWidth, m_TableRect.y,
                      sideSeatWidth, m_TableRect.h};
+    layout.visibleFraction = sideSeatVisibleFraction;
     m_PlayerSeatLayouts[3] = layout;
   }
 
@@ -521,7 +527,13 @@ void KasinoGame::updateLayout() {
       if (layout.anchor.h > totalHeight) {
         startY += (layout.anchor.h - totalHeight) * 0.5f;
       }
-      float x = layout.anchor.x + (layout.anchor.w - cardW) * 0.5f;
+      float visibleFraction = layout.visibleFraction;
+      visibleFraction = std::clamp(visibleFraction, 0.f, 1.f);
+      bool isLeftSeat = layout.anchor.x < m_TableRect.x;
+      float desiredDrawX =
+          isLeftSeat ? margin - m_CardWidth * (1.f - visibleFraction)
+                     : width - margin - m_CardWidth * visibleFraction;
+      float x = desiredDrawX + m_CardWidth * 0.5f - cardW * 0.5f;
       for (size_t i = 0; i < hand.size(); ++i) {
         rects.push_back(Rect{x, startY + (float)i * (cardH + spacing), cardW,
                              cardH});

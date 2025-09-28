@@ -60,6 +60,7 @@ class KasinoGame : public Game {
   struct SeatLayout {
     Rect anchor;
     SeatOrientation orientation = SeatOrientation::Horizontal;
+    float visibleFraction = 1.0f;
   };
 
   struct RunningScore {
