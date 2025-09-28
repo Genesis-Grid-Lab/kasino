@@ -1090,6 +1090,13 @@ void KasinoGame::applyMove(const Casino::Move &mv) {
     handleRoundEnd();
     updateLayout();
     refreshHighlights();
+  } else if (m_State.HandsEmpty()) {
+    updateRoundScorePreview();
+    m_ShowPrompt = true;
+    m_PromptMode = PromptMode::HandSummary;
+    m_PromptHeader = "HAND COMPLETE";
+    m_PromptButtonLabel = "DEAL NEXT HAND";
+    updatePromptLayout();
   } else {
     updateRoundScorePreview();
   }
@@ -1136,6 +1143,21 @@ void KasinoGame::handlePrompt() {
   case PromptMode::RoundSummary:
     startNextRound();
     break;
+  case PromptMode::HandSummary: {
+    m_ShowPrompt = false;
+    m_PromptMode = PromptMode::None;
+    if (!Casino::DealNextHands(m_State)) {
+      handleRoundEnd();
+      updateLayout();
+      refreshHighlights();
+      break;
+    }
+    updateLegalMoves();
+    layoutActionEntries();
+    updateLayout();
+    refreshHighlights();
+    updateRoundScorePreview();
+  } break;
   case PromptMode::PlayerSetup: {
     updateMenuHumanCounts();
     if (m_MenuSelectedHumans <= 0 || m_MenuSelectedPlayers <= 0) return;

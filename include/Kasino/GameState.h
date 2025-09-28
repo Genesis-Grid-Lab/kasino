@@ -36,11 +36,17 @@ struct GameState {
   const PlayerState& CurPlayer() const { return players[current]; }
   PlayerState&       CurPlayer()       { return players[current]; }
 
+  bool HandsEmpty() const {
+    for (const auto& player : players) {
+      if (!player.hand.empty()) return false;
+    }
+    return true;
+  }
+
   bool RoundOver() const {
     // round ends when stock empty and all hands empty
     if (!stock.empty()) return false;
-    for (auto& p : players) if (!p.hand.empty()) return false;
-    return true;
+    return HandsEmpty();
   }
 };
 

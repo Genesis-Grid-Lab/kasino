@@ -247,22 +247,17 @@ bool Casino::ApplyMove(GameState& gs, const Move& mv){
   } break;
   }
 
-  // End-of-turn deal if everyone’s hand exhausted
-  bool handsEmpty = true;
-  for (auto& pl : gs.players) if (!pl.hand.empty()) { handsEmpty = false; break; }
-
-  if (handsEmpty) {
+  // End-of-turn handling when everyone’s hand exhausted
+  if (gs.HandsEmpty()) {
     // last-capture takes remaining table at end of round
     if (gs.stock.empty()) {
       if (gs.lastCaptureBy >= 0) {
-	auto& last = gs.players[gs.lastCaptureBy];
-	// collect all remaining
-	for (auto& c : L) last.pile.push_back(c);
-	L.clear();
-	B.clear(); // builds vanish
+        auto& last = gs.players[gs.lastCaptureBy];
+        // collect all remaining
+        for (auto& c : L) last.pile.push_back(c);
+        L.clear();
+        B.clear(); // builds vanish
       }
-    } else {
-      DealNextHands(gs);
     }
   }
 
