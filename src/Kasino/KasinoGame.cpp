@@ -406,6 +406,7 @@ void KasinoGame::updateLayout() {
   float panelWidth = 160.f;
   float sideSeatVisibleFraction = 0.2f;
   float topSeatVisibleFraction = 0.2f;
+  float sideSeatPeek = m_CardWidth * sideSeatVisibleFraction + margin;  
 
   bool hasLeftSeat = m_State.numPlayers >= 3;
   bool hasRightSeat = m_State.numPlayers >= 4;
@@ -413,10 +414,11 @@ void KasinoGame::updateLayout() {
   float sideSeatWidth = m_CardHeight + margin * 2.f;
 
   float actionPanelX = width - panelWidth - margin;
-  float tableLeft = margin + (hasLeftSeat ? (sideSeatWidth + margin) : 0.f);
+  float tableLeft = margin + (hasLeftSeat ? sideSeatPeek : 0.f);
   float tableRightLimit = actionPanelX - margin;
   if (hasRightSeat) {
-    tableRightLimit -= (sideSeatWidth + margin);
+    tableRightLimit -= sideSeatPeek;
+    actionPanelX -= sideSeatPeek;
   }
   if (tableRightLimit <= tableLeft) {
     tableRightLimit = tableLeft + 160.f;
