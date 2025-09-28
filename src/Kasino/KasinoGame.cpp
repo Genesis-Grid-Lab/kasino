@@ -1107,30 +1107,62 @@ void KasinoGame::handleRoundEnd() {
   if (m_TotalScores.size() != static_cast<size_t>(m_State.numPlayers))
     m_TotalScores.assign(m_State.numPlayers, 0);
 
-  bool hasWinner = false;
-  m_WinningPlayer = -1;
+  // bool hasWinner = false;
+  // m_WinningPlayer = -1;
+  std::vector<int> leaders;
+  int bestTotal = 0;
+  bool haveLeader = false;
   for (int p = 0; p < m_State.numPlayers; ++p) {
     m_TotalScores[p] += m_LastRoundScores[p].total;
-    if (m_TotalScores[p] >= m_TargetScore) {
-      if (!hasWinner || m_TotalScores[p] > m_TotalScores[m_WinningPlayer]) {
-        hasWinner = true;
-        m_WinningPlayer = p;
-      }
+    // if (m_TotalScores[p] >= m_TargetScore) {
+    //   if (!hasWinner || m_TotalScores[p] > m_TotalScores[m_WinningPlayer]) {
+    //     hasWinner = true;
+    //     m_WinningPlayer = p;
+    //   }
+
+    int playerTotal = m_TotalScores[p];
+    if (!haveLeader || playerTotal > bestTotal) {
+      bestTotal = playerTotal;
+      leaders.clear();
+      leaders.push_back(p);
+      haveLeader = true;
+    } else if (playerTotal == bestTotal) {
+      leaders.push_back(p);
     }
   }
 
+  bool deckEmpty = m_State.stock.empty();
+  bool tie = leaders.size() > 1;
+  m_WinningPlayer = tie || leaders.empty() ? -1 : leaders.front();
+
   m_CurrentRoundScores.clear();
 
-  m_Phase = hasWinner ? Phase::MatchSummary : Phase::RoundSummary;
-  m_PromptMode = hasWinner ? PromptMode::MatchSummary : PromptMode::RoundSummary;
+  // m_Phase = hasWinner ? Phase::MatchSummary : Phase::RoundSummary;
+  // m_PromptMode = hasWinner ? PromptMode::MatchSummary :
+  // PromptMode::RoundSummary;
+  m_Phase = deckEmpty ? Phase::MatchSummary : Phase::RoundSummary;
+  m_PromptMode =
+      deckEmpty ? PromptMode::MatchSummary : PromptMode::RoundSummary;
+  
   m_ShowPrompt = true;
-  if (hasWinner) {
-    m_PromptHeader = "PLAYER " + std::to_string(m_WinningPlayer + 1) +
-                     " WINS";
-    m_PromptButtonLabel = "NEW MATCH";
+  // if (hasWinner) {
+  //   m_PromptHeader = "PLAYER " + std::to_string(m_WinningPlayer + 1) +
+  //                    " WINS";
+  //   m_PromptButtonLabel = "NEW MATCH";
+  if (deckEmpty) {
+    if (tie) {
+      m_PromptHeader = "MATCH ENDS IN A TIE";
+    } else if (m_WinningPlayer >= 0) {
+      m_PromptHeader = "PLAYER " + std::to_string(m_WinningPlayer + 1) +
+                       " WINS THE MATCH";
+    } else {
+      m_PromptHeader = "MATCH COMPLETE";
+    }
+    m_PromptButtonLabel = "START NEW MATCH";
   } else {
     m_PromptHeader = "ROUND " + std::to_string(m_RoundNumber) + " COMPLETE";
-    m_PromptButtonLabel = "NEXT ROUND";
+    // m_PromptButtonLabel = "NEXT ROUND";
+    m_PromptButtonLabel = "DEAL NEXT HAND";
   }
   updatePromptLayout();
 }
@@ -1138,7 +1170,7 @@ void KasinoGame::handleRoundEnd() {
 void KasinoGame::handlePrompt() {
   switch (m_PromptMode) {
   case PromptMode::MatchSummary:
-    startNewMatch();
+    // startNewMatch();
     break;
   case PromptMode::RoundSummary:
     startNextRound();
@@ -1146,6 +1178,7 @@ void KasinoGame::handlePrompt() {
   case PromptMode::HandSummary: {
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
+    m_Phase = Phase::Playing; // tmpish
     if (!Casino::DealNextHands(m_State)) {
       handleRoundEnd();
       updateLayout();
