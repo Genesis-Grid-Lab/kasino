@@ -22,6 +22,14 @@ struct Rect {
   glm::vec2 Center() const;
 };
 
+struct Glyph {
+  int width = 3;
+  std::array<const char *, 5> rows{};
+};
+
+const Glyph &glyphFor(char c);
+glm::vec2 measureText(const std::string &text, float scale);
+
 class Render2D {
 public:
   struct Statistics {

@@ -1,18 +1,11 @@
 #pragma once
 
+#include "core/Types.h"
 #include "app/Game.h"
 #include "Kasino/GameLogic.h"
 #include "Kasino/Scoring.h"
 #include "input/InputSystem.h"
 #include "gfx/ITexture2D.h"
-
-#include <array>
-#include <memory>
-#include <optional>
-#include <random>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 #include <glm/glm.hpp>
 

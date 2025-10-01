@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <algorithm>
 #include <unordered_set>
+#include <optional>
+#include <random>
+#include <unordered_map>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

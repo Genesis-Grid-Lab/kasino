@@ -26,11 +26,6 @@ KasinoGame::~KasinoGame() = default;
 
 namespace {
 
-struct Glyph {
-  int width = 3;
-  std::array<const char *, 5> rows{};
-};
-
 constexpr float kAiDecisionDelay = 0.5f;
 constexpr float kAiAnimDuration = 0.3f;
 constexpr float kDealAnimDuration = 0.35f;
@@ -46,52 +41,6 @@ constexpr float kTitleSubtitleSpacingFactor = 1.2f;
 constexpr float kSubtitleButtonsSpacingFactor = 3.0f;
 constexpr float kButtonsFooterSpacingFactor = 2.4f;
 constexpr float kButtonVerticalSpacingFactor = 1.75f;
-
-const Glyph &glyphFor(char c) {
-  static const std::unordered_map<char, Glyph> font = {
-      {'0', {3, {"###", "# #", "# #", "# #", "###"}}},
-      {'1', {3, {" ##", "  #", "  #", "  #", " ###"}}},
-      {'2', {3, {"###", "  #", "###", "#  ", "###"}}},
-      {'3', {3, {"###", "  #", " ##", "  #", "###"}}},
-      {'4', {3, {"# #", "# #", "###", "  #", "  #"}}},
-      {'5', {3, {"###", "#  ", "###", "  #", "###"}}},
-      {'6', {3, {"###", "#  ", "###", "# #", "###"}}},
-      {'7', {3, {"###", "  #", "  #", "  #", "  #"}}},
-      {'8', {3, {"###", "# #", "###", "# #", "###"}}},
-      {'9', {3, {"###", "# #", "###", "  #", "###"}}},
-      {'A', {3, {"###", "# #", "###", "# #", "# #"}}},
-      {'B', {3, {"## ", "# #", "## ", "# #", "## "}}},
-      {'C', {4, {" ###", "#   ", "#   ", "#   ", " ###"}}},
-      {'D', {3, {"## ", "# #", "# #", "# #", "## "}}},
-      {'E', {3, {"###", "#  ", "###", "#  ", "###"}}},
-      {'F', {3, {"###", "#  ", "###", "#  ", "#  "}}},
-      {'G', {4, {" ###", "#   ", "# ##", "#  #", " ###"}}},
-      {'H', {3, {"# #", "# #", "###", "# #", "# #"}}},
-      {'I', {3, {"###", " # ", " # ", " # ", "###"}}},
-      {'K', {3, {"# #", "# #", "## ", "# #", "# #"}}},
-      {'L', {3, {"#  ", "#  ", "#  ", "#  ", "###"}}},
-      {'M', {3, {"# #", "###", "# #", "# #", "# #"}}},
-      {'N', {4, {"# #", "## #", "# ##", "#  #", "#  #"}}},
-      {'O', {3, {"###", "# #", "# #", "# #", "###"}}},
-      {'P', {3, {"###", "# #", "###", "#  ", "#  "}}},
-      {'R', {3, {"###", "# #", "###", "## ", "# #"}}},
-      {'S', {4, {" ###", "#   ", " ###", "   #", "### "}}},
-      {'T', {3, {"###", " # ", " # ", " # ", " # "}}},
-      {'U', {3, {"# #", "# #", "# #", "# #", "###"}}},
-      {'V', {3, {"# #", "# #", "# #", "# #", " # "}}},
-      {'W', {3, {"# #", "# #", "# #", "###", "# #"}}},
-      {'Y', {3, {"# #", "# #", " # ", " # ", " # "}}},
-      {' ', {2, {"  ", "  ", "  ", "  ", "  "}}},
-      {'-', {3, {"   ", "   ", "###", "   ", "   "}}},
-      {':', {1, {" ", "#", " ", "#", " "}}},
-      {'?', {3, {"###", "  #", " ##", "   ", " # "}}},
-  };
-
-  auto upper = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-  auto it = font.find(upper);
-  if (it != font.end()) return it->second;
-  return font.at('?');
-}
 
 struct PreviewScoreResult {
   std::vector<ScoreLine> lines;
@@ -111,36 +60,6 @@ PreviewScoreResult computePreviewScores(const GameState &state) {
   }
   return result;
 }
-
-glm::vec2 measureText(const std::string &text, float scale) {
-  float maxWidth = 0.f;
-  float currentWidth = 0.f;
-  int lineCount = 1;
-  bool hasGlyph = false;
-  for (char ch : text) {
-    if (ch == '\n') {
-      maxWidth = std::max(maxWidth, currentWidth);
-      currentWidth = 0.f;
-      ++lineCount;
-      continue;
-    }
-    const Glyph &g = glyphFor(ch);
-    currentWidth += (float)g.width * scale + scale * 0.5f;
-    hasGlyph = true;
-  }
-  maxWidth = std::max(maxWidth, currentWidth);
-  if (hasGlyph && maxWidth > 0.f) {
-    maxWidth -= scale * 0.5f;
-  }
-
-  float height = 0.f;
-  if (hasGlyph) {
-    height = scale * 5.f + static_cast<float>(lineCount - 1) * scale * 6.f;
-  }
-
-  return {maxWidth, height};
-}
-
 
 }  // namespace
 glm::mat4 KasinoGame::buildCardTransform(const Rect &rect, float rotation) {
