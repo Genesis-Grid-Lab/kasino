@@ -45,6 +45,7 @@ endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog)
 
 file(GLOB_RECURSE source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
 file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
@@ -64,6 +65,7 @@ target_include_directories(engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad/include
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/stb_image
+  ${CMAKE_SOURCE_DIR}/vendor/spdlog/include
 )
 
 # Backend selection
@@ -81,6 +83,7 @@ if (WINDOW_BACKEND STREQUAL "glfw")
 	  glfw
 	  glad
 	  glm
+	  spdlog
 	)
     else()
         find_package(glfw3 REQUIRED)
@@ -88,6 +91,7 @@ if (WINDOW_BACKEND STREQUAL "glfw")
 	  glfw
 	  glad
 	  glm
+	  spdlog
 	)
     endif()
 elseif (WINDOW_BACKEND STREQUAL "native")
@@ -95,18 +99,21 @@ elseif (WINDOW_BACKEND STREQUAL "native")
   target_link_libraries(engine PUBLIC
     glad
     glm
+    spdlog
   )
 elseif(WINDOW_BACKEND STREQUAL "android")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_ANDROID=1)
   target_link_libraries(engine PUBLIC
     glad
     glm
+    spdlog
   )
 elseif(WINDOW_BACKEND STREQUAL "ios")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_IOS=1)
   target_link_libraries(engine PUBLIC
     glad
     glm
+    spdlog
   )
 else()
     message(FATAL_ERROR "Unknown WINDOW_BACKEND: ${WINDOW_BACKEND}. Use glfw or native.")

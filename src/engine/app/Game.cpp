@@ -1,10 +1,13 @@
 #include "app/Game.h"
 #include "gfx/RenderCommand.h"
 #include "gfx/ViewportUtil.h"
+#include "core/Log.h"
 // concrete GL device for now
 #include <chrono>
 
-bool Game::Init(const FactoryDesc& desc) {
+bool Game::Init(const FactoryDesc &desc) {
+  Log::Init();
+  EN_CORE_INFO("init log done.");
   // 1) Window from factory (uses your FactoryDesc)
   m_Window = Factory::CreateWindow(desc);
   if (!m_Window)
