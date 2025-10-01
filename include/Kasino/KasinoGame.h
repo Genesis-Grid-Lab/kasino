@@ -102,6 +102,8 @@ class KasinoGame : public Game {
   std::array<bool, 4> m_MenuSeatIsAI{false, true, true, true};
   std::vector<Rect> m_MenuPlayerCountRects;
   std::vector<Rect> m_MenuSeatToggleRects;
+  float m_MenuSummaryTextY = 0.f;
+  float m_MenuInstructionTextY = 0.f;
   int m_HumanSeatCount = 1;
   std::vector<bool> m_SeatIsAI;
   std::vector<bool> m_IsAiPlayer;
