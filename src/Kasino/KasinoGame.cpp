@@ -543,6 +543,8 @@ void KasinoGame::updatePromptLayout() {
   if (!m_ShowPrompt) {
     m_MenuPlayerCountRects.clear();
     m_MenuSeatToggleRects.clear();
+    m_MenuSummaryTextY = 0.f;
+    m_MenuInstructionTextY = 0.f;
     return;
   }
 
@@ -550,6 +552,18 @@ void KasinoGame::updatePromptLayout() {
   float height = m_Camera.LogicalHeight();
   float boxWidth = width * 0.75f;
   float boxHeight = 220.f;
+  const float buttonWidth = 180.f;
+  const float buttonHeight = 40.f;
+  const float buttonBottomPadding = 16.f;
+  const float summaryMargin = 24.f;
+  const float textSpacing = 24.f;
+  const float buttonSpacing = 24.f;
+  const float seatSpacing = 12.f;
+  const float seatHeight = 32.f;
+  const float optionHeight = 40.f;
+  const float optionSpacing = 16.f;
+  const float optionYBase = 90.f;
+  const float seatHeaderSpacing = 60.f;
 
   switch (m_PromptMode) {
   case PromptMode::RoundSummary:
@@ -559,8 +573,20 @@ void KasinoGame::updatePromptLayout() {
     boxHeight = 220.f;
     break;
   case PromptMode::PlayerSetup: {
-    float seatBlock = static_cast<float>(m_MenuSelectedPlayers) * 44.f;
-    boxHeight = std::max(320.f, 260.f + seatBlock);
+    boxHeight = 320.f;
+    float seatStartOffset = optionYBase + optionHeight + seatHeaderSpacing;
+    int seatCount = std::max(0, m_MenuSelectedPlayers);
+    float seatBottomOffset = seatStartOffset;
+    if (seatCount > 0) {
+      seatBottomOffset += seatHeight * static_cast<float>(seatCount);
+      seatBottomOffset += seatSpacing * static_cast<float>(seatCount - 1);
+    }
+    float summaryOffset = seatBottomOffset + summaryMargin;
+    float instructionOffset = summaryOffset + textSpacing;
+    float buttonTopOffset = instructionOffset + buttonSpacing;
+    float requiredHeight =
+        buttonTopOffset + buttonHeight + buttonBottomPadding;
+    boxHeight = std::max(boxHeight, requiredHeight);
   } break;
   case PromptMode::Settings:
     boxHeight = 240.f;
@@ -571,18 +597,14 @@ void KasinoGame::updatePromptLayout() {
 
   m_PromptBoxRect = {width * 0.5f - boxWidth * 0.5f,
                      height * 0.5f - boxHeight * 0.5f, boxWidth, boxHeight};
-  m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - 180.f) * 0.5f,
-                        m_PromptBoxRect.y + boxHeight - 56.f, 180.f, 40.f};
 
   if (m_PromptMode == PromptMode::PlayerSetup) {
     m_MenuPlayerCountRects.clear();
     m_MenuPlayerCountRects.reserve(4);
     float optionWidth = 60.f;
-    float optionHeight = 40.f;
-    float optionSpacing = 16.f;
     float totalWidth = optionWidth * 4.f + optionSpacing * 3.f;
     float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
-    float optionY = m_PromptBoxRect.y + 90.f;
+    float optionY = m_PromptBoxRect.y + optionYBase;
     for (int i = 0; i < 4; ++i) {
       m_MenuPlayerCountRects.push_back(
           {startX + (float)i * (optionWidth + optionSpacing), optionY,
@@ -591,16 +613,29 @@ void KasinoGame::updatePromptLayout() {
 
     m_MenuSeatToggleRects.clear();
     float seatWidth = boxWidth - 48.f;
-    float seatHeight = 32.f;
-    float seatY = optionY + optionHeight + 60.f;
+    float seatY = optionY + optionHeight + seatHeaderSpacing;
     for (int i = 0; i < m_MenuSelectedPlayers; ++i) {
       m_MenuSeatToggleRects.push_back(
           {m_PromptBoxRect.x + 24.f, seatY, seatWidth, seatHeight});
-      seatY += seatHeight + 12.f;
+      seatY += seatHeight + seatSpacing;
     }
+
+    float seatBottom =
+        (m_MenuSelectedPlayers > 0) ? (seatY - seatSpacing) : seatY;
+    m_MenuSummaryTextY = seatBottom + summaryMargin;
+    m_MenuInstructionTextY = m_MenuSummaryTextY + textSpacing;
+    float buttonTop = m_MenuInstructionTextY + buttonSpacing;
+    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
+                          buttonTop, buttonWidth, buttonHeight};
   } else {
     m_MenuPlayerCountRects.clear();
     m_MenuSeatToggleRects.clear();
+    m_MenuSummaryTextY = 0.f;
+    m_MenuInstructionTextY = 0.f;
+    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
+                          m_PromptBoxRect.y + boxHeight -
+                              (buttonHeight + buttonBottomPadding),
+                          buttonWidth, buttonHeight};
   }
 }
 
@@ -1928,12 +1963,10 @@ void KasinoGame::drawPromptOverlay() {
     int aiCount = std::max(0, m_MenuSelectedPlayers - m_MenuSelectedHumans);
     drawText("HUMANS " + std::to_string(m_MenuSelectedHumans) + " | AI " +
                  std::to_string(aiCount),
-             glm::vec2{m_PromptBoxRect.x + 16.f,
-                       m_PromptButtonRect.y - 48.f},
+             glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuSummaryTextY},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
     drawText("CLICK TO TOGGLE HUMAN / AI",
-             glm::vec2{m_PromptBoxRect.x + 16.f,
-                       m_PromptButtonRect.y - 24.f},
+             glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuInstructionTextY},
              2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
   } else if (m_PromptMode == PromptMode::Settings) {
     drawText("OPTIONS COMING SOON",
