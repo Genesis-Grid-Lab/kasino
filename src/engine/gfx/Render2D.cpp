@@ -190,7 +190,8 @@ void Render2D::DrawQuad(const glm::mat4& transform, const Ref<ITexture2D>& tex,
 void Render2D::StartBatch() {
   s_QuadCount = 0;
   s_TextureSlotCount = 0;
-  std::memset(s_TextureSlots, 0, sizeof(s_TextureSlots));
+  // std::memset(s_TextureSlots, 0, sizeof(s_TextureSlots));
+  std::fill(std::begin(s_TextureSlots), std::end(s_TextureSlots), Ref<ITexture2D>());
   s_TextureSlots[s_TextureSlotCount++] = s_WhiteTexture; // slot 0
 }
 

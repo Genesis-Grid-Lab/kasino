@@ -12,6 +12,7 @@
 #include <optional>
 #include <random>
 #include <unordered_map>
+#include <iterator>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
