@@ -2,6 +2,7 @@
 
 #include "app/Game.h"
 #include "core/Factory.h"
+#include "core/Log.h"
 #include "gfx/Render2D.h"
 #include "input/InputSystem.h"
 #include "Kasino/GameLogic.h"
@@ -77,7 +78,10 @@ glm::mat4 KasinoGame::buildCardTransform(const Rect &rect, float rotation) {
 }
 
 bool KasinoGame::OnStart() {
-  if (!Render2D::Initialize()) return false;
+  if (!Render2D::Initialize()) {
+    EN_ERROR("Render2D initialization failed");
+    return false;
+  }
 
   loadCardTextures();
 
@@ -117,12 +121,19 @@ void KasinoGame::loadCardTextures() {
          value <= RankValue(Rank::King); ++value) {
       Rank rank = static_cast<Rank>(value);
       Card card(rank, suit);
-      auto texture = Factory::CreateTexture2D();
-      if (!texture) continue;
-
+      std::string key = cardTextureKey(card);
       std::string path = cardTexturePath(card);
+
+      auto texture = Factory::CreateTexture2D();
+      if (!texture) {
+        EN_ERROR("Failed to create texture for card {} from {}", key, path);
+        continue;
+      }
+
       if (texture->LoadFromFile(path.c_str(), false)) {
-        m_CardTextures[cardTextureKey(card)] = texture;
+        m_CardTextures[key] = texture;
+      } else {
+        EN_ERROR("Failed to load texture for card {} from {}", key, path);
       }
     }
   }
@@ -134,6 +145,7 @@ void KasinoGame::loadCardTextures() {
     m_CardBackTexture = backTexture;
   } else {
     m_CardBackTexture.reset();
+    EN_ERROR("Failed to load card back texture: {}", backPath);
   }
 }
 
