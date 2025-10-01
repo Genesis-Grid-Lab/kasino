@@ -2,6 +2,7 @@
 #include "window/IWindow.h"
 #include "gfx/RenderCommand.h"
 #include "core/Factory.h"
+#include "core/Log.h"
 #include "gfx/ViewportUtil.h"
 
 // GLAD
@@ -17,25 +18,25 @@ bool GLDevice::Initialize(IWindow &window){
   // Ask window to ensure a GL context exist & is current (GLFW backend
   // implements this).
   if(!m_Window->EnsureGLContext(/*major*/3, /*minor*/3, /*debug*/false)){
-    std::fprintf(stderr, "[GLDevice] EnsureGLContext failed\n");
+    EN_CORE_ERROR("Failed to ensure OpenGL context during GLDevice initialization.");
     return false;
   }
 
   // Load GL via GLAD using window's proc loader
   auto loader = m_Window->GetGLProcLoader();
   if (!loader) {
-    std::fprintf(stderr, "[GLDevice] No GL proc loader\n");
+    EN_CORE_ERROR("No OpenGL procedure loader provided by the window backend.");
     return false;
   }
 
   if (!gladLoadGLLoader((GLADloadproc)loader)) {
-    std::fprintf(stderr, "[GLDevice] gladLoadGLLoader failed\n");
+    EN_CORE_ERROR("gladLoadGLLoader failed to initialize OpenGL function pointers.");
     return false;
   }
 
-  std::printf("[OpenGL] Vendor:   %s\n", glGetString(GL_VENDOR));
-  std::printf("[OpenGL] Renderer: %s\n", glGetString(GL_RENDERER));
-  std::printf("[OpenGL] Version:  %s\n", glGetString(GL_VERSION));
+  EN_CORE_INFO("[OpenGL] Vendor:   {}", reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+  EN_CORE_INFO("[OpenGL] Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+  EN_CORE_INFO("[OpenGL] Version:  {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
   // Basic GL state
   glDisable(GL_DEPTH_TEST);
