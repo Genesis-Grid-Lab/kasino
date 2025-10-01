@@ -1,7 +1,12 @@
 #include "gfx/glad/GLShader.h"
+#include "core/Log.h"
+
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <cctype>
 #include <fstream>
+#include <array>
+#include <vector>
 
 static GLenum ShaderTypeFromString(const std::string& type)
 {
@@ -10,7 +15,7 @@ static GLenum ShaderTypeFromString(const std::string& type)
   if (type == "fragment" || type == "pixel")
     return GL_FRAGMENT_SHADER;
 
-  // UE_CORE_ASSERT(false, "Unknown shader type!");
+  EN_CORE_ERROR("Unknown shader type '{}'", type);
   return 0;
 }
 
@@ -20,12 +25,15 @@ static bool compile(GLuint sh, const char* src, std::string* log){
   GLint ok = 0;
   glGetShaderiv(sh, GL_COMPILE_STATUS, &ok);
 
-  if (!ok && log) {
+  if (!ok) {
     GLint len = 0;
     glGetShaderiv(sh, GL_INFO_LOG_LENGTH, &len);
     std::vector<char> buf(len + 1);
     glGetShaderInfoLog(sh, len, nullptr, buf.data());
-    *log += buf.data();
+    std::string message = buf.data();
+    if (log)
+      *log += message;
+    EN_CORE_ERROR("Shader compilation failed:\n{}", message);
   }
 
   return ok==GL_TRUE;
@@ -45,7 +53,7 @@ void GLShader::Destroy() {
 }
 
 std::unordered_map<GLenum, std::string> GLShader::PreProcess(const std::string& source)
-{ 
+{
   std::unordered_map<GLenum, std::string> shaderSources;
 
   const char* typeToken = "#type";
@@ -54,16 +62,42 @@ std::unordered_map<GLenum, std::string> GLShader::PreProcess(const std::string& 
   while (pos != std::string::npos)
     {
       size_t eol = source.find_first_of("\r\n", pos); //End of shader type declaration line
-      // UE_CORE_ASSERT(eol != std::string::npos, "Syntax error");
-      size_t begin = pos + typeTokenLength + 1; //Start of shader type name (after "#type " keyword)
+      if (eol == std::string::npos)
+        {
+          EN_CORE_ERROR("Shader preprocessing error: missing end of line after '#type' declaration.");
+          break;
+        }
+
+      size_t begin = source.find_first_not_of(" \t", pos + typeTokenLength); //Start of shader type name
+      if (begin == std::string::npos || begin >= eol)
+        {
+          EN_CORE_ERROR("Shader preprocessing error: missing shader type after '#type'.");
+          pos = source.find(typeToken, eol);
+          continue;
+        }
+
       std::string type = source.substr(begin, eol - begin);
-      // UE_CORE_ASSERT(ShaderTypeFromString(type), "Invalid shader type specified");
+      while (!type.empty() && std::isspace(static_cast<unsigned char>(type.back())))
+        type.pop_back();
+
+      GLenum shaderType = ShaderTypeFromString(type);
 
       size_t nextLinePos = source.find_first_not_of("\r\n", eol); //Start of shader code after shader type declaration line
-      // UE_CORE_ASSERT(nextLinePos != std::string::npos, "Syntax error");
+      if (nextLinePos == std::string::npos)
+        {
+          EN_CORE_ERROR("Shader preprocessing error: missing shader code for type '{}'", type);
+          break;
+        }
+
       pos = source.find(typeToken, nextLinePos); //Start of next shader type declaration line
 
-      shaderSources[ShaderTypeFromString(type)] = (pos == std::string::npos) ? source.substr(nextLinePos) : source.substr(nextLinePos, pos - nextLinePos);
+      if (shaderType == 0)
+        {
+          EN_CORE_ERROR("Shader preprocessing error: invalid shader type '{}'", type);
+          continue;
+        }
+
+      shaderSources[shaderType] = (pos == std::string::npos) ? source.substr(nextLinePos) : source.substr(nextLinePos, pos - nextLinePos);
     }
 
   return shaderSources;
@@ -78,9 +112,10 @@ bool GLShader::CompileFromSource(const char *vs, const char *fs,
   if (!compile(v, vs, &log) || !compile(f, fs, &log)) {
     if (outLog)
       *outLog = log;
+    EN_CORE_ERROR("Shader compilation failed:\n{}", log);
     glDeleteShader(v);
     glDeleteShader(f);
-    return false;    
+    return false;
   }
 
   GLuint p = glCreateProgram();
@@ -89,11 +124,13 @@ bool GLShader::CompileFromSource(const char *vs, const char *fs,
   GLint ok=0; glGetProgramiv(p,GL_LINK_STATUS,&ok);
   if(!ok){ GLint len=0; glGetProgramiv(p,GL_INFO_LOG_LENGTH,&len);
     std::vector<char> buf(len + 1);
-    glGetProgramInfoLog(p, len, nullptr, buf.data());    
+    glGetProgramInfoLog(p, len, nullptr, buf.data());
+    std::string linkLog = buf.data();
     if (outLog)
-      *outLog = buf.data();
+      *outLog = linkLog;
+    EN_CORE_ERROR("Shader linking failed:\n{}", linkLog);
     glDeleteProgram(p);
-    return false;    
+    return false;
   }
   m_Program = p;
   m_Uniforms.clear();
@@ -105,8 +142,9 @@ void GLShader::CompileFromSource(const std::unordered_map<GLenum, std::string>& 
 
   GLuint program = glCreateProgram();
   // UE_CORE_ASSERT(shaderSources.size() <= 2, "We only support 2 shaders for now");
-  std::array<GLenum, 2> glShaderIDs;
+  std::array<GLenum, 2> glShaderIDs{};
   int glShaderIDIndex = 0;
+  bool hadError = false;
   for (auto& kv : shaderSources)
     {
       GLenum type = kv.first;
@@ -122,24 +160,32 @@ void GLShader::CompileFromSource(const std::unordered_map<GLenum, std::string>& 
       GLint isCompiled = 0;
       glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
       if (isCompiled == GL_FALSE)
-	{
-	  GLint maxLength = 0;
-	  glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+        {
+          GLint maxLength = 0;
+          glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
 
-	  std::vector<GLchar> infoLog(maxLength);
-	  glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
+          std::vector<GLchar> infoLog(maxLength);
+          glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
 
-	  glDeleteShader(shader);
+          glDeleteShader(shader);
 
-	  // UE_CORE_ERROR("{0}", infoLog.data());
-	  // UE_CORE_ASSERT(false, "Shader compilation failure!");
-	  break;
-	}
+          EN_CORE_ERROR("Shader compilation failed:\n{}", infoLog.data());
+          hadError = true;
+          break;
+        }
 
       glAttachShader(program, shader);
       glShaderIDs[glShaderIDIndex++] = shader;
     }
-		
+
+  if (hadError)
+    {
+      for (int i = 0; i < glShaderIDIndex; ++i)
+        glDeleteShader(glShaderIDs[i]);
+      glDeleteProgram(program);
+      return;
+    }
+
   m_Program = program;
 
   // Link our program
@@ -159,17 +205,18 @@ void GLShader::CompileFromSource(const std::unordered_map<GLenum, std::string>& 
 
       // We don't need the program anymore.
       glDeleteProgram(program);
-			
-      for (auto id : glShaderIDs)
-	glDeleteShader(id);
 
-      // UE_CORE_ERROR("{0}", infoLog.data());
-      // UE_CORE_ASSERT(false, "Shader link failure!");
+      for (auto id : glShaderIDs)
+        glDeleteShader(id);
+
+      EN_CORE_ERROR("Shader linking failed:\n{}", infoLog.data());
       return;
     }
 
   for (auto id : glShaderIDs)
     {
+      if (id == 0)
+        continue;
       glDetachShader(program, id);
       glDeleteShader(id);
     }
@@ -185,19 +232,19 @@ std::string GLShader::ReadFile(const std::string& filepath)
       in.seekg(0, std::ios::end);
       size_t size = in.tellg();
       if (size != -1)
-	{
-	  result.resize(size);
-	  in.seekg(0, std::ios::beg);
-	  in.read(&result[0], size);
-	}
+        {
+          result.resize(size);
+          in.seekg(0, std::ios::beg);
+          in.read(&result[0], size);
+        }
       else
-	{
-	  // UE_CORE_ERROR("Could not read from file '{0}'", filepath);
-	}
+        {
+          EN_CORE_ERROR("Could not read from file '{}'", filepath);
+        }
     }
   else
     {
-      // UE_CORE_ERROR("Could not open file '{0}'", filepath);
+      EN_CORE_ERROR("Could not open file '{}'", filepath);
     }
 
   return result;
