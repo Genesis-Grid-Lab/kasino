@@ -19,7 +19,9 @@ inline bool IsLittleCasino(const Card& c){ return c.rank == Rank::Ten && c.suit 
 	if (IsBigCasino(c)) sc.bigCasino = 1;
 	if (IsLittleCasino(c)) sc.littleCasino = 2; // worth 2 pts
       }
-      sc.sweeps = gs.players[p].sweeps;
+      sc.captureBonuses = gs.players[p].captureBonuses;
+      sc.buildCaptureBonuses = gs.players[p].buildCaptureBonuses;
+      sc.sweepBonuses = gs.players[p].sweepBonuses;
     }
 
     // Most cards (3)
@@ -39,7 +41,9 @@ inline bool IsLittleCasino(const Card& c){ return c.rank == Rank::Ten && c.suit 
 
     // Totals
     for (auto& sc : score) {
-      sc.total = sc.mostCards + sc.mostSpades + sc.bigCasino + sc.littleCasino + sc.aces + sc.sweeps;
+      sc.total = sc.mostCards + sc.mostSpades + sc.bigCasino + sc.littleCasino +
+                 sc.aces + sc.captureBonuses + sc.buildCaptureBonuses +
+                 sc.sweepBonuses;
     }
     return score;
   }

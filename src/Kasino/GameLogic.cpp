@@ -201,16 +201,22 @@ bool ApplyMove(GameState& gs, const Move& mv){
     if (!mv.captureBuildIdx.empty()) {
       std::vector<int> bsorted = mv.captureBuildIdx; std::sort(bsorted.begin(), bsorted.end());
       for (int k=(int)bsorted.size()-1; k>=0; --k) {
-	// when capturing a build, you take nothing extra except the notion it’s cleared from table
-	B.erase(B.begin()+bsorted[k]);
+        // when capturing a build, you take nothing extra except the notion it’s cleared from table
+        B.erase(B.begin()+bsorted[k]);
       }
     }
     // the played card itself goes to pile
     P.pile.push_back(played);
     madeCapture = true;
 
+    if (!mv.captureBuildIdx.empty()) {
+      P.buildCaptureBonuses++;
+    } else {
+      P.captureBonuses++;
+    }
+
     // Sweep?
-    if (tableEmpty(gs)) { P.sweeps++; }
+    if (tableEmpty(gs)) { P.sweepBonuses++; }
     gs.lastCaptureBy = gs.current;
   } break;
 
