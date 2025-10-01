@@ -1509,8 +1509,14 @@ void KasinoGame::drawScoreboard() {
            glm::vec2{width - 120.f, 14.f}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
+  int playerCount = std::max(1, m_State.numPlayers);
+  float columnWidth = width / static_cast<float>(playerCount);
+  constexpr float columnPadding = 12.f;
+
   for (int p = 0; p < m_State.numPlayers; ++p) {
-    float offsetX = 12.f + p * (width * 0.5f);
+    float columnLeft = columnWidth * static_cast<float>(p);
+    float columnRight = columnWidth * static_cast<float>(p + 1);
+    float offsetX = columnLeft + columnPadding;
     glm::vec4 color = m_PlayerColors[p % m_PlayerColors.size()];
     drawText("PLAYER " + std::to_string(p + 1), glm::vec2{offsetX, 44.f}, 3.5f,
              color);
@@ -1542,8 +1548,13 @@ void KasinoGame::drawScoreboard() {
                glm::vec2{totalPos.x + baseWidth, totalPos.y}, 3.f,
                potentialColor);
     }
-    drawText("SWEEPS " + std::to_string(m_State.players[p].sweeps),
-             glm::vec2{offsetX + 120.f, 64.f}, 3.f,
+    std::string sweepsText = "SWEEPS " + std::to_string(m_State.players[p].sweeps);
+    float sweepsWidth = measureText(sweepsText, 3.f).x;
+    float sweepsX = columnRight - columnPadding - sweepsWidth;
+    if (sweepsX < offsetX) {
+      sweepsX = offsetX;
+    }
+    drawText(sweepsText, glm::vec2{sweepsX, 64.f}, 3.f,
              glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
   }
 
