@@ -124,7 +124,7 @@ class KasinoGame : public Game {
   Rect m_PromptBoxRect{};
   Rect m_PromptButtonRect{};
   Rect m_CancelButtonRect{};
-  float m_ScoreboardHeight = 120.f;
+  float m_ScoreboardHeight = 132.f;
 
   std::vector<std::vector<Rect>> m_PlayerHandRects;
   std::vector<SeatLayout> m_PlayerSeatLayouts;

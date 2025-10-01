@@ -1504,22 +1504,33 @@ void KasinoGame::drawScoreboard() {
   Render2D::DrawQuad(glm::vec2{bar.x, bar.y}, glm::vec2{bar.w, 4.f},
                      glm::vec4(0.02f, 0.05f, 0.03f, 1.0f));
 
-  drawText("ROUND " + std::to_string(m_RoundNumber), glm::vec2{12.f, 14.f}, 4.f,
-           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+  const float headerTop = 14.f;
+  const float headerSpacing = 10.f;
+  const float rowSpacing = 3.f;
+  auto measureHeight = [](const std::string &text, float scale) {
+    return measureText(text, scale).y;
+  };
+  float headerHeight = measureHeight("ROUND", 4.f);
+
+  drawText("ROUND " + std::to_string(m_RoundNumber), glm::vec2{12.f, headerTop},
+           4.f, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
   drawText("DECK " + std::to_string(m_State.stock.size()),
-           glm::vec2{width - 120.f, 14.f}, 4.f,
+           glm::vec2{width - 120.f, headerTop}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   int playerCount = std::max(1, m_State.numPlayers);
   float columnWidth = width / static_cast<float>(playerCount);
   constexpr float columnPadding = 12.f;
+  float columnStartY = headerTop + headerHeight + headerSpacing;
 
   for (int p = 0; p < m_State.numPlayers; ++p) {
     float columnLeft = columnWidth * static_cast<float>(p);
     float offsetX = columnLeft + columnPadding;
     glm::vec4 color = m_PlayerColors[p % m_PlayerColors.size()];
-    drawText("PLAYER " + std::to_string(p + 1), glm::vec2{offsetX, 44.f}, 3.5f,
-             color);
+    float currentY = columnStartY;
+    std::string playerLabel = "PLAYER " + std::to_string(p + 1);
+    drawText(playerLabel, glm::vec2{offsetX, currentY}, 3.5f, color);
+    currentY += measureHeight(playerLabel, 3.5f) + rowSpacing;
     int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
     bool showPotential = false;
     int potentialPoints = 0;
@@ -1537,7 +1548,7 @@ void KasinoGame::drawScoreboard() {
       }
       total += roundPoints;
     }
-    glm::vec2 totalPos{offsetX, 64.f};
+    glm::vec2 totalPos{offsetX, currentY};
     glm::vec4 totalColor(0.95f, 0.95f, 0.95f, 1.0f);
     std::string totalText = "TOTAL " + std::to_string(total);
     drawText(totalText, totalPos, 3.f, totalColor);
@@ -1550,6 +1561,7 @@ void KasinoGame::drawScoreboard() {
                glm::vec2{totalPos.x + baseWidth, totalPos.y}, 3.f,
                potentialColor);
     }
+    currentY += measureHeight(totalText, 3.f) + rowSpacing;
     int captureBonus = 0;
     int buildCaptureBonus = 0;
     int sweepBonus = 0;
@@ -1564,19 +1576,23 @@ void KasinoGame::drawScoreboard() {
       sweepBonus = player.sweepBonuses;
     }
 
-    auto drawBonus = [&](const std::string &label, int value, float y) {
+    auto drawBonus = [&](const std::string &label, int value, bool addSpacing) {
       std::string text = label + " +" + std::to_string(value);
-      drawText(text, glm::vec2{offsetX, y}, 2.6f,
+      drawText(text, glm::vec2{offsetX, currentY}, 2.6f,
                glm::vec4(0.9f, 0.94f, 0.92f, 1.0f));
+      currentY += measureHeight(text, 2.6f);
+      if (addSpacing) {
+        currentY += rowSpacing;
+      }
     };
 
-    drawBonus("CAP", captureBonus, 82.f);
-    drawBonus("BLD", buildCaptureBonus, 98.f);
-    drawBonus("SWP", sweepBonus, 114.f);
+    drawBonus("CAP", captureBonus, true);
+    drawBonus("BLD", buildCaptureBonus, true);
+    drawBonus("SWP", sweepBonus, false);
   }
 
   drawText("TURN P" + std::to_string(m_State.current + 1),
-           glm::vec2{width * 0.5f - 60.f, 14.f}, 4.f,
+           glm::vec2{width * 0.5f - 60.f, headerTop}, 4.f,
            m_PlayerColors[m_State.current % m_PlayerColors.size()]);
 }
 
