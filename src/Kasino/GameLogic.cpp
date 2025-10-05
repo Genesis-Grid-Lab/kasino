@@ -35,8 +35,6 @@ static void removeBuilds(std::vector<Build>& v, std::vector<int> idx){
   for (int k=(int)idx.size()-1; k>=0; --k) v.erase(v.begin()+idx[k]);
 }
 
-static bool tableEmpty(const GameState& gs){ return gs.table.loose.empty() && gs.table.builds.empty(); }
-
 // ---------- flow
 
 void StartRound(GameState& gs, int numPlayers, uint32_t shuffleSeed){
@@ -187,36 +185,33 @@ bool ApplyMove(GameState& gs, const Move& mv){
   auto& B = gs.table.builds;
   auto& P = gs.players[gs.current];
 
-  bool madeCapture = false;
-
   switch (mv.type) {
   case MoveType::Capture: {
+    int cardPointsEarned = 0;
     // Take loose indices
     std::vector<int> sorted = mv.captureLooseIdx; std::sort(sorted.begin(), sorted.end());
     for (int k=(int)sorted.size()-1; k>=0; --k) {
       P.pile.push_back(L[sorted[k]]);
+      cardPointsEarned++;
       L.erase(L.begin()+sorted[k]);
     }
     // Take matching builds
     if (!mv.captureBuildIdx.empty()) {
       std::vector<int> bsorted = mv.captureBuildIdx; std::sort(bsorted.begin(), bsorted.end());
       for (int k=(int)bsorted.size()-1; k>=0; --k) {
-        // when capturing a build, you take nothing extra except the notion it’s cleared from table
-        B.erase(B.begin()+bsorted[k]);
+        int bi = bsorted[k];
+        if (bi < 0 || bi >= (int)B.size()) continue;
+        const auto capturedCards = B[bi].cards;
+        cardPointsEarned += static_cast<int>(capturedCards.size());
+        P.pile.insert(P.pile.end(), capturedCards.begin(), capturedCards.end());
+        B.erase(B.begin()+bi);
       }
     }
     // the played card itself goes to pile
     P.pile.push_back(played);
-    madeCapture = true;
+    cardPointsEarned++;
 
-    if (!mv.captureBuildIdx.empty()) {
-      P.buildCaptureBonuses++;
-    } else {
-      P.captureBonuses++;
-    }
-
-    // Sweep?
-    if (tableEmpty(gs)) { P.sweepBonuses++; }
+    P.capturedCardPoints += cardPointsEarned;
     gs.lastCaptureBy = gs.current;
   } break;
 
@@ -233,6 +228,7 @@ bool ApplyMove(GameState& gs, const Move& mv){
       L.erase(L.begin()+sorted[k]);
     }
     B.push_back(std::move(nb));
+    P.buildBonus += 1;
     // played card goes to table *as part of build* (not to pile)
   } break;
 
@@ -258,7 +254,8 @@ bool ApplyMove(GameState& gs, const Move& mv){
       if (gs.lastCaptureBy >= 0) {
         auto& last = gs.players[gs.lastCaptureBy];
         // collect all remaining
-        for (auto& c : L) last.pile.push_back(c);
+        last.pile.insert(last.pile.end(), L.begin(), L.end());
+        last.capturedCardPoints += static_cast<int>(L.size());
         L.clear();
         B.clear(); // builds vanish
       }

@@ -45,20 +45,12 @@ constexpr float kButtonVerticalSpacingFactor = 1.75f;
 
 struct PreviewScoreResult {
   std::vector<ScoreLine> lines;
-  bool includeMajorities = false;
 };
 
 PreviewScoreResult computePreviewScores(const GameState &state) {
   PreviewScoreResult result;
-  result.includeMajorities = state.RoundOver();
   GameState previewState = state;
   result.lines = ScoreRound(previewState);
-  if (!result.includeMajorities) {
-    for (auto &line : result.lines) {
-      line.total -= line.mostCards;
-      line.total -= line.mostSpades;
-    }
-  }
   return result;
 }
 
@@ -263,14 +255,6 @@ void KasinoGame::updateRoundScorePreview() {
   for (const auto &line : preview.lines) {
     RunningScore running;
     running.line = line;
-    running.potentialMajorities = line.mostCards + line.mostSpades;
-    running.securedPoints = line.aces + line.bigCasino + line.littleCasino +
-                            line.captureBonuses +
-                            line.buildCaptureBonuses + line.sweepBonuses;
-    running.showMajorityBonuses = preview.includeMajorities;
-    if (!preview.includeMajorities) {
-      running.line.total = running.securedPoints;
-    }
     m_CurrentRoundScores.push_back(running);
   }
 }
@@ -1579,51 +1563,35 @@ void KasinoGame::drawScoreboard() {
     drawText(playerLabel, glm::vec2{offsetX, currentY}, 3.5f, color);
     currentY += measureHeight(playerLabel, 3.5f) + rowSpacing;
     int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
-    bool showPotential = false;
-    int potentialPoints = 0;
     const RunningScore *runningScore =
         (p < static_cast<int>(m_CurrentRoundScores.size()))
             ? &m_CurrentRoundScores[p]
             : nullptr;
-    if (m_Phase == Phase::Playing && runningScore) {
-      int roundPoints = runningScore->securedPoints;
-      if (runningScore->showMajorityBonuses) {
-        roundPoints += runningScore->potentialMajorities;
-      } else if (runningScore->potentialMajorities > 0) {
-        showPotential = true;
-        potentialPoints = runningScore->potentialMajorities;
+    if (m_Phase == Phase::Playing) {
+      if (runningScore) {
+        total += runningScore->line.total;
+      } else if (p < static_cast<int>(m_State.players.size())) {
+        const auto &player = m_State.players[p];
+        total += player.capturedCardPoints + player.buildBonus;
       }
-      total += roundPoints;
     }
     glm::vec2 totalPos{offsetX, currentY};
     glm::vec4 totalColor(0.95f, 0.95f, 0.95f, 1.0f);
     std::string totalText = "TOTAL " + std::to_string(total);
     drawText(totalText, totalPos, 3.f, totalColor);
-    if (showPotential && potentialPoints > 0) {
-      // float baseWidth = measureTextWidth(totalText, 3.f);
-      float baseWidth = measureText(totalText, 3.f).x;
-      std::string potentialText = " +" + std::to_string(potentialPoints);
-      glm::vec4 potentialColor(totalColor.r, totalColor.g, totalColor.b, 0.6f);
-      drawText(potentialText,
-               glm::vec2{totalPos.x + baseWidth, totalPos.y}, 3.f,
-               potentialColor);
-    }
     currentY += measureHeight(totalText, 3.f) + rowSpacing;
-    int captureBonus = 0;
-    int buildCaptureBonus = 0;
-    int sweepBonus = 0;
+    int cardPoints = 0;
+    int buildBonus = 0;
     if (runningScore) {
-      captureBonus = runningScore->line.captureBonuses;
-      buildCaptureBonus = runningScore->line.buildCaptureBonuses;
-      sweepBonus = runningScore->line.sweepBonuses;
+      cardPoints = runningScore->line.capturedCardPoints;
+      buildBonus = runningScore->line.buildBonus;
     } else if (p < static_cast<int>(m_State.players.size())) {
       const auto &player = m_State.players[p];
-      captureBonus = player.captureBonuses;
-      buildCaptureBonus = player.buildCaptureBonuses;
-      sweepBonus = player.sweepBonuses;
+      cardPoints = player.capturedCardPoints;
+      buildBonus = player.buildBonus;
     }
 
-    auto drawBonus = [&](const std::string &label, int value, bool addSpacing) {
+    auto drawStat = [&](const std::string &label, int value, bool addSpacing) {
       std::string text = label + " +" + std::to_string(value);
       drawText(text, glm::vec2{offsetX, currentY}, 2.6f,
                glm::vec4(0.9f, 0.94f, 0.92f, 1.0f));
@@ -1633,9 +1601,8 @@ void KasinoGame::drawScoreboard() {
       }
     };
 
-    drawBonus("CAP", captureBonus, true);
-    drawBonus("BLD", buildCaptureBonus, true);
-    drawBonus("SWP", sweepBonus, false);
+    drawStat("CARDS", cardPoints, true);
+    drawStat("BUILDS", buildBonus, false);
   }
 
   drawText("TURN P" + std::to_string(m_State.current + 1),
