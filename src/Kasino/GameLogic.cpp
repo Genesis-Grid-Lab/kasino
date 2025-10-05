@@ -188,6 +188,7 @@ bool ApplyMove(GameState& gs, const Move& mv){
   switch (mv.type) {
   case MoveType::Capture: {
     int cardPointsEarned = 0;
+    int buildsCaptured = 0;
     // Take loose indices
     std::vector<int> sorted = mv.captureLooseIdx; std::sort(sorted.begin(), sorted.end());
     for (int k=(int)sorted.size()-1; k>=0; --k) {
@@ -204,11 +205,13 @@ bool ApplyMove(GameState& gs, const Move& mv){
         const auto capturedCards = B[bi].cards;
         cardPointsEarned += static_cast<int>(capturedCards.size());
         P.pile.insert(P.pile.end(), capturedCards.begin(), capturedCards.end());
+	buildsCaptured++;        
         B.erase(B.begin()+bi);
       }
     }
     // the played card itself goes to pile
     P.pile.push_back(played);
+    P.buildBonus += buildsCaptured;    
     cardPointsEarned++;
 
     P.capturedCardPoints += cardPointsEarned;
@@ -228,7 +231,7 @@ bool ApplyMove(GameState& gs, const Move& mv){
       L.erase(L.begin()+sorted[k]);
     }
     B.push_back(std::move(nb));
-    P.buildBonus += 1;
+    // P.buildBonus += 1;
     // played card goes to table *as part of build* (not to pile)
   } break;
 
