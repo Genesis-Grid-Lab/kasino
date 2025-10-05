@@ -9,6 +9,7 @@ struct PlayerState {
   std::vector<Card> pile;   // captured
   int capturedCardPoints = 0;     // points earned by moving cards into pile
   int buildBonus = 0;             // bonuses earned for successful builds
+  int sweepBonus = 0;             // sweeps earned by clearing the table
 };
 
 struct TableState {

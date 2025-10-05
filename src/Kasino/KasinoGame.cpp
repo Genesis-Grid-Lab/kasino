@@ -1572,7 +1572,8 @@ void KasinoGame::drawScoreboard() {
         total += runningScore->line.total;
       } else if (p < static_cast<int>(m_State.players.size())) {
         const auto &player = m_State.players[p];
-        total += player.capturedCardPoints + player.buildBonus;
+        total += player.capturedCardPoints + player.buildBonus +
+                 player.sweepBonus;
       }
     }
     glm::vec2 totalPos{offsetX, currentY};
@@ -1582,13 +1583,16 @@ void KasinoGame::drawScoreboard() {
     currentY += measureHeight(totalText, 3.f) + rowSpacing;
     int cardPoints = 0;
     int buildBonus = 0;
+    int sweepBonus = 0;
     if (runningScore) {
       cardPoints = runningScore->line.capturedCardPoints;
       buildBonus = runningScore->line.buildBonus;
+      sweepBonus = runningScore->line.sweepBonus;
     } else if (p < static_cast<int>(m_State.players.size())) {
       const auto &player = m_State.players[p];
       cardPoints = player.capturedCardPoints;
       buildBonus = player.buildBonus;
+      sweepBonus = player.sweepBonus;
     }
 
     auto drawStat = [&](const std::string &label, int value, bool addSpacing) {
@@ -1602,7 +1606,8 @@ void KasinoGame::drawScoreboard() {
     };
 
     drawStat("CARDS", cardPoints, true);
-    drawStat("BUILDS", buildBonus, false);
+    drawStat("BUILDS", buildBonus, true);
+    drawStat("SWEEPS", sweepBonus, false);
   }
 
   drawText("TURN P" + std::to_string(m_State.current + 1),

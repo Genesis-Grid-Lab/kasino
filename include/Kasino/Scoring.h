@@ -10,7 +10,8 @@
       const auto &player = gs.players[p];
       sc.capturedCardPoints = player.capturedCardPoints;
       sc.buildBonus = player.buildBonus;
-      sc.total = sc.capturedCardPoints + sc.buildBonus;
+      sc.sweepBonus = player.sweepBonus;
+      sc.total = sc.capturedCardPoints + sc.buildBonus + sc.sweepBonus;
     }
 
     return score;
