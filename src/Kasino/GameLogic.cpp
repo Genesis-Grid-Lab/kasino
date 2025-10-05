@@ -207,6 +207,10 @@ bool ApplyMove(GameState& gs, const Move& mv){
         B.erase(B.begin()+bi);
       }
     }
+    bool clearedTable = L.empty() && B.empty();
+    if (clearedTable) {
+      P.sweepBonus += 1;
+    }
     // the played card itself goes to pile
     P.pile.push_back(played);
     cardPointsEarned++;

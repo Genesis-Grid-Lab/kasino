@@ -20,6 +20,7 @@
     int total = 0;
     int capturedCardPoints = 0;
     int buildBonus = 0;
+    int sweepBonus = 0;
   };
   std::vector<ScoreLine> ScoreRound(GameState& gs);
 
