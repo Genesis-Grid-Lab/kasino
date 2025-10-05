@@ -18,16 +18,8 @@
   // Scoring at end of round
   struct ScoreLine {
     int total = 0;
-    int mostCards = 0;
-    int mostSpades = 0;
-    int bigCasino = 0;
-    int littleCasino = 0;
-    int aces = 0;
-    int captureBonuses = 0;
-    int buildCaptureBonuses = 0;
-    int sweepBonuses = 0;
-    int cardsCount = 0;
-    int spadesCount = 0;
+    int capturedCardPoints = 0;
+    int buildBonus = 0;
   };
   std::vector<ScoreLine> ScoreRound(GameState& gs);
 
@@ -57,9 +49,6 @@ struct Selection {
 
   struct RunningScore {
     ScoreLine line;
-    int securedPoints = 0;
-    int potentialMajorities = 0;
-    bool showMajorityBonuses = false;
   };
 
   struct DealAnim {

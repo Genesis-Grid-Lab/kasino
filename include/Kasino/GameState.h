@@ -7,9 +7,8 @@
 struct PlayerState {
   std::vector<Card> hand;
   std::vector<Card> pile;   // captured
-  int sweepBonuses = 0;           // sweep count / bonus this round
-  int captureBonuses = 0;         // plain capture bonuses earned this round
-  int buildCaptureBonuses = 0;    // bonuses for capturing builds
+  int capturedCardPoints = 0;     // points earned by moving cards into pile
+  int buildBonus = 0;             // bonuses earned for successful builds
 };
 
 struct TableState {
