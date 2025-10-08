@@ -26,8 +26,11 @@ class KasinoGame : public Game {
     MatchSummary,
     HandSummary,
     PlayerSetup,
-    Settings
-  };  
+    Settings,
+    MainMenuSettings
+  };
+
+  enum class Difficulty { Easy, Medium, Hard };
 
   // tmp
   glm::mat4 buildCardTransform(const Rect &rect, float rotation);
@@ -41,6 +44,7 @@ class KasinoGame : public Game {
   void updateLayout();
   void updatePromptLayout();
   void updateMenuHumanCounts();
+  void updateActionOptions();
   void layoutActionEntries();
   void updateHoveredAction(float mx, float my);
   void refreshHighlights();
@@ -77,6 +81,11 @@ class KasinoGame : public Game {
                 const glm::vec4 &color);
 
   std::string moveLabel(const Move &mv) const;
+  std::string moveLabelForDifficulty(const Move &mv, Difficulty difficulty) const;
+  std::string difficultyLabel(Difficulty difficulty) const;
+  std::string difficultyDescription(Difficulty difficulty) const;
+  bool selectionMatches(const Move &mv) const;
+  bool movesEquivalent(const Move &a, const Move &b) const;
   bool selectionCompatible(const Move &mv) const;
   void loadCardTextures();
   std::string cardTextureKey(const Card &card) const;
@@ -100,8 +109,11 @@ class KasinoGame : public Game {
   int m_MenuSelectedPlayers = 2;
   int m_MenuSelectedHumans = 1;
   std::array<bool, 4> m_MenuSeatIsAI{false, true, true, true};
+  Difficulty m_MenuDifficulty = Difficulty::Easy;
+  Difficulty m_ActiveDifficulty = Difficulty::Easy;
   std::vector<Rect> m_MenuPlayerCountRects;
   std::vector<Rect> m_MenuSeatToggleRects;
+  std::vector<Rect> m_DifficultyOptionRects;
   float m_MenuSummaryTextY = 0.f;
   float m_MenuInstructionTextY = 0.f;
   int m_HumanSeatCount = 1;
@@ -126,6 +138,7 @@ class KasinoGame : public Game {
   Rect m_PromptBoxRect{};
   Rect m_PromptButtonRect{};
   Rect m_CancelButtonRect{};
+  Rect m_ConfirmButtonRect{};
   float m_ScoreboardHeight = 132.f;
 
   std::vector<std::vector<Rect>> m_PlayerHandRects;
@@ -147,6 +160,8 @@ class KasinoGame : public Game {
   std::optional<PendingMove> m_PendingMove;
   std::vector<bool> m_PendingLooseHighlights;
   std::vector<bool> m_PendingBuildHighlights;
+  std::optional<Move> m_ConfirmableMove;
+  bool m_ConfirmAmbiguous = false;
 
   int m_HoveredAction = -1;
   std::set<int> m_HoveredLoose;
