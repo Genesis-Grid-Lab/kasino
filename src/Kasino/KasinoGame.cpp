@@ -97,6 +97,8 @@ bool KasinoGame::OnStart() {
   m_Phase = Phase::MainMenu;
   m_PromptMode = PromptMode::None;
   m_ShowPrompt = false;
+  m_MenuDifficulty = Difficulty::Easy;
+  m_ActiveDifficulty = m_MenuDifficulty;
   return true;
 }
 
@@ -208,7 +210,6 @@ void KasinoGame::startNewMatch() {
   StartRound(m_State, m_State.numPlayers, m_Rng());
   m_LegalMoves = LegalMoves(m_State);
   m_Selection.Clear();
-  m_ActionEntries.clear();
   m_LastRoundScores.clear();
   m_PendingMove.reset();
   m_PendingLooseHighlights.clear();
@@ -217,11 +218,9 @@ void KasinoGame::startNewMatch() {
   m_ShowPrompt = false;
   m_PromptMode = PromptMode::None;
   updateRoundScorePreview();
+  updateActionOptions();
   updateLayout();
   beginDealAnimation();
-  if (!m_IsDealing) {
-    refreshHighlights();
-  }
 }
 
 void KasinoGame::startNextRound() {
@@ -229,7 +228,6 @@ void KasinoGame::startNextRound() {
   StartRound(m_State, m_State.numPlayers, m_Rng());
   m_LegalMoves = LegalMoves(m_State);
   m_Selection.Clear();
-  m_ActionEntries.clear();
   m_LastRoundScores.clear();
   m_PendingMove.reset();
   m_PendingLooseHighlights.clear();
@@ -238,6 +236,7 @@ void KasinoGame::startNextRound() {
   m_ShowPrompt = false;
   m_PromptMode = PromptMode::None;
   updateRoundScorePreview();
+  updateActionOptions();
   updateLayout();
   refreshHighlights();
 }
@@ -296,8 +295,7 @@ void KasinoGame::beginDealAnimation() {
   if (!m_DealQueue.empty()) {
     m_IsDealing = true;
     m_Selection.Clear();
-    m_ActionEntries.clear();
-    layoutActionEntries();
+    updateActionOptions();
     m_HoveredAction = -1;
   } else {
     for (int p = 0; p < m_State.numPlayers; ++p) {
@@ -312,14 +310,17 @@ void KasinoGame::updateLegalMoves() {
   m_LegalMoves = LegalMoves(m_State);
   if (m_Selection.handIndex) {
     // Ensure the selected index is still valid; otherwise clear selection.
-    auto &hand = m_State.players[m_State.current].hand;
-    if (*m_Selection.handIndex < 0 ||
-        *m_Selection.handIndex >= static_cast<int>(hand.size())) {
+    if (m_State.current < 0 || m_State.current >= m_State.numPlayers) {
       m_Selection.Clear();
-      m_ActionEntries.clear();
+    } else {
+      auto &hand = m_State.players[m_State.current].hand;
+      if (*m_Selection.handIndex < 0 ||
+          *m_Selection.handIndex >= static_cast<int>(hand.size())) {
+        m_Selection.Clear();
+      }
     }
   }
-  refreshHighlights();
+  updateActionOptions();
 }
 
 void KasinoGame::updateMainMenuLayout() {
@@ -531,6 +532,11 @@ void KasinoGame::updateLayout() {
   m_CancelButtonRect = {m_ActionPanelRect.x + 12.f,
                         m_ActionPanelRect.y + m_ActionPanelRect.h - buttonHeight - 12.f,
                         m_ActionPanelRect.w - 24.f, buttonHeight};
+  float confirmHeight = 32.f;
+  float confirmSpacing = 8.f;
+  m_ConfirmButtonRect = {m_ActionPanelRect.x + 12.f,
+                         m_CancelButtonRect.y - confirmHeight - confirmSpacing,
+                         m_ActionPanelRect.w - 24.f, confirmHeight};
 
   updatePromptLayout();
 }
@@ -587,6 +593,9 @@ void KasinoGame::updatePromptLayout() {
   case PromptMode::Settings:
     boxHeight = 240.f;
     break;
+  case PromptMode::MainMenuSettings:
+    boxHeight = 260.f;
+    break;
   case PromptMode::None:
     break;
   }
@@ -623,11 +632,34 @@ void KasinoGame::updatePromptLayout() {
     float buttonTop = m_MenuInstructionTextY + buttonSpacing;
     m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
                           buttonTop, buttonWidth, buttonHeight};
+    m_DifficultyOptionRects.clear();
+  } else if (m_PromptMode == PromptMode::MainMenuSettings) {
+    m_MenuPlayerCountRects.clear();
+    m_MenuSeatToggleRects.clear();
+    m_MenuSummaryTextY = 0.f;
+    m_MenuInstructionTextY = 0.f;
+    m_DifficultyOptionRects.clear();
+    float optionWidth = 120.f;
+    float optionHeightLocal = 44.f;
+    float optionSpacingLocal = 20.f;
+    float totalWidth = optionWidth * 3.f + optionSpacingLocal * 2.f;
+    float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
+    float optionY = m_PromptBoxRect.y + 110.f;
+    for (int i = 0; i < 3; ++i) {
+      m_DifficultyOptionRects.push_back(
+          {startX + (float)i * (optionWidth + optionSpacingLocal), optionY,
+           optionWidth, optionHeightLocal});
+    }
+    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
+                          m_PromptBoxRect.y + boxHeight -
+                              (buttonHeight + buttonBottomPadding),
+                          buttonWidth, buttonHeight};
   } else {
     m_MenuPlayerCountRects.clear();
     m_MenuSeatToggleRects.clear();
     m_MenuSummaryTextY = 0.f;
     m_MenuInstructionTextY = 0.f;
+    m_DifficultyOptionRects.clear();
     m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
                           m_PromptBoxRect.y + boxHeight -
                               (buttonHeight + buttonBottomPadding),
@@ -653,8 +685,18 @@ void KasinoGame::layoutActionEntries() {
   float labelTop = m_ActionPanelRect.y + 6.f;
   float labelHeight = 5.f * labelScale;
   float y = labelTop + labelHeight + 8.f;
+  if (m_ActiveDifficulty != Difficulty::Easy) {
+    y += 20.f;
+  }
   float w = m_ActionPanelRect.w - 24.f;
+  float bottomLimit = m_ActionPanelRect.y + m_ActionPanelRect.h - 12.f;
+  if (m_ActiveDifficulty != Difficulty::Easy && m_ConfirmButtonRect.h > 0.f) {
+    bottomLimit = m_ConfirmButtonRect.y - 8.f;
+  } else if (m_CancelButtonRect.h > 0.f) {
+    bottomLimit = m_CancelButtonRect.y - 8.f;
+  }
   for (auto &entry : m_ActionEntries) {
+    if (y + buttonHeight > bottomLimit) break;
     entry.rect = {x, y, w, buttonHeight};
     y += buttonHeight + 8.f;
   }
@@ -665,6 +707,7 @@ void KasinoGame::refreshHighlights() {
   m_BuildHighlights.assign(m_BuildRects.size(), false);
 
   if (!m_Selection.handIndex) return;
+  if (m_ActiveDifficulty == Difficulty::Hard) return;
 
   for (const auto &mv : m_LegalMoves) {
     if (!(mv.handCard ==
@@ -753,6 +796,163 @@ std::string KasinoGame::moveLabel(const Move &mv) const {
   return oss.str();
 }
 
+std::string KasinoGame::moveLabelForDifficulty(const Move &mv,
+                                               Difficulty difficulty) const {
+  if (difficulty == Difficulty::Easy) {
+    return moveLabel(mv);
+  }
+
+  std::ostringstream oss;
+  switch (mv.type) {
+  case MoveType::Capture: {
+    oss << "CAPTURE";
+    int targets = static_cast<int>(mv.captureLooseIdx.size()) +
+                  static_cast<int>(mv.captureBuildIdx.size());
+    if (targets > 0) {
+      oss << " (" << targets << (targets == 1 ? " CARD" : " CARDS") << ")";
+    }
+  } break;
+  case MoveType::Build:
+    oss << "BUILD TO " << mv.buildTargetValue;
+    break;
+  case MoveType::ExtendBuild:
+    oss << "RAISE BUILD TO " << mv.buildTargetValue;
+    break;
+  case MoveType::Trail:
+    oss << "TRAIL";
+    break;
+  }
+  return oss.str();
+}
+
+std::string KasinoGame::difficultyLabel(Difficulty difficulty) const {
+  switch (difficulty) {
+  case Difficulty::Easy:
+    return "EASY";
+  case Difficulty::Medium:
+    return "MEDIUM";
+  case Difficulty::Hard:
+    return "HARD";
+  }
+  return "";
+}
+
+std::string KasinoGame::difficultyDescription(Difficulty difficulty) const {
+  switch (difficulty) {
+  case Difficulty::Easy:
+    return "Shows full move details and highlights to guide play.";
+  case Difficulty::Medium:
+    return "Shows move types but fewer specifics—some planning required.";
+  case Difficulty::Hard:
+    return "No move hints. Select exact targets then confirm the play.";
+  }
+  return "";
+}
+
+bool KasinoGame::selectionMatches(const Move &mv) const {
+  if (!m_Selection.handIndex) return false;
+
+  auto vectorToSet = [](const std::vector<int> &indices) {
+    return std::set<int>(indices.begin(), indices.end());
+  };
+
+  switch (mv.type) {
+  case MoveType::Capture:
+    return m_Selection.loose == vectorToSet(mv.captureLooseIdx) &&
+           m_Selection.builds == vectorToSet(mv.captureBuildIdx);
+  case MoveType::Build:
+    return m_Selection.builds.empty() &&
+           m_Selection.loose == vectorToSet(mv.buildUseLooseIdx);
+  case MoveType::ExtendBuild:
+    return m_Selection.loose.empty() &&
+           m_Selection.builds == vectorToSet(mv.captureBuildIdx);
+  case MoveType::Trail:
+    return m_Selection.loose.empty() && m_Selection.builds.empty();
+  }
+  return false;
+}
+
+bool KasinoGame::movesEquivalent(const Move &a, const Move &b) const {
+  if (a.type != b.type) return false;
+  if (!(a.handCard == b.handCard)) return false;
+  switch (a.type) {
+  case MoveType::Capture:
+    return a.captureLooseIdx == b.captureLooseIdx &&
+           a.captureBuildIdx == b.captureBuildIdx;
+  case MoveType::Build:
+    return a.buildTargetValue == b.buildTargetValue &&
+           a.buildUseLooseIdx == b.buildUseLooseIdx;
+  case MoveType::ExtendBuild:
+    return a.buildTargetValue == b.buildTargetValue &&
+           a.captureBuildIdx == b.captureBuildIdx;
+  case MoveType::Trail:
+    return true;
+  }
+  return false;
+}
+
+void KasinoGame::updateActionOptions() {
+  m_ActionEntries.clear();
+  m_ConfirmableMove.reset();
+  m_ConfirmAmbiguous = false;
+
+  if (!m_Selection.handIndex) {
+    layoutActionEntries();
+    refreshHighlights();
+    return;
+  }
+
+  if (m_State.current < 0 || m_State.current >= m_State.numPlayers) {
+    layoutActionEntries();
+    refreshHighlights();
+    return;
+  }
+
+  const auto &players = m_State.players;
+  if (m_State.current >= static_cast<int>(players.size())) {
+    layoutActionEntries();
+    refreshHighlights();
+    return;
+  }
+
+  const auto &hand = players[m_State.current].hand;
+  int handIndex = *m_Selection.handIndex;
+  if (handIndex < 0 || handIndex >= static_cast<int>(hand.size())) {
+    layoutActionEntries();
+    refreshHighlights();
+    return;
+  }
+
+  for (const auto &mv : m_LegalMoves) {
+    if (!(mv.handCard == hand[handIndex])) continue;
+    if (!selectionCompatible(mv)) continue;
+
+    bool exact = selectionMatches(mv);
+    if (m_ActiveDifficulty != Difficulty::Hard) {
+      ActionEntry entry;
+      entry.move = mv;
+      entry.label = moveLabelForDifficulty(mv, m_ActiveDifficulty);
+      m_ActionEntries.push_back(entry);
+    }
+
+    if (exact) {
+      if (!m_ConfirmableMove) {
+        m_ConfirmableMove = mv;
+      } else if (!movesEquivalent(*m_ConfirmableMove, mv)) {
+        m_ConfirmableMove.reset();
+        m_ConfirmAmbiguous = true;
+      }
+    }
+  }
+
+  if (m_ConfirmAmbiguous) {
+    m_ConfirmableMove.reset();
+  }
+
+  layoutActionEntries();
+  refreshHighlights();
+}
+
 void KasinoGame::updateHoveredAction(float mx, float my) {
   m_HoveredAction = -1;
   m_HoveredLoose.clear();
@@ -775,27 +975,14 @@ void KasinoGame::selectHandCard(int player, int index) {
   if (m_State.current != player) return;
   if (m_Selection.handIndex && *m_Selection.handIndex == index) {
     m_Selection.Clear();
-    m_ActionEntries.clear();
-    refreshHighlights();
+    updateActionOptions();
     return;
   }
 
   m_Selection.handIndex = index;
   m_Selection.loose.clear();
   m_Selection.builds.clear();
-  m_ActionEntries.clear();
-
-  for (const auto &mv : m_LegalMoves) {
-    if (!(mv.handCard == m_State.players[player].hand[index])) continue;
-    if (!selectionCompatible(mv)) continue;
-    ActionEntry entry;
-    entry.move = mv;
-    entry.label = moveLabel(mv);
-    m_ActionEntries.push_back(entry);
-  }
-
-  layoutActionEntries();
-  refreshHighlights();
+  updateActionOptions();
 }
 
 void KasinoGame::toggleLooseCard(int idx) {
@@ -805,19 +992,7 @@ void KasinoGame::toggleLooseCard(int idx) {
   else
     m_Selection.loose.insert(idx);
 
-  m_ActionEntries.clear();
-  for (const auto &mv : m_LegalMoves) {
-    if (!(mv.handCard ==
-          m_State.players[m_State.current].hand[*m_Selection.handIndex]))
-      continue;
-    if (!selectionCompatible(mv)) continue;
-    ActionEntry entry;
-    entry.move = mv;
-    entry.label = moveLabel(mv);
-    m_ActionEntries.push_back(entry);
-  }
-  layoutActionEntries();
-  refreshHighlights();
+  updateActionOptions();
 }
 
 void KasinoGame::toggleBuild(int idx) {
@@ -827,19 +1002,7 @@ void KasinoGame::toggleBuild(int idx) {
   else
     m_Selection.builds.insert(idx);
 
-  m_ActionEntries.clear();
-  for (const auto &mv : m_LegalMoves) {
-    if (!(mv.handCard ==
-          m_State.players[m_State.current].hand[*m_Selection.handIndex]))
-      continue;
-    if (!selectionCompatible(mv)) continue;
-    ActionEntry entry;
-    entry.move = mv;
-    entry.label = moveLabel(mv);
-    m_ActionEntries.push_back(entry);
-  }
-  layoutActionEntries();
-  refreshHighlights();
+  updateActionOptions();
 }
 
 void KasinoGame::processInput(float mx, float my) {
@@ -862,22 +1025,31 @@ void KasinoGame::processInput(float mx, float my) {
     return;
   }
 
+  if (m_ActiveDifficulty != Difficulty::Easy && m_ConfirmableMove &&
+      m_ConfirmButtonRect.Contains(mx, my)) {
+    int handIndex = m_Selection.handIndex ? *m_Selection.handIndex : -1;
+    if (handIndex >= 0) {
+      beginPendingMove(*m_ConfirmableMove, m_State.current, handIndex, 0.f);
+      m_Selection.Clear();
+      updateActionOptions();
+    }
+    return;
+  }
+
   // Action entries
   for (size_t i = 0; i < m_ActionEntries.size(); ++i) {
     if (m_ActionEntries[i].rect.Contains(mx, my)) {
       int handIndex = m_Selection.handIndex ? *m_Selection.handIndex : -1;
       beginPendingMove(m_ActionEntries[i].move, m_State.current, handIndex, 0.f);
       m_Selection.Clear();
-      m_ActionEntries.clear();
-      refreshHighlights();
+      updateActionOptions();
       return;
     }
   }
 
   if (m_Selection.handIndex && m_CancelButtonRect.Contains(mx, my)) {
     m_Selection.Clear();
-    m_ActionEntries.clear();
-    refreshHighlights();
+    updateActionOptions();
     return;
   }
 
@@ -912,8 +1084,7 @@ void KasinoGame::processInput(float mx, float my) {
 
   // Background click clears selection
   m_Selection.Clear();
-  m_ActionEntries.clear();
-  refreshHighlights();
+  updateActionOptions();
 }
 
 bool KasinoGame::playAiTurn() {
@@ -1015,8 +1186,8 @@ void KasinoGame::processMainMenuInput(float mx, float my) {
     updatePromptLayout();
   } else if (m_MainMenuSettingsButtonRect.Contains(mx, my)) {
     m_ShowPrompt = true;
-    m_PromptMode = PromptMode::Settings;
-    m_PromptHeader = "SETTINGS";
+    m_PromptMode = PromptMode::MainMenuSettings;
+    m_PromptHeader = "GAME SETTINGS";
     m_PromptButtonLabel = "CLOSE";
     updatePromptLayout();
   }
@@ -1067,6 +1238,23 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
         }
       }
     }
+  } else if (m_PromptMode == PromptMode::MainMenuSettings) {
+    if (click) {
+      std::array<Difficulty, 3> difficulties = {
+          Difficulty::Easy, Difficulty::Medium, Difficulty::Hard};
+      for (size_t i = 0; i < m_DifficultyOptionRects.size() &&
+                       i < difficulties.size();
+           ++i) {
+        if (m_DifficultyOptionRects[i].Contains(mx, my)) {
+          Difficulty selected = difficulties[i];
+          if (m_MenuDifficulty != selected) {
+            m_MenuDifficulty = selected;
+          }
+          handled = true;
+          break;
+        }
+      }
+    }
   }
 
   if (click && m_PromptButtonRect.Contains(mx, my)) {
@@ -1081,11 +1269,8 @@ void KasinoGame::applyMove(const Move &mv) {
   if (!ApplyMove(m_State, mv)) return;
 
   m_Selection.Clear();
-  m_ActionEntries.clear();
   updateLegalMoves();
-  layoutActionEntries();
   updateLayout();
-  refreshHighlights();
 
   if (m_State.RoundOver()) {
     handleRoundEnd();
@@ -1171,7 +1356,16 @@ void KasinoGame::handleRoundEnd() {
 void KasinoGame::handlePrompt() {
   switch (m_PromptMode) {
   case PromptMode::MatchSummary:
-    // startNewMatch();
+    m_MenuSelectedPlayers = m_State.numPlayers;
+    for (int i = 0; i < 4; ++i) {
+      if (i < static_cast<int>(m_SeatIsAI.size())) {
+        m_MenuSeatIsAI[i] = m_SeatIsAI[i];
+      } else {
+        m_MenuSeatIsAI[i] = true;
+      }
+    }
+    m_MenuDifficulty = m_ActiveDifficulty;
+    startNewMatch();
     break;
   case PromptMode::RoundSummary:
     startNextRound();
@@ -1189,8 +1383,7 @@ void KasinoGame::handlePrompt() {
     // updateLegalMoves();
     m_LegalMoves = LegalMoves(m_State);
     m_Selection.Clear();
-    m_ActionEntries.clear();
-    layoutActionEntries();
+    updateActionOptions();
     updateLayout();
     // refreshHighlights();
     beginDealAnimation();
@@ -1209,9 +1402,14 @@ void KasinoGame::handlePrompt() {
       m_SeatIsAI[i] = m_MenuSeatIsAI[i];
     }
     m_HumanSeatCount = m_MenuSelectedHumans;
+    m_ActiveDifficulty = m_MenuDifficulty;
     startNewMatch();
   } break;
   case PromptMode::Settings:
+    m_ShowPrompt = false;
+    m_PromptMode = PromptMode::None;
+    break;
+  case PromptMode::MainMenuSettings:
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
     break;
@@ -1846,6 +2044,13 @@ void KasinoGame::drawActionPanel() {
                                 m_ActionPanelRect.y + 6.f},
            3.f, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 
+  if (m_ActiveDifficulty != Difficulty::Easy) {
+    std::string diffText = "DIFFICULTY: " + difficultyLabel(m_ActiveDifficulty);
+    drawText(diffText, glm::vec2{m_ActionPanelRect.x + 10.f,
+                                 m_ActionPanelRect.y + 28.f},
+             2.6f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
+  }
+
   for (size_t i = 0; i < m_ActionEntries.size(); ++i) {
     const auto &entry = m_ActionEntries[i];
     glm::vec4 color =
@@ -1857,6 +2062,28 @@ void KasinoGame::drawActionPanel() {
     drawText(entry.label,
              glm::vec2{entry.rect.x + 6.f, entry.rect.y + 10.f}, 3.f,
              glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
+  }
+
+  if (m_ActiveDifficulty != Difficulty::Easy) {
+    bool hovered =
+        m_ConfirmButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y);
+    bool enabled = m_ConfirmableMove.has_value();
+    glm::vec4 baseColor =
+        enabled ? glm::vec4(0.25f, 0.55f, 0.38f, 1.0f)
+                : glm::vec4(0.18f, 0.22f, 0.24f, 1.0f);
+    if (hovered && enabled) {
+      baseColor = glm::vec4(0.35f, 0.65f, 0.48f, 1.0f);
+    }
+    Render2D::DrawQuad(glm::vec2{m_ConfirmButtonRect.x, m_ConfirmButtonRect.y},
+                       glm::vec2{m_ConfirmButtonRect.w, m_ConfirmButtonRect.h},
+                       baseColor);
+    glm::vec4 textColor =
+        enabled ? glm::vec4(0.05f, 0.05f, 0.05f, 1.0f)
+                 : glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
+    drawText("CONFIRM MOVE",
+             glm::vec2{m_ConfirmButtonRect.x + 12.f,
+                       m_ConfirmButtonRect.y + 8.f},
+             3.f, textColor);
   }
 
   if (m_Selection.handIndex) {
@@ -1952,6 +2179,37 @@ void KasinoGame::drawPromptOverlay() {
     drawText("CLICK TO TOGGLE HUMAN / AI",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuInstructionTextY},
              2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
+  } else if (m_PromptMode == PromptMode::MainMenuSettings) {
+    drawText("SELECT DIFFICULTY", glm::vec2{m_PromptBoxRect.x + 16.f,
+                                           m_PromptBoxRect.y + 64.f},
+             3.f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
+    std::array<Difficulty, 3> difficulties = {Difficulty::Easy,
+                                              Difficulty::Medium,
+                                              Difficulty::Hard};
+    for (size_t i = 0; i < difficulties.size() &&
+                       i < m_DifficultyOptionRects.size();
+         ++i) {
+      const Rect &rect = m_DifficultyOptionRects[i];
+      bool selected = (m_MenuDifficulty == difficulties[i]);
+      bool hovered = rect.Contains(m_LastMousePos.x, m_LastMousePos.y);
+      glm::vec4 color = selected ? glm::vec4(0.28f, 0.58f, 0.38f, 1.0f)
+                                 : glm::vec4(0.2f, 0.3f, 0.35f, 1.0f);
+      if (hovered) {
+        color = glm::mix(color, glm::vec4(0.9f, 0.7f, 0.35f, 1.0f), 0.35f);
+      }
+      Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
+                         color);
+      std::string label = difficultyLabel(difficulties[i]);
+      glm::vec2 metrics = measureText(label, 3.2f);
+      float textX = rect.x + rect.w * 0.5f - metrics.x * 0.5f;
+      float textY = rect.y + rect.h * 0.5f - metrics.y * 0.5f;
+      drawText(label, glm::vec2{textX, textY}, 3.2f,
+               glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+    }
+    std::string desc = difficultyDescription(m_MenuDifficulty);
+    drawText(desc, glm::vec2{m_PromptBoxRect.x + 16.f,
+                             m_PromptBoxRect.y + 180.f},
+             3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
   } else if (m_PromptMode == PromptMode::Settings) {
     drawText("OPTIONS COMING SOON",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 64.f},
