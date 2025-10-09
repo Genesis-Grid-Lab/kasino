@@ -9,6 +9,7 @@
 #include "gfx/IVertexArray.h"
 #include "gfx/RendererAPI.h"
 #include "gfx/ITexture2D.h"
+#include "audio/IAudioDevice.h"
 
 class Factory {
 public:
@@ -19,6 +20,7 @@ public:
 
   static Scope<IWindow> CreateWindow(const FactoryDesc &desc);
   static Scope<IGraphicsDevice> CreateDevice(const FactoryDesc &desc);
+  static Scope<IAudioDevice> CreateAudioDevice(const FactoryDesc& desc);
 
   static Ref<IShader> CreateShader(const std::string& filepath);
   static Ref<IBuffer> CreateBuffer(BufferType type);
@@ -30,5 +32,6 @@ public:
 private:
   static GraphicsAPI s_Gapi;
   static WindowAPI s_Wapi;
+  static AudioAPI s_Aapi;
 };
 

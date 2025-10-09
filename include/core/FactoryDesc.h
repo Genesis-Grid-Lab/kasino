@@ -15,6 +15,16 @@ enum class GraphicsAPI{
   Vulkan
 };
 
+enum class AudioAPI {
+  None = 0,
+  Miniaudio,
+  // OpenAL,
+  // SDL,
+  // Oboe, // Android
+  // AVAudio, // IOS  
+};
+
+
 
 struct FactoryDesc{
   std::string title = "Kasino";
@@ -35,6 +45,7 @@ struct FactoryDesc{
   // Desired API
   WindowAPI window_api = WindowAPI::None;
   GraphicsAPI graphics_api = GraphicsAPI::None;
+  AudioAPI audio_api = AudioAPI::None;
 
   // OpenGL hints (used if api == OpenGL && backend supports GL)
   int  glMajor = 3;
