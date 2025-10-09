@@ -27,7 +27,8 @@ class KasinoGame : public Game {
     HandSummary,
     PlayerSetup,
     Settings,
-    MainMenuSettings
+    MainMenuSettings,
+    HowToPlay
   };
 
   enum class Difficulty { Easy, Medium, Hard };
@@ -103,8 +104,10 @@ class KasinoGame : public Game {
 
   Rect m_MainMenuStartButtonRect{};
   Rect m_MainMenuSettingsButtonRect{};
+  Rect m_MainMenuHowToButtonRect{};
   bool m_MainMenuStartHovered = false;
   bool m_MainMenuSettingsHovered = false;
+  bool m_MainMenuHowToHovered = false;
 
   int m_MenuSelectedPlayers = 2;
   int m_MenuSelectedHumans = 1;
