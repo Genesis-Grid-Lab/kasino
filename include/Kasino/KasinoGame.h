@@ -33,6 +33,8 @@ class KasinoGame : public Game {
 
   enum class Difficulty { Easy, Medium, Hard };
 
+  enum class PromptAction { Primary, Secondary };
+
   // tmp
   glm::mat4 buildCardTransform(const Rect &rect, float rotation);
 
@@ -60,7 +62,7 @@ class KasinoGame : public Game {
   void beginPendingMove(const Move &mv, int player, int handIndex,
                         float delay);
   void handleRoundEnd();
-  void handlePrompt();
+  void handlePrompt(PromptAction action);
 
   void drawScene();
   void drawMainMenu();
@@ -140,9 +142,12 @@ class KasinoGame : public Game {
   Rect m_ActionPanelRect{};
   Rect m_PromptBoxRect{};
   Rect m_PromptButtonRect{};
+  Rect m_PromptSecondaryButtonRect{};
   Rect m_CancelButtonRect{};
   Rect m_ConfirmButtonRect{};
+  Rect m_SettingsButtonRect{};
   float m_ScoreboardHeight = 132.f;
+  bool m_SettingsButtonHovered = false;
 
   std::vector<std::vector<Rect>> m_PlayerHandRects;
   std::vector<SeatLayout> m_PlayerSeatLayouts;
@@ -173,6 +178,7 @@ class KasinoGame : public Game {
   bool m_ShowPrompt = false;
   std::string m_PromptHeader;
   std::string m_PromptButtonLabel;
+  std::string m_PromptSecondaryButtonLabel;
 
   std::vector<DealAnim> m_DealQueue;
   std::vector<int> m_DealtCounts;

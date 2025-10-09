@@ -97,6 +97,8 @@ bool KasinoGame::OnStart() {
   m_Phase = Phase::MainMenu;
   m_PromptMode = PromptMode::None;
   m_ShowPrompt = false;
+  m_PromptButtonLabel.clear();
+  m_PromptSecondaryButtonLabel.clear();
   m_MenuDifficulty = Difficulty::Easy;
   m_ActiveDifficulty = m_MenuDifficulty;
   return true;
@@ -217,6 +219,8 @@ void KasinoGame::startNewMatch() {
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
   m_PromptMode = PromptMode::None;
+  m_PromptButtonLabel.clear();
+  m_PromptSecondaryButtonLabel.clear();
   updateRoundScorePreview();
   updateActionOptions();
   updateLayout();
@@ -235,6 +239,8 @@ void KasinoGame::startNextRound() {
   m_Phase = Phase::Playing;
   m_ShowPrompt = false;
   m_PromptMode = PromptMode::None;
+  m_PromptButtonLabel.clear();
+  m_PromptSecondaryButtonLabel.clear();
   updateRoundScorePreview();
   updateActionOptions();
   updateLayout();
@@ -359,7 +365,19 @@ void KasinoGame::updateLayout() {
   float panelWidth = 160.f;
   float sideSeatVisibleFraction = 0.2f;
   float topSeatVisibleFraction = 0.2f;
-  float sideSeatPeek = m_CardWidth * sideSeatVisibleFraction + margin;  
+  float sideSeatPeek = m_CardWidth * sideSeatVisibleFraction + margin;
+
+  const float settingsButtonWidth = 140.f;
+  const float settingsButtonHeight = 36.f;
+  const float settingsButtonPadding = 12.f;
+  float settingsX = width - settingsButtonWidth - settingsButtonPadding;
+  float settingsY = m_ScoreboardHeight * 0.5f - settingsButtonHeight * 0.5f;
+  settingsX = std::max(settingsButtonPadding, settingsX);
+  settingsY = std::clamp(settingsY, settingsButtonPadding,
+                         m_ScoreboardHeight - settingsButtonHeight -
+                             settingsButtonPadding);
+  m_SettingsButtonRect =
+      {settingsX, settingsY, settingsButtonWidth, settingsButtonHeight};
 
   bool hasLeftSeat = m_State.numPlayers >= 3;
   bool hasRightSeat = m_State.numPlayers >= 4;
@@ -551,6 +569,8 @@ void KasinoGame::updatePromptLayout() {
     m_MenuSeatToggleRects.clear();
     m_MenuSummaryTextY = 0.f;
     m_MenuInstructionTextY = 0.f;
+    m_PromptButtonRect = {};
+    m_PromptSecondaryButtonRect = {};
     return;
   }
 
@@ -564,12 +584,15 @@ void KasinoGame::updatePromptLayout() {
   const float summaryMargin = 24.f;
   const float textSpacing = 24.f;
   const float buttonSpacing = 24.f;
+  const float buttonHorizontalSpacing = 24.f;
   const float seatSpacing = 12.f;
   const float seatHeight = 32.f;
   const float optionHeight = 40.f;
   const float optionSpacing = 16.f;
   const float optionYBase = 90.f;
   const float seatHeaderSpacing = 60.f;
+
+  m_PromptSecondaryButtonRect = {};
 
   switch (m_PromptMode) {
   case PromptMode::RoundSummary:
@@ -610,6 +633,22 @@ void KasinoGame::updatePromptLayout() {
   m_PromptBoxRect = {width * 0.5f - boxWidth * 0.5f,
                      height * 0.5f - boxHeight * 0.5f, boxWidth, boxHeight};
 
+  auto assignButtons = [&](float buttonTop) {
+    if (!m_PromptSecondaryButtonLabel.empty()) {
+      float totalWidth = buttonWidth * 2.f + buttonHorizontalSpacing;
+      float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
+      m_PromptButtonRect = {startX, buttonTop, buttonWidth, buttonHeight};
+      m_PromptSecondaryButtonRect =
+          {startX + buttonWidth + buttonHorizontalSpacing, buttonTop,
+           buttonWidth, buttonHeight};
+    } else {
+      m_PromptButtonRect =
+          {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f, buttonTop,
+           buttonWidth, buttonHeight};
+      m_PromptSecondaryButtonRect = {};
+    }
+  };
+
   if (m_PromptMode == PromptMode::PlayerSetup) {
     m_MenuPlayerCountRects.clear();
     m_MenuPlayerCountRects.reserve(4);
@@ -637,8 +676,7 @@ void KasinoGame::updatePromptLayout() {
     m_MenuSummaryTextY = seatBottom + summaryMargin;
     m_MenuInstructionTextY = m_MenuSummaryTextY + textSpacing;
     float buttonTop = m_MenuInstructionTextY + buttonSpacing;
-    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
-                          buttonTop, buttonWidth, buttonHeight};
+    assignButtons(buttonTop);
     m_DifficultyOptionRects.clear();
   } else if (m_PromptMode == PromptMode::MainMenuSettings) {
     m_MenuPlayerCountRects.clear();
@@ -657,20 +695,16 @@ void KasinoGame::updatePromptLayout() {
           {startX + (float)i * (optionWidth + optionSpacingLocal), optionY,
            optionWidth, optionHeightLocal});
     }
-    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
-                          m_PromptBoxRect.y + boxHeight -
-                              (buttonHeight + buttonBottomPadding),
-                          buttonWidth, buttonHeight};
+    assignButtons(m_PromptBoxRect.y + boxHeight -
+                  (buttonHeight + buttonBottomPadding));
   } else {
     m_MenuPlayerCountRects.clear();
     m_MenuSeatToggleRects.clear();
     m_MenuSummaryTextY = 0.f;
     m_MenuInstructionTextY = 0.f;
     m_DifficultyOptionRects.clear();
-    m_PromptButtonRect = {m_PromptBoxRect.x + (boxWidth - buttonWidth) * 0.5f,
-                          m_PromptBoxRect.y + boxHeight -
-                              (buttonHeight + buttonBottomPadding),
-                          buttonWidth, buttonHeight};
+    assignButtons(m_PromptBoxRect.y + boxHeight -
+                  (buttonHeight + buttonBottomPadding));
   }
 }
 
@@ -1190,12 +1224,14 @@ void KasinoGame::processMainMenuInput(float mx, float my) {
     m_PromptMode = PromptMode::PlayerSetup;
     m_PromptHeader = "START NEW MATCH";
     m_PromptButtonLabel = "START MATCH";
+    m_PromptSecondaryButtonLabel.clear();
     updatePromptLayout();
   } else if (m_MainMenuSettingsButtonRect.Contains(mx, my)) {
     m_ShowPrompt = true;
     m_PromptMode = PromptMode::MainMenuSettings;
     m_PromptHeader = "GAME SETTINGS";
     m_PromptButtonLabel = "CLOSE";
+    m_PromptSecondaryButtonLabel.clear();
     updatePromptLayout();
   } else if (m_MainMenuHowToButtonRect.Contains(mx, my)) {
     m_ShowPrompt = true;
@@ -1270,8 +1306,20 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
     }
   }
 
-  if (click && m_PromptButtonRect.Contains(mx, my)) {
-    handlePrompt();
+  bool primaryEnabled = true;
+  if (m_PromptMode == PromptMode::PlayerSetup) {
+    primaryEnabled = m_MenuSelectedHumans > 0 && m_MenuSelectedPlayers > 0;
+  }
+
+  if (click && !m_PromptButtonLabel.empty() && primaryEnabled &&
+      m_PromptButtonRect.Contains(mx, my)) {
+    handlePrompt(PromptAction::Primary);
+    handled = true;
+  }
+
+  if (click && !m_PromptSecondaryButtonLabel.empty() &&
+      m_PromptSecondaryButtonRect.Contains(mx, my)) {
+    handlePrompt(PromptAction::Secondary);
     handled = true;
   }
 
@@ -1295,6 +1343,7 @@ void KasinoGame::applyMove(const Move &mv) {
     m_PromptMode = PromptMode::HandSummary;
     m_PromptHeader = "HAND COMPLETE";
     m_PromptButtonLabel = "DEAL NEXT HAND";
+    m_PromptSecondaryButtonLabel.clear();
     updatePromptLayout();
   } else {
     updateRoundScorePreview();
@@ -1358,34 +1407,45 @@ void KasinoGame::handleRoundEnd() {
       m_PromptHeader = "MATCH COMPLETE";
     }
     m_PromptButtonLabel = "START NEW MATCH";
+    m_PromptSecondaryButtonLabel.clear();
   } else {
     m_PromptHeader = "ROUND " + std::to_string(m_RoundNumber) + " COMPLETE";
     // m_PromptButtonLabel = "NEXT ROUND";
     m_PromptButtonLabel = "DEAL NEXT HAND";
+    m_PromptSecondaryButtonLabel.clear();
   }
   updatePromptLayout();
 }
 
-void KasinoGame::handlePrompt() {
+void KasinoGame::handlePrompt(PromptAction action) {
   switch (m_PromptMode) {
   case PromptMode::MatchSummary:
-    m_MenuSelectedPlayers = m_State.numPlayers;
-    for (int i = 0; i < 4; ++i) {
-      if (i < static_cast<int>(m_SeatIsAI.size())) {
-        m_MenuSeatIsAI[i] = m_SeatIsAI[i];
-      } else {
-        m_MenuSeatIsAI[i] = true;
+    if (action == PromptAction::Primary) {
+      m_MenuSelectedPlayers = m_State.numPlayers;
+      for (int i = 0; i < 4; ++i) {
+        if (i < static_cast<int>(m_SeatIsAI.size())) {
+          m_MenuSeatIsAI[i] = m_SeatIsAI[i];
+        } else {
+          m_MenuSeatIsAI[i] = true;
+        }
       }
+      m_MenuDifficulty = m_ActiveDifficulty;
+      startNewMatch();
     }
-    m_MenuDifficulty = m_ActiveDifficulty;
-    startNewMatch();
     break;
   case PromptMode::RoundSummary:
-    startNextRound();
+    if (action == PromptAction::Primary) {
+      startNextRound();
+    }
     break;
   case PromptMode::HandSummary: {
+    if (action != PromptAction::Primary) {
+      break;
+    }
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
+    m_PromptButtonLabel.clear();
+    m_PromptSecondaryButtonLabel.clear();
     m_Phase = Phase::Playing; // tmpish
     if (!DealNextHands(m_State)) {
       handleRoundEnd();
@@ -1403,9 +1463,12 @@ void KasinoGame::handlePrompt() {
     updateRoundScorePreview();
     if (!m_IsDealing) {
       refreshHighlights();
-    }    
+    }
   } break;
   case PromptMode::PlayerSetup: {
+    if (action != PromptAction::Primary) {
+      break;
+    }
     updateMenuHumanCounts();
     if (m_MenuSelectedHumans <= 0 || m_MenuSelectedPlayers <= 0) return;
     m_State.numPlayers = m_MenuSelectedPlayers;
@@ -1419,12 +1482,21 @@ void KasinoGame::handlePrompt() {
     startNewMatch();
   } break;
   case PromptMode::Settings:
+    if (action == PromptAction::Secondary) {
+      Stop();
+    }
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
+    m_PromptButtonLabel.clear();
+    m_PromptSecondaryButtonLabel.clear();
     break;
   case PromptMode::MainMenuSettings:
-    m_ShowPrompt = false;
-    m_PromptMode = PromptMode::None;
+    if (action == PromptAction::Primary) {
+      m_ShowPrompt = false;
+      m_PromptMode = PromptMode::None;
+      m_PromptButtonLabel.clear();
+      m_PromptSecondaryButtonLabel.clear();
+    }
     break;
   case PromptMode::HowToPlay:
     m_ShowPrompt = false;
@@ -1432,8 +1504,13 @@ void KasinoGame::handlePrompt() {
     break;  
   case PromptMode::None:
     m_ShowPrompt = false;
+    m_PromptMode = PromptMode::None;
+    m_PromptButtonLabel.clear();
+    m_PromptSecondaryButtonLabel.clear();
     break;
   }
+
+  updatePromptLayout();
 }
 
 void KasinoGame::OnUpdate(float dt) {
@@ -1445,12 +1522,15 @@ void KasinoGame::OnUpdate(float dt) {
     if (m_ShowPrompt && m_PromptMode == PromptMode::Settings) {
       m_ShowPrompt = false;
       m_PromptMode = PromptMode::None;
+      m_PromptButtonLabel.clear();
+      m_PromptSecondaryButtonLabel.clear();
       updatePromptLayout();
     } else if (!m_ShowPrompt) {
       m_ShowPrompt = true;
       m_PromptMode = PromptMode::Settings;
       m_PromptHeader = "SETTINGS";
       m_PromptButtonLabel = "CLOSE";
+      m_PromptSecondaryButtonLabel = "QUIT GAME";
       updatePromptLayout();
     }
   }
@@ -1554,17 +1634,32 @@ void KasinoGame::OnUpdate(float dt) {
 
   float mx = m_Input->MouseX();
   float my = m_Input->MouseY();
+  bool mouseClick = m_Input->WasMousePressed(MouseButton::Left);
   m_LastMousePos = {mx, my};
 
   if (m_Phase == Phase::MainMenu) {
     m_MainMenuStartHovered = m_MainMenuStartButtonRect.Contains(mx, my);
+    m_SettingsButtonHovered = false;
     m_MainMenuSettingsHovered = m_MainMenuSettingsButtonRect.Contains(mx, my);
     m_MainMenuHowToHovered = m_MainMenuHowToButtonRect.Contains(mx, my);
   } else {
     updateHoveredAction(mx, my);
     m_MainMenuStartHovered = false;
     m_MainMenuSettingsHovered = false;
-    m_MainMenuHowToHovered = false;    
+    m_MainMenuHowToHovered = false;
+    if (!m_ShowPrompt) {
+      m_SettingsButtonHovered = m_SettingsButtonRect.Contains(mx, my);
+      if (mouseClick && m_SettingsButtonHovered) {
+        m_ShowPrompt = true;
+        m_PromptMode = PromptMode::Settings;
+        m_PromptHeader = "SETTINGS";
+        m_PromptButtonLabel = "CLOSE";
+        m_PromptSecondaryButtonLabel = "QUIT GAME";
+        updatePromptLayout();
+      }
+    } else {
+      m_SettingsButtonHovered = false;
+    }
   }
 
   if (m_ShowPrompt) {
@@ -1761,8 +1856,39 @@ void KasinoGame::drawScoreboard() {
 
   drawText("ROUND " + std::to_string(m_RoundNumber), glm::vec2{12.f, headerTop},
            4.f, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-  drawText("DECK " + std::to_string(m_State.stock.size()),
-           glm::vec2{width - 120.f, headerTop}, 4.f,
+
+  auto drawSettingsButton = [&]() {
+    if (m_SettingsButtonRect.w <= 0.f || m_SettingsButtonRect.h <= 0.f) {
+      return;
+    }
+    glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
+    glm::vec4 hoverColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
+    glm::vec4 color = m_SettingsButtonHovered ? hoverColor : baseColor;
+    Render2D::DrawQuad(
+        glm::vec2{m_SettingsButtonRect.x - 2.f, m_SettingsButtonRect.y - 2.f},
+        glm::vec2{m_SettingsButtonRect.w + 4.f, m_SettingsButtonRect.h + 4.f},
+        glm::vec4(0.03f, 0.05f, 0.06f, 1.0f));
+    Render2D::DrawQuad(glm::vec2{m_SettingsButtonRect.x, m_SettingsButtonRect.y},
+                       glm::vec2{m_SettingsButtonRect.w, m_SettingsButtonRect.h},
+                       color);
+    std::string label = "SETTINGS";
+    glm::vec2 metrics = measureText(label, 3.2f);
+    float textX = m_SettingsButtonRect.x + m_SettingsButtonRect.w * 0.5f -
+                  metrics.x * 0.5f;
+    float textY = m_SettingsButtonRect.y + m_SettingsButtonRect.h * 0.5f -
+                  metrics.y * 0.5f;
+    drawText(label, glm::vec2{textX, textY}, 3.2f,
+             glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+  };
+  drawSettingsButton();
+
+  std::string deckText = "DECK " + std::to_string(m_State.stock.size());
+  glm::vec2 deckMetrics = measureText(deckText, 4.f);
+  float deckX = m_SettingsButtonRect.x - 12.f - deckMetrics.x;
+  if (deckX < 12.f) {
+    deckX = 12.f;
+  }
+  drawText(deckText, glm::vec2{deckX, headerTop}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   int playerCount = std::max(1, m_State.numPlayers);
@@ -2258,32 +2384,58 @@ void KasinoGame::drawPromptOverlay() {
       textY += 16.f;
     }
   } else if (m_PromptMode == PromptMode::Settings) {
-    drawText("OPTIONS COMING SOON",
+    drawText("Close resumes play without leaving the table.",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 64.f},
              3.2f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
-    drawText("AUDIO, RULES, AND MORE WILL LIVE HERE",
+    drawText("Quit Game ends the current match and exits immediately.",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 96.f},
+             3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
+    drawText("Press ESC or tap Settings to reopen this menu.",
+             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 128.f},
              3.f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
   }
 
-  if (!m_PromptButtonLabel.empty()) {
-    bool hovered = m_PromptButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y);
-    bool enabled = true;
-    if (m_PromptMode == PromptMode::PlayerSetup) {
-      enabled = m_MenuSelectedHumans > 0 && m_MenuSelectedPlayers > 0;
+  auto drawPromptButton = [&](const Rect &rect, const std::string &label,
+                              bool hovered, bool enabled,
+                              const glm::vec4 &baseColor,
+                              const glm::vec4 &hoverColor,
+                              const glm::vec4 &enabledTextColor) {
+    if (rect.w <= 0.f || rect.h <= 0.f || label.empty()) {
+      return;
     }
-    glm::vec4 baseColor = enabled ? glm::vec4(0.25f, 0.55f, 0.85f, 1.0f)
-                                  : glm::vec4(0.2f, 0.2f, 0.22f, 1.0f);
+    glm::vec4 color = enabled ? baseColor : glm::vec4(0.2f, 0.2f, 0.22f, 1.0f);
     if (hovered && enabled) {
-      baseColor = glm::vec4(0.35f, 0.65f, 0.95f, 1.0f);
+      color = hoverColor;
     }
-    Render2D::DrawQuad(glm::vec2{m_PromptButtonRect.x, m_PromptButtonRect.y},
-                       glm::vec2{m_PromptButtonRect.w, m_PromptButtonRect.h},
-                       baseColor);
-    drawText(m_PromptButtonLabel,
-             glm::vec2{m_PromptButtonRect.x + 12.f,
-                       m_PromptButtonRect.y + 10.f},
-             3.2f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
+    Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
+                       color);
+    glm::vec4 textColor =
+        enabled ? enabledTextColor : glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
+    glm::vec2 metrics = measureText(label, 3.2f);
+    float textX = rect.x + rect.w * 0.5f - metrics.x * 0.5f;
+    float textY = rect.y + rect.h * 0.5f - metrics.y * 0.5f;
+    drawText(label, glm::vec2{textX, textY}, 3.2f, textColor);
+  };
+
+  bool primaryEnabled = true;
+  if (m_PromptMode == PromptMode::PlayerSetup) {
+    primaryEnabled = m_MenuSelectedHumans > 0 && m_MenuSelectedPlayers > 0;
+  }
+
+  drawPromptButton(
+      m_PromptButtonRect, m_PromptButtonLabel,
+      m_PromptButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y),
+      primaryEnabled, glm::vec4(0.25f, 0.55f, 0.85f, 1.0f),
+      glm::vec4(0.35f, 0.65f, 0.95f, 1.0f),
+      glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
+
+  if (!m_PromptSecondaryButtonLabel.empty()) {
+    drawPromptButton(
+        m_PromptSecondaryButtonRect, m_PromptSecondaryButtonLabel,
+        m_PromptSecondaryButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y),
+        true, glm::vec4(0.45f, 0.22f, 0.22f, 1.0f),
+        glm::vec4(0.65f, 0.32f, 0.32f, 1.0f),
+        glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
   }
 }
 
