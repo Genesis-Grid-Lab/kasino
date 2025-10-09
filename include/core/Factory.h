@@ -13,14 +13,15 @@
 
 class Factory {
 public:
+  static void SetDesc(const FactoryDesc &desc);
   static void SetGraphicsAPI(GraphicsAPI api);
-  static GraphicsAPI GetGraphicsAPI() { return s_Gapi;}
+  static GraphicsAPI GetGraphicsAPI() { return s_Desc.graphics_api;}
   static void SetWindowAPI(WindowAPI api);
-  static WindowAPI GetWindowAPI() { return s_Wapi;}
+  static WindowAPI GetWindowAPI() { return s_Desc.window_api;}
 
-  static Scope<IWindow> CreateWindow(const FactoryDesc &desc);
-  static Scope<IGraphicsDevice> CreateDevice(const FactoryDesc &desc);
-  static Scope<IAudioDevice> CreateAudioDevice(const FactoryDesc& desc);
+  static Scope<IWindow> CreateWindow();
+  static Scope<IGraphicsDevice> CreateGraphicsDevice();
+  static Scope<IAudioDevice> CreateAudioDevice();
 
   static Ref<IShader> CreateShader(const std::string& filepath);
   static Ref<IBuffer> CreateBuffer(BufferType type);
@@ -30,8 +31,6 @@ public:
   static std::unique_ptr<RendererAPI>  CreateRendererAPI();
 
 private:
-  static GraphicsAPI s_Gapi;
-  static WindowAPI s_Wapi;
-  static AudioAPI s_Aapi;
+  static FactoryDesc s_Desc;
 };
 

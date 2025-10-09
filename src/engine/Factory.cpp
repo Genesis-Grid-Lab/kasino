@@ -18,6 +18,9 @@
 #include "gfx/glad/GLTexture2D.h"
 #include "gfx/glad/GLRendererAPI.h"
 
+#include "audio/null/NullAudioDevice.h"
+#include "audio/miniaudio/MiniaudioDevice.h"
+
 // Scope<IWindow> CreateWindow(const WindowDesc& desc){
 // #if defined(WINDOW_BACKEND_GLFW)
 //     return CreateScope<GlfwWindow>(desc);
@@ -35,34 +38,45 @@
 
 // Scope<IGraphicsDevice> CreateDevice() { return CreateScope<GLDevice>(); }
 
-GraphicsAPI Factory::s_Gapi = GraphicsAPI::OpenGL;
-WindowAPI Factory::s_Wapi = WindowAPI::GLFW;
+FactoryDesc Factory::s_Desc = FactoryDesc{};
 
-void Factory::SetGraphicsAPI(GraphicsAPI api){ s_Gapi = api;}
-void Factory::SetWindowAPI(WindowAPI api){ s_Wapi = api;}
+void Factory::SetDesc(const FactoryDesc& desc){
+  s_Desc = desc;
+}
 
-Scope<IWindow> Factory::CreateWindow(const FactoryDesc &desc) {
-  switch(s_Wapi){
+void Factory::SetGraphicsAPI(GraphicsAPI api){ s_Desc.graphics_api = api;}
+void Factory::SetWindowAPI(WindowAPI api){ s_Desc.window_api = api;}
+
+Scope<IWindow> Factory::CreateWindow() {
+  switch(s_Desc.window_api){
   case WindowAPI::GLFW:
-    return CreateScope<GlfwWindow>(desc);
+    return CreateScope<GlfwWindow>(s_Desc);
   }
 
   // static_assert(false, "No window backend selected");
   return nullptr;
 }
 
-Scope<IGraphicsDevice> Factory::CreateDevice(const FactoryDesc &desc) {
-  switch(s_Gapi){
+Scope<IGraphicsDevice> Factory::CreateGraphicsDevice() {
+  switch(s_Desc.graphics_api){
   case GraphicsAPI::OpenGL:
-    return CreateScope<GLDevice>(desc);
+    return CreateScope<GLDevice>(s_Desc);
   }
 
   return nullptr;
 }
 
+Scope<IAudioDevice> Factory::CreateAudioDevice(){
+  switch(s_Desc.audio_api){
+    case AudioAPI::Miniaudio: return CreateScope<MiniaudioDevice>();
+    case AudioAPI::Null:
+    default: return CreateScope<NullAudioDevice>();
+  }
+}
+
 
 Ref<IShader> Factory::CreateShader(const std::string& filepath){
-  switch(s_Gapi){
+  switch(s_Desc.graphics_api){
   case GraphicsAPI::OpenGL:
     return CreateRef<GLShader>(filepath);
   }
@@ -70,7 +84,7 @@ Ref<IShader> Factory::CreateShader(const std::string& filepath){
   return nullptr;
 }
 Ref<IBuffer> Factory::CreateBuffer(BufferType type){
-  switch(s_Gapi){
+  switch(s_Desc.graphics_api){
   case GraphicsAPI::OpenGL:
     return CreateRef<GLBuffer>(type);
   }
@@ -78,7 +92,7 @@ Ref<IBuffer> Factory::CreateBuffer(BufferType type){
   return nullptr;
 }
 Ref<IVertexArray> Factory::CreateVertexArray(){
-  switch(s_Gapi){
+  switch(s_Desc.graphics_api){
   case GraphicsAPI::OpenGL:
     return CreateRef<GLVertexArray>();
   }
@@ -87,8 +101,8 @@ Ref<IVertexArray> Factory::CreateVertexArray(){
 }
 
 std::shared_ptr<ITexture2D>   Factory::CreateTexture2D()   { 
-  switch(s_Gapi){ case GraphicsAPI::OpenGL: return std::make_shared<GLTexture2D>(); default: return nullptr; } 
+  switch(s_Desc.graphics_api){ case GraphicsAPI::OpenGL: return std::make_shared<GLTexture2D>(); default: return nullptr; } 
 }
 std::unique_ptr<RendererAPI>  Factory::CreateRendererAPI() { 
-  switch(s_Gapi){ case GraphicsAPI::OpenGL: return std::make_unique<GLRendererAPI>(); default: return nullptr; } 
+  switch(s_Desc.graphics_api){ case GraphicsAPI::OpenGL: return std::make_unique<GLRendererAPI>(); default: return nullptr; } 
 }

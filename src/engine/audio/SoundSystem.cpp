@@ -1,15 +1,17 @@
 #include "audio/SoundSystem.h"
+#include "core/Log.h"
 // #include <algorithm>
 
 namespace {
-    Ref<IAudioDevice> g_device;
+    Scope<IAudioDevice> g_device;
     struct OneShot {
         Ref<IAudioSource> src;
     };
     std::vector<OneShot> g_active;
 }
 
-bool SoundSystem::Init(Ref<IAudioDevice> device) {
+bool SoundSystem::Init(Scope<IAudioDevice>& device) {
+    EN_CORE_INFO("Init Audio Device");
     g_device = std::move(device);
     if (!g_device) return false;
     if (!g_device->Initialize()) { g_device.reset(); return false; }
@@ -42,4 +44,4 @@ void SoundSystem::PlayOneShot(const Ref<IAudioBuffer>& buffer, float volume, flo
     g_active.push_back({src});
 }
 
-Ref<IAudioDevice> SoundSystem::GetDevice() { return g_device; }
+Scope<IAudioDevice>& SoundSystem::GetDevice() { return g_device; }

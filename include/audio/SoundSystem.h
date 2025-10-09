@@ -8,7 +8,7 @@
 namespace SoundSystem {
 
   // Call once at app startup/shutdown
-  bool Init(Ref<IAudioDevice> device);
+  bool Init(Scope<IAudioDevice>& device);
   void Shutdown();
 
   // Per-frame (optional; some backends need no ticking)
@@ -18,5 +18,5 @@ namespace SoundSystem {
   void PlayOneShot(const Ref<IAudioBuffer>& buffer, float volume = 1.0f, float pitch = 1.0f, float pan = 0.0f);
 
   // Access to the device if needed
-  Ref<IAudioDevice> GetDevice();
+  Scope<IAudioDevice>& GetDevice();
 }

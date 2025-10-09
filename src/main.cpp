@@ -12,6 +12,7 @@ int main() {
   desc.fullscreen = false;
   desc.window_api = WindowAPI::GLFW;
   desc.graphics_api = GraphicsAPI::OpenGL;
+  desc.audio_api = AudioAPI::Miniaudio;
 
   KasinoGame game;
   if (!game.Init(desc)) return 1;

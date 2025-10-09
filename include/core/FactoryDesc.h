@@ -16,7 +16,7 @@ enum class GraphicsAPI{
 };
 
 enum class AudioAPI {
-  None = 0,
+  Null = 0,
   Miniaudio,
   // OpenAL,
   // SDL,
@@ -45,7 +45,7 @@ struct FactoryDesc{
   // Desired API
   WindowAPI window_api = WindowAPI::None;
   GraphicsAPI graphics_api = GraphicsAPI::None;
-  AudioAPI audio_api = AudioAPI::None;
+  AudioAPI audio_api = AudioAPI::Null;
 
   // OpenGL hints (used if api == OpenGL && backend supports GL)
   int  glMajor = 3;

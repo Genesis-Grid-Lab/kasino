@@ -50,6 +50,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog)
 file(GLOB_RECURSE source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
 file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 file(GLOB gladFile ${CMAKE_CURRENT_SOURCE_DIR}/src/glad/*.cpp)
+file(GLOB_RECURSE miniaudioFile ${CMAKE_CURRENT_SOURCE_DIR}/src/miniaudio/*.cpp)
 
 add_library(engine
     ${source} ${headers}
@@ -58,6 +59,7 @@ add_library(engine
     ${iosFile}
     ${androidFile}
     ${gladFile}
+    ${miniaudioFile}
     )
 
 target_include_directories(engine PUBLIC

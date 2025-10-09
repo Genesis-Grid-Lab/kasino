@@ -7,6 +7,7 @@
 #include "gfx/RenderCommand.h"
 #include "core/Factory.h"
 #include "window/IWindow.h"
+#include "audio/IAudioDevice.h"
 
 // forward-declare to avoid depending on its exact fields
 struct FactoryDesc;
@@ -32,6 +33,7 @@ class Game {
  protected:
   Scope<IWindow>         m_Window;
   Scope<IGraphicsDevice> m_Device;
+  Scope<IAudioDevice> m_Audio;
   Camera2D             m_Camera;
 
   int m_fbWidth  = 0;
