@@ -1846,6 +1846,20 @@ void KasinoGame::drawScoreboard() {
   Render2D::DrawQuad(glm::vec2{bar.x, bar.y}, glm::vec2{bar.w, 4.f},
                      glm::vec4(0.02f, 0.05f, 0.03f, 1.0f));
 
+  const bool settingsVisible =
+      m_SettingsButtonRect.w > 0.f && m_SettingsButtonRect.h > 0.f;
+  float columnAreaLeft = 0.f;
+  float columnAreaRight = settingsVisible ? (m_SettingsButtonRect.x - 12.f)
+                                          : width;
+  columnAreaRight = std::clamp(columnAreaRight, columnAreaLeft, width);
+  constexpr float kMinColumnSpan = 160.f;
+  float availableSpan = std::max(columnAreaRight - columnAreaLeft, 0.f);
+  float constrainedSpan = std::max(availableSpan, kMinColumnSpan);
+  float spanScale = constrainedSpan > 0.f ? (availableSpan / constrainedSpan) : 1.f;
+  if (spanScale <= 0.f) {
+    spanScale = 1.f;
+  }
+
   const float headerTop = 14.f;
   const float headerSpacing = 10.f;
   const float rowSpacing = 3.f;
@@ -1858,7 +1872,7 @@ void KasinoGame::drawScoreboard() {
            4.f, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   auto drawSettingsButton = [&]() {
-    if (m_SettingsButtonRect.w <= 0.f || m_SettingsButtonRect.h <= 0.f) {
+    if (!settingsVisible) {
       return;
     }
     glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
@@ -1884,21 +1898,21 @@ void KasinoGame::drawScoreboard() {
 
   std::string deckText = "DECK " + std::to_string(m_State.stock.size());
   glm::vec2 deckMetrics = measureText(deckText, 4.f);
-  float deckX = m_SettingsButtonRect.x - 12.f - deckMetrics.x;
-  if (deckX < 12.f) {
-    deckX = 12.f;
-  }
+  float deckX = std::max(columnAreaRight - deckMetrics.x, 12.f);
   drawText(deckText, glm::vec2{deckX, headerTop}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   int playerCount = std::max(1, m_State.numPlayers);
-  float columnWidth = width / static_cast<float>(playerCount);
+  float columnWidth = constrainedSpan / static_cast<float>(playerCount);
+  float effectiveColumnWidth = columnWidth * spanScale;
   constexpr float columnPadding = 12.f;
   float columnStartY = headerTop + headerHeight + headerSpacing;
 
   for (int p = 0; p < m_State.numPlayers; ++p) {
-    float columnLeft = columnWidth * static_cast<float>(p);
+    float columnLeft = columnAreaLeft + effectiveColumnWidth * static_cast<float>(p);
     float offsetX = columnLeft + columnPadding;
+    offsetX = std::min(offsetX, columnAreaRight - columnPadding);
+    offsetX = std::max(offsetX, columnAreaLeft + columnPadding);
     glm::vec4 color = m_PlayerColors[p % m_PlayerColors.size()];
     float currentY = columnStartY;
     std::string playerLabel = "PLAYER " + std::to_string(p + 1);
@@ -1952,8 +1966,11 @@ void KasinoGame::drawScoreboard() {
     drawStat("SWEEPS", sweepBonus, false);
   }
 
-  drawText("TURN P" + std::to_string(m_State.current + 1),
-           glm::vec2{width * 0.5f - 60.f, headerTop}, 4.f,
+  std::string turnText = "TURN P" + std::to_string(m_State.current + 1);
+  glm::vec2 turnMetrics = measureText(turnText, 4.f);
+  float turnCenter = (columnAreaLeft + columnAreaRight) * 0.5f;
+  float turnX = turnCenter - turnMetrics.x * 0.5f;
+  drawText(turnText, glm::vec2{turnX, headerTop}, 4.f,
            m_PlayerColors[m_State.current % m_PlayerColors.size()]);
 }
 
