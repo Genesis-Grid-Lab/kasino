@@ -348,8 +348,12 @@ void KasinoGame::updateMainMenuLayout() {
   float startY = buttonsTop;
 
   m_MainMenuStartButtonRect = {startX, startY, buttonWidth, buttonHeight};
-  m_MainMenuSettingsButtonRect =
-      {startX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight};
+  m_MainMenuSettingsButtonRect = {startX, startY + buttonHeight + buttonSpacing,
+                                  buttonWidth, buttonHeight};
+  m_MainMenuHowToButtonRect =
+      {startX,
+       startY + (buttonHeight + buttonSpacing) * 2.f,
+       buttonWidth, buttonHeight};
 
   updatePromptLayout();
 }
@@ -596,6 +600,9 @@ void KasinoGame::updatePromptLayout() {
     break;
   case PromptMode::MatchSummary:
     boxHeight = 220.f;
+    break;
+  case PromptMode::HowToPlay:
+    boxHeight = 420.f;
     break;
   case PromptMode::PlayerSetup: {
     boxHeight = 320.f;
@@ -1226,6 +1233,12 @@ void KasinoGame::processMainMenuInput(float mx, float my) {
     m_PromptButtonLabel = "CLOSE";
     m_PromptSecondaryButtonLabel.clear();
     updatePromptLayout();
+  } else if (m_MainMenuHowToButtonRect.Contains(mx, my)) {
+    m_ShowPrompt = true;
+    m_PromptMode = PromptMode::HowToPlay;
+    m_PromptHeader = "HOW TO PLAY";
+    m_PromptButtonLabel = "CLOSE";
+    updatePromptLayout();
   }
 }
 
@@ -1485,6 +1498,10 @@ void KasinoGame::handlePrompt(PromptAction action) {
       m_PromptSecondaryButtonLabel.clear();
     }
     break;
+  case PromptMode::HowToPlay:
+    m_ShowPrompt = false;
+    m_PromptMode = PromptMode::None;
+    break;  
   case PromptMode::None:
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
@@ -1622,13 +1639,14 @@ void KasinoGame::OnUpdate(float dt) {
 
   if (m_Phase == Phase::MainMenu) {
     m_MainMenuStartHovered = m_MainMenuStartButtonRect.Contains(mx, my);
-    m_MainMenuSettingsHovered =
-        m_MainMenuSettingsButtonRect.Contains(mx, my);
     m_SettingsButtonHovered = false;
+    m_MainMenuSettingsHovered = m_MainMenuSettingsButtonRect.Contains(mx, my);
+    m_MainMenuHowToHovered = m_MainMenuHowToButtonRect.Contains(mx, my);
   } else {
     updateHoveredAction(mx, my);
     m_MainMenuStartHovered = false;
     m_MainMenuSettingsHovered = false;
+    m_MainMenuHowToHovered = false;
     if (!m_ShowPrompt) {
       m_SettingsButtonHovered = m_SettingsButtonRect.Contains(mx, my);
       if (mouseClick && m_SettingsButtonHovered) {
@@ -2333,9 +2351,38 @@ void KasinoGame::drawPromptOverlay() {
                glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
     }
     std::string desc = difficultyDescription(m_MenuDifficulty);
-    drawText(desc, glm::vec2{m_PromptBoxRect.x + 16.f,
-                             m_PromptBoxRect.y + 180.f},
+    drawText(desc,
+             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 180.f},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
+  } else if (m_PromptMode == PromptMode::HowToPlay) {
+    std::vector<std::string> lines = {
+        "EACH ROUND STARTS WITH FOUR CARDS PER PLAYER",
+        "AND FOUR FACE UP ON THE TABLE",
+        "ON YOUR TURN CHOOSE ONE ACTION:",
+        " - CAPTURE MATCHING RANKS OR SUM TABLE CARDS",
+        "   TO YOUR CARD VALUE AND TAKE BUILDS OF THAT VALUE",
+        " - BUILD BY COMBINING YOUR CARD WITH TABLE CARDS",
+        "   TO RESERVE A TARGET VALUE FOR LATER CAPTURE",
+        " - EXTEND YOUR OWN BUILDS TO A HIGHER VALUE WHEN",
+        "   YOU HOLD THE NEEDED CARD",
+        " - TRAIL TO PLACE A CARD ON THE TABLE WHEN NO",
+        "   OTHER MOVE FITS",
+        "CAPTURED CARDS GO TO YOUR PILE AND CLEARING THE",
+        "TABLE DURING A CAPTURE EARNS A SWEEP BONUS",
+        "WHEN ALL HANDS ARE EMPTY THE LAST PLAYER TO CAPTURE",
+        "TAKES ANY CARDS LEFT ON THE TABLE",
+        "SCORING EACH ROUND:",
+        " - ONE POINT PER CARD IN YOUR PILE",
+        " - ONE POINT FOR EACH BUILD YOU COLLECT",
+        " - ONE POINT FOR EVERY SWEEP BONUS",
+        "REACH THE TARGET SCORE TO WIN THE MATCH"};
+
+    float textY = m_PromptBoxRect.y + 64.f;
+    for (const auto &line : lines) {
+      drawText(line, glm::vec2{m_PromptBoxRect.x + 16.f, textY}, 2.6f,
+               glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
+      textY += 16.f;
+    }
   } else if (m_PromptMode == PromptMode::Settings) {
     drawText("Close resumes play without leaving the table.",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 64.f},
@@ -2476,9 +2523,9 @@ void KasinoGame::drawMainMenu() {
   drawButton(m_MainMenuStartButtonRect, "START", m_MainMenuStartHovered);
   drawButton(m_MainMenuSettingsButtonRect, "SETTINGS",
              m_MainMenuSettingsHovered);
+  drawButton(m_MainMenuHowToButtonRect, "HOW TO PLAY", m_MainMenuHowToHovered);  
 
-  float footerY = m_MainMenuSettingsButtonRect.y +
-                  m_MainMenuSettingsButtonRect.h + buttonsToFooterSpacing;
+  float footerY = m_MainMenuHowToButtonRect.y + m_MainMenuHowToButtonRect.h + buttonsToFooterSpacing;
   drawText(kMainMenuFooterText,
            glm::vec2{centerX - footerMetrics.x * 0.5f, footerY},
            kMainMenuFooterScale,
