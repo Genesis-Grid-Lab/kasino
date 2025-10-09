@@ -42,6 +42,7 @@ constexpr float kTitleSubtitleSpacingFactor = 1.2f;
 constexpr float kSubtitleButtonsSpacingFactor = 3.0f;
 constexpr float kButtonsFooterSpacingFactor = 2.4f;
 constexpr float kButtonVerticalSpacingFactor = 1.75f;
+constexpr float kMainMenuBottomMargin = 48.f;
 
 struct PreviewScoreResult {
   std::vector<ScoreLine> lines;
@@ -346,6 +347,21 @@ void KasinoGame::updateMainMenuLayout() {
   float buttonHeight = 60.f;
   float startX = width * 0.5f - buttonWidth * 0.5f;
   float startY = buttonsTop;
+
+  float maxButtonBottom = height - kMainMenuBottomMargin;
+  float totalButtonsHeight = buttonHeight * 3.f + buttonSpacing * 2.f;
+  if (startY + totalButtonsHeight > maxButtonBottom) {
+    float allowedSpacing =
+        (maxButtonBottom - startY - buttonHeight * 3.f) * 0.5f;
+    if (allowedSpacing < 0.f) {
+      allowedSpacing = 0.f;
+    }
+    buttonSpacing = std::min(buttonSpacing, allowedSpacing);
+
+    totalButtonsHeight = buttonHeight * 3.f + buttonSpacing * 2.f;
+    float maxStartY = maxButtonBottom - totalButtonsHeight;
+    startY = std::min(startY, maxStartY);
+  }
 
   m_MainMenuStartButtonRect = {startX, startY, buttonWidth, buttonHeight};
   m_MainMenuSettingsButtonRect = {startX, startY + buttonHeight + buttonSpacing,
@@ -2525,7 +2541,10 @@ void KasinoGame::drawMainMenu() {
              m_MainMenuSettingsHovered);
   drawButton(m_MainMenuHowToButtonRect, "HOW TO PLAY", m_MainMenuHowToHovered);  
 
-  float footerY = m_MainMenuHowToButtonRect.y + m_MainMenuHowToButtonRect.h + buttonsToFooterSpacing;
+  float footerY = m_MainMenuHowToButtonRect.y + m_MainMenuHowToButtonRect.h +
+                  buttonsToFooterSpacing;
+  float maxFooterY = height - kMainMenuBottomMargin - footerMetrics.y;
+  footerY = std::min(footerY, maxFooterY);
   drawText(kMainMenuFooterText,
            glm::vec2{centerX - footerMetrics.x * 0.5f, footerY},
            kMainMenuFooterScale,
