@@ -46,6 +46,7 @@ endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/glad)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/miniaudio)
 
 file(GLOB_RECURSE source ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp)
 file(GLOB_RECURSE headers ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
@@ -68,6 +69,7 @@ target_include_directories(engine PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor/stb_image
   ${CMAKE_SOURCE_DIR}/vendor/spdlog/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/miniaudio
 )
 
 # Backend selection
@@ -86,6 +88,7 @@ if (WINDOW_BACKEND STREQUAL "glfw")
 	  glad
 	  glm
 	  spdlog
+    miniaudio
 	)
     else()
         find_package(glfw3 REQUIRED)
@@ -94,6 +97,7 @@ if (WINDOW_BACKEND STREQUAL "glfw")
 	  glad
 	  glm
 	  spdlog
+    miniaudio
 	)
     endif()
 elseif (WINDOW_BACKEND STREQUAL "native")
@@ -102,6 +106,7 @@ elseif (WINDOW_BACKEND STREQUAL "native")
     glad
     glm
     spdlog
+    miniaudio
   )
 elseif(WINDOW_BACKEND STREQUAL "android")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_ANDROID=1)
