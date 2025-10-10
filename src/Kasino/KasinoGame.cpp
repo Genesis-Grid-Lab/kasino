@@ -1638,10 +1638,10 @@ void KasinoGame::OnUpdate(float dt) {
   }
 
   if (m_Phase == Phase::MainMenu) {
-    SoundSystem::PlayEx(m_Audio_1, m_GlobAudioSource, true);
+    SoundSystem::Play(m_Audio_1, m_GlobAudioSource, true);
     updateMainMenuLayout();
   } else {
-    m_GlobAudioSource->Stop();
+    SoundSystem::Stop();
     updateLayout();
     if (!m_IsDealing) {
       refreshHighlights();
