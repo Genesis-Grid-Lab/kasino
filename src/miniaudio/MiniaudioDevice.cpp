@@ -210,55 +210,52 @@ void DestroySound(ma_sound*& sound) {
 MiniaudioSource::MiniaudioSource(ma_engine* eng) : m_engine(eng) {}
 MiniaudioSource::~MiniaudioSource() { DestroySound(m_sound); }
 
+namespace { struct OwnedBuffer { ma_audio_buffer buf{}; bool inited=false; }; }
+
 void MiniaudioSource::SetBuffer(Ref<IAudioBuffer> buffer) {
-    if (!m_engine) {
-        return;
+    // cleanup old
+    if (m_sound) {
+        if (void* ud = ma_sound_get_userdata(m_sound)) {
+            auto* ob = reinterpret_cast<OwnedBuffer*>(ud);
+            if (ob->inited) ma_audio_buffer_uninit(&ob->buf);
+            delete ob;
+        }
+        ma_sound_uninit(m_sound);
+        delete m_sound; m_sound=nullptr;
     }
+    m_bound.reset();
 
-    if (buffer == nullptr) {
-        DestroySound(m_sound);
-        m_bound.reset();
-        return;
+    if (!m_engine || !buffer) return;
+    auto pcm = std::dynamic_pointer_cast<MiniaudioBuffer>(buffer);
+    if (!pcm || !pcm->IsValid()) return;
+
+    const bool f32 = pcm->RawIsFloat32();
+    const ma_format fmt = f32 ? ma_format_f32 : ma_format_s16;
+    const ma_uint32 ch  = (ma_uint32)pcm->GetChannels();
+    const ma_uint32 sr  = (ma_uint32)pcm->GetSampleRate();
+    const size_t frameSize = (f32 ? sizeof(float) : sizeof(int16_t)) * ch;
+    const ma_uint64 frames = frameSize ? (ma_uint64)(pcm->RawSize()/frameSize) : 0;
+    if (!frames) return;
+
+    auto* ob = new OwnedBuffer();
+    auto cfg = ma_audio_buffer_config_init(fmt, ch, pcm->Raw(), frames);
+    cfg.sampleRate = sr;
+    if (ma_audio_buffer_init(&cfg, &ob->buf) != MA_SUCCESS) { delete ob; return; }
+    ob->inited = true;
+
+    m_sound = new ma_sound();
+    if (ma_sound_init_from_data_source(m_engine, &ob->buf, 0, nullptr, m_sound) != MA_SUCCESS) {
+        ma_audio_buffer_uninit(&ob->buf); delete ob; delete m_sound; m_sound=nullptr; return;
     }
+    ma_sound_set_userdata(m_sound, ob);
 
-    auto typed = std::dynamic_pointer_cast<MiniaudioBuffer>(buffer);
-    if (!typed || !typed->IsValid()) {
-        DestroySound(m_sound);
-        m_bound.reset();
-        return;
-    }
-
-    ma_uint64 frameCount = CalculateFrameCount(*typed);
-    if (frameCount == 0) {
-        DestroySound(m_sound);
-        m_bound.reset();
-        return;
-    }
-
-    ma_sound* sound = new ma_sound();
-    // ma_result result = ma_sound_init_from_data(
-    //     m_engine,
-    //     sound,
-    //     typed->Raw(),
-    //     frameCount,
-    //     static_cast<ma_uint32>(typed->GetChannels()),
-    //     static_cast<ma_uint32>(typed->GetSampleRate()),
-    //     ToMiniaudioFormat(*typed));
-
-    // if (result != MA_SUCCESS) {
-    //     delete sound;
-    //     return;
-    // }
-
-    DestroySound(m_sound);
-    m_sound = sound;
-    m_bound = buffer;
-
+    m_bound = std::move(buffer);
     ma_sound_set_looping(m_sound, m_loop ? MA_TRUE : MA_FALSE);
     ma_sound_set_volume(m_sound, m_vol);
     ma_sound_set_pitch(m_sound, m_pitch);
     ma_sound_set_pan(m_sound, m_pan);
 }
+
 
 void MiniaudioSource::SetLooping(bool e) {
     m_loop = e;
@@ -327,9 +324,7 @@ bool MiniaudioDevice::Initialize() {
     }
 
     ma_engine_set_volume(m_engine, m_master);
-
-    //tmp test    
-    ma_engine_play_sound(m_engine, "Resources/audio_1.wav", NULL);
+    
     return true;
 }
 
