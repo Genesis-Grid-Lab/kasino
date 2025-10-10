@@ -98,12 +98,15 @@ private:
   std::string cardTexturePath(const Card &card) const;
   std::string cardRankString(Rank rank) const;
   std::string cardSuitFolder(Suit suit) const;
+
+  void playCardSlideSound();
 private:
   std::unique_ptr<InputSystem> m_Input;
   Ref<IAudioSource> m_GlobAudioSource;
   Ref<IAudioBuffer> m_Audio_1;
   Ref<IAudioBuffer> m_card_slide_1;
   Ref<IAudioBuffer> m_card_slide_2;
+  int m_NextCardSlideIndex = 0;
   GameState m_State;
   std::vector<Move> m_LegalMoves;
   std::vector<ActionEntry> m_ActionEntries;

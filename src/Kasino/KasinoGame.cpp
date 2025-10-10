@@ -1548,6 +1548,28 @@ void KasinoGame::handlePrompt(PromptAction action) {
   updatePromptLayout();
 }
 
+void KasinoGame::playCardSlideSound() {
+  Ref<IAudioBuffer> buffer;
+
+  if(m_GlobAudioSource->IsPlaying()){
+        SoundSystem::Stop(m_GlobAudioSource);
+      }
+      // SoundSystem::Play(m_card_slide_1, m_GlobAudioSource);
+
+  if (m_card_slide_1 && m_card_slide_2) {
+    buffer = (m_NextCardSlideIndex == 0) ? m_card_slide_1 : m_card_slide_2;
+    m_NextCardSlideIndex = 1 - m_NextCardSlideIndex;
+  } else if (m_card_slide_1) {
+    buffer = m_card_slide_1;
+  } else if (m_card_slide_2) {
+    buffer = m_card_slide_2;
+  }
+
+  if (buffer) {
+    
+    SoundSystem::Play(buffer);
+  }
+}
 void KasinoGame::OnUpdate(float dt) {
   if (!m_Input)
     return;
@@ -1581,11 +1603,16 @@ void KasinoGame::OnUpdate(float dt) {
       }
       
 
+      float previousProgress = anim.progress;
       if (kDealAnimDuration > 0.f) {
         anim.progress =
 	  std::min(1.f, anim.progress + dt / kDealAnimDuration);
       } else {
         anim.progress = 1.f;
+      }
+
+      if(previousProgress <= 0.f && anim.progress > 0.f){
+        playCardSlideSound();
       }
 
       if (anim.progress >= 1.f) {
@@ -1612,11 +1639,7 @@ void KasinoGame::OnUpdate(float dt) {
     } else {
       m_IsDealing = true;
     }
-
-    if(m_GlobAudioSource->IsPlaying()){
-        SoundSystem::Stop(m_GlobAudioSource);
-      }
-      SoundSystem::Play(m_card_slide_1, m_GlobAudioSource);
+    
   } else if (m_IsDealing) {
     dealFinishedThisFrame = true;
   }
