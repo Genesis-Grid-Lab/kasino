@@ -31,12 +31,6 @@ bool Game::Init(const FactoryDesc &desc) {
     EN_CORE_ERROR("failed to init audio");
   }
 
-  // testing sound
-  auto testSound = m_Audio->CreateBuffer();
-  testSound->LoadWavFile("Resources/audio_1.wav");
-
-  SoundSystem::PlayOneShot(testSound);
-
   // 5) Camera: derive logical size from the window itself
   auto [lw, lh] = m_Window->GetLogicalSize();
   if (lw <= 0) lw = 360;
@@ -64,6 +58,11 @@ void Game::Run() {
   auto last = clock::now();
 
   while (m_Running && !m_Window->ShouldClose()) {
+    // testing sound
+    auto testSound = SoundSystem::GetDevice()->CreateBuffer();
+    testSound->LoadWavFile("Resources/audio_1.wav");
+
+    SoundSystem::PlayOneShot(testSound);
     m_Window->PollEvents();
     SoundSystem::Update();
     RenderCommand::SetClearColor(0.5, 0.3, 0.1, 1.0);
