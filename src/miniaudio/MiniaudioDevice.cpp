@@ -196,11 +196,27 @@ bool MiniaudioBuffer::LoadWavFile(const std::string& path) {
 }
 
 // ---------------- MiniaudioSource ----------------
+
+static std::unordered_map<ma_sound*, ma_audio_buffer*> g_ownedBuffers;
+
+static void FreeOwnedBufferFor(ma_sound* snd) {
+    if (!snd) return;
+    auto it = g_ownedBuffers.find(snd);
+    if (it == g_ownedBuffers.end()) return;
+    if (it->second) {
+        ma_audio_buffer_uninit(it->second);
+        delete it->second;
+    }
+    g_ownedBuffers.erase(it);
+}
+
 namespace {
 void DestroySound(ma_sound*& sound) {
     if (!sound) {
         return;
     }
+
+    FreeOwnedBufferFor(sound);
     ma_sound_uninit(sound);
     delete sound;
     sound = nullptr;
@@ -210,18 +226,10 @@ void DestroySound(ma_sound*& sound) {
 MiniaudioSource::MiniaudioSource(ma_engine* eng) : m_engine(eng) {}
 MiniaudioSource::~MiniaudioSource() { DestroySound(m_sound); }
 
-namespace { struct OwnedBuffer { ma_audio_buffer buf{}; bool inited=false; }; }
-
 void MiniaudioSource::SetBuffer(Ref<IAudioBuffer> buffer) {
     // cleanup old
-    if (m_sound) {
-        if (void* ud = ma_sound_get_userdata(m_sound)) {
-            auto* ob = reinterpret_cast<OwnedBuffer*>(ud);
-            if (ob->inited) ma_audio_buffer_uninit(&ob->buf);
-            delete ob;
-        }
-        ma_sound_uninit(m_sound);
-        delete m_sound; m_sound=nullptr;
+    if (m_sound) {        
+        DestroySound(m_sound);
     }
     m_bound.reset();
 
@@ -237,17 +245,19 @@ void MiniaudioSource::SetBuffer(Ref<IAudioBuffer> buffer) {
     const ma_uint64 frames = frameSize ? (ma_uint64)(pcm->RawSize()/frameSize) : 0;
     if (!frames) return;
 
-    auto* ob = new OwnedBuffer();
-    auto cfg = ma_audio_buffer_config_init(fmt, ch, pcm->Raw(), frames);
+    // allocate a data source we own (heap)
+    ma_audio_buffer* ab = new ma_audio_buffer();
+    auto cfg = ma_audio_buffer_config_init(fmt, ch, frames, pcm->Raw(), nullptr);
     cfg.sampleRate = sr;
-    if (ma_audio_buffer_init(&cfg, &ob->buf) != MA_SUCCESS) { delete ob; return; }
-    ob->inited = true;
+    if (ma_audio_buffer_init(&cfg, ab) != MA_SUCCESS) { delete ab; return; }
+    
 
     m_sound = new ma_sound();
-    if (ma_sound_init_from_data_source(m_engine, &ob->buf, 0, nullptr, m_sound) != MA_SUCCESS) {
-        ma_audio_buffer_uninit(&ob->buf); delete ob; delete m_sound; m_sound=nullptr; return;
+    if (ma_sound_init_from_data_source(m_engine, ab, 0, nullptr, m_sound) != MA_SUCCESS) {
+        ma_audio_buffer_uninit(ab); delete ab; delete m_sound; m_sound=nullptr; return;
     }
-    ma_sound_set_userdata(m_sound, ob);
+    
+    g_ownedBuffers[m_sound] = ab;
 
     m_bound = std::move(buffer);
     ma_sound_set_looping(m_sound, m_loop ? MA_TRUE : MA_FALSE);

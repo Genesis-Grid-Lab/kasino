@@ -31,17 +31,31 @@ void SoundSystem::Update() {
         [](const OneShot& o){ return !o.src || !o.src->IsPlaying(); }), g_active.end());
 }
 
-void SoundSystem::PlayOneShot(const Ref<IAudioBuffer>& buffer, float volume, float pitch, float pan) {
+void SoundSystem::Play(const Ref<IAudioBuffer>& buffer,bool loop, float volume, float pitch, float pan) {
     if (!g_device || !buffer || !buffer->IsValid()) return;
     auto src = g_device->CreateSource();
     if (!src) return;
     src->SetBuffer(buffer);
-    src->SetLooping(false);
+    src->SetLooping(loop);
     src->SetVolume(volume);
     src->SetPitch(pitch);
     src->SetPan(pan);
     src->Play();
     g_active.push_back({src});
+}
+
+void SoundSystem::PlayEx(const Ref<IAudioBuffer>& buffer, const Ref<IAudioSource>& source,bool loop, float volume, float pitch, float pan) {
+    if (!g_device || !buffer || !buffer->IsValid()) return;    
+    if (!source) return;
+    if(!source->IsPlaying()){
+        source->SetBuffer(buffer);
+        source->SetLooping(loop);
+        source->SetVolume(volume);
+        source->SetPitch(pitch);
+        source->SetPan(pan);
+        source->Play();
+        g_active.push_back({source});
+    }
 }
 
 Scope<IAudioDevice>& SoundSystem::GetDevice() { return g_device; }

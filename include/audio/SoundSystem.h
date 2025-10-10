@@ -5,18 +5,21 @@
 #include "IAudioDevice.h"
 #include "IAudioSource.h"
 
-namespace SoundSystem {
-
+class SoundSystem {
+public:
   // Call once at app startup/shutdown
-  bool Init(Scope<IAudioDevice>& device);
-  void Shutdown();
+  static bool Init(Scope<IAudioDevice>& device);
+  static void Shutdown();
 
   // Per-frame (optional; some backends need no ticking)
-  void Update();
+  static void Update();
 
   // Convenience: quick one-shot sound (creates a temporary source)
-  void PlayOneShot(const Ref<IAudioBuffer>& buffer, float volume = 1.0f, float pitch = 1.0f, float pan = 0.0f);
+  static void Play(const Ref<IAudioBuffer>& buffer, bool loop = false, float volume = 1.0f, float pitch = 1.0f, float pan = 0.0f);
+  static void PlayEx(const Ref<IAudioBuffer>& buffer, const Ref<IAudioSource>& source, bool loop = false, float volume = 1.0f, float pitch = 1.0f, float pan = 0.0f);
+
+  // static void Play
 
   // Access to the device if needed
-  Scope<IAudioDevice>& GetDevice();
-}
+  static Scope<IAudioDevice>& GetDevice();
+};
