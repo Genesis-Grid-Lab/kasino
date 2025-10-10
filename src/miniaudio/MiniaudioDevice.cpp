@@ -5,9 +5,7 @@
 #include <cstring>
 #include <memory>
 
-#if __has_include("vendor/miniaudio/miniaudio.h")
-#    include "vendor/miniaudio/miniaudio.h"
-#else
+#include "miniaudio.h"
 #include <vector>
 
 #include "core/Log.h"
@@ -18,47 +16,6 @@ using ma_int32  = std::int32_t;
 using ma_bool32 = ma_int32;
 using ma_result = ma_int32;
 
-constexpr ma_result MA_SUCCESS       =  0;
-constexpr ma_result MA_INVALID_ARGS  = -1;
-constexpr ma_result MA_OUT_OF_MEMORY = -2;
-
-constexpr ma_bool32 MA_FALSE = 0;
-constexpr ma_bool32 MA_TRUE  = 1;
-
-enum ma_format {
-    ma_format_unknown = 0,
-    ma_format_u8,
-    ma_format_s16,
-    ma_format_s24,
-    ma_format_s32,
-    ma_format_f32
-};
-
-struct ma_engine_config {
-    ma_uint32 sampleRate = 48000;
-    ma_uint32 channels   = 2;
-    float     volume     = 1.0f;
-};
-
-struct ma_engine {
-    ma_engine_config config{};
-    float masterVolume = 1.0f;
-};
-
-struct ma_sound {
-    ma_engine* engine      = nullptr;
-    ma_format  format      = ma_format_unknown;
-    ma_uint32  channels    = 0;
-    ma_uint32  sampleRate  = 0;
-    ma_uint64  frameCount  = 0;
-    bool       looping     = false;
-    float      volume      = 1.0f;
-    float      pitch       = 1.0f;
-    float      pan         = 0.0f;
-    bool       playing     = false;
-    std::vector<float>   dataF32;
-    std::vector<int16_t> dataS16;
-};
 
 inline ma_engine_config ma_engine_config_init() {
     return ma_engine_config{};
@@ -177,7 +134,6 @@ inline void ma_sound_set_pan(ma_sound* sound, float pan) {
     if (!sound) return;
     sound->pan = pan;
 }
-#endif
 
 namespace {
 ma_format ToMiniaudioFormat(const MiniaudioBuffer& buffer) {
