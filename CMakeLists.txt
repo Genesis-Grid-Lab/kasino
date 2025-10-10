@@ -160,7 +160,8 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/Resources)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND 
         ${CMAKE_COMMAND} -E copy_directory 
         ${CMAKE_SOURCE_DIR}/Resources
-        ${EXECUTABLE_OUTPUT_PATH}/Resources
+        # ${EXECUTABLE_OUTPUT_PATH}/Resources
+	$<TARGET_FILE_DIR:${PROJECT_NAME}>/Resources
     )
 else()
     message(WARNING "[WARNING] no resources directory!")

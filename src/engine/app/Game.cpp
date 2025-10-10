@@ -56,13 +56,16 @@ void Game::Run() {
 
   using clock = std::chrono::high_resolution_clock;
   auto last = clock::now();
+  // testing sound
+  SoundSystem::GetDevice()->SetMasterVolume(1000);
+    auto testSound = SoundSystem::GetDevice()->CreateBuffer();
+    if(!testSound->LoadWavFile("Resources/audio_1.wav")){
+      EN_CORE_ERROR("Failed to load wav file");
+    }
+    SoundSystem::PlayOneShot(testSound);
 
   while (m_Running && !m_Window->ShouldClose()) {
-    // testing sound
-    auto testSound = SoundSystem::GetDevice()->CreateBuffer();
-    testSound->LoadWavFile("Resources/audio_1.wav");
 
-    SoundSystem::PlayOneShot(testSound);
     m_Window->PollEvents();
     SoundSystem::Update();
     RenderCommand::SetClearColor(0.5, 0.3, 0.1, 1.0);

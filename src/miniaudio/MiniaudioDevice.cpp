@@ -10,6 +10,8 @@
 #else
 #include <vector>
 
+#include "core/Log.h"
+
 using ma_uint32 = std::uint32_t;
 using ma_uint64 = std::uint64_t;
 using ma_int32  = std::int32_t;
@@ -213,6 +215,7 @@ bool MiniaudioBuffer::LoadPCM(const void* data, size_t bytes, int channels, int 
     size_t frames = (frameSize ? bytes / frameSize : 0);
     m_durationSec = (frameSize ? (float)frames / (float)sampleRate : 0.f);
     m_valid = true;
+    EN_CORE_INFO("LoadPCM done");    
     return true;
 }
 
@@ -233,7 +236,8 @@ bool ReadExact(std::ifstream& file, void* dst, std::size_t bytes) {
 bool MiniaudioBuffer::LoadWavFile(const std::string& path) {
     std::ifstream file(path, std::ios::binary);
     if (!file) {
-        return false;
+      EN_CORE_ERROR("Eroor file: {} donst exist");
+      return false;
     }
 
     char riff[4];
