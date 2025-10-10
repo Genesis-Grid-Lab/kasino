@@ -18,6 +18,8 @@ public:
   static void Play(const Ref<IAudioBuffer>& buffer, bool loop = false, float volume = 1.0f, float pitch = 1.0f, float pan = 0.0f);
   static void PlayEx(const Ref<IAudioBuffer>& buffer, const Ref<IAudioSource>& source, bool loop = false, float volume = 1.0f, float pitch = 1.0f, float pan = 0.0f);
 
+  // static void Stop(const Ref<IAudioSource>& source);
+
   // static void Play
 
   // Access to the device if needed

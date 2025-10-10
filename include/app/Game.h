@@ -28,7 +28,7 @@ class Game {
   virtual void OnUpdate(float dtSeconds) {}
   virtual void OnRender() {}
   virtual void OnResize(int fbWidth, int fbHeight) {}
-  virtual void OnStop() {}
+  virtual void OnStop() {}  
 
  protected:
   Scope<IWindow>         m_Window;

@@ -7,6 +7,7 @@
 #include "input/InputSystem.h"
 #include "Kasino/GameLogic.h"
 #include "Kasino/Scoring.h"
+#include "audio/SoundSystem.h"
 
 #include <algorithm>
 #include <array>
@@ -102,6 +103,13 @@ bool KasinoGame::OnStart() {
   m_PromptSecondaryButtonLabel.clear();
   m_MenuDifficulty = Difficulty::Easy;
   m_ActiveDifficulty = m_MenuDifficulty;
+
+  m_GlobAudioSource = SoundSystem::GetDevice()->CreateSource();
+  m_Audio_1 = SoundSystem::GetDevice()->CreateBuffer();
+
+  if(!m_Audio_1->LoadWavFile("Resources/audio_1.wav")){
+    EN_CORE_ERROR("Failed to load wav file");
+  }
   return true;
 }
 
@@ -1630,8 +1638,10 @@ void KasinoGame::OnUpdate(float dt) {
   }
 
   if (m_Phase == Phase::MainMenu) {
+    SoundSystem::PlayEx(m_Audio_1, m_GlobAudioSource, true);
     updateMainMenuLayout();
   } else {
+    m_GlobAudioSource->Stop();
     updateLayout();
     if (!m_IsDealing) {
       refreshHighlights();

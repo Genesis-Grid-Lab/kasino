@@ -6,6 +6,9 @@
 #include "Kasino/Scoring.h"
 #include "input/InputSystem.h"
 #include "gfx/ITexture2D.h"
+#include "audio/IAudioBuffer.h"
+#include "audio/IAudioSource.h"
+#include "audio/SoundSystem.h"
 
 #include <glm/glm.hpp>
 
@@ -34,7 +37,7 @@ class KasinoGame : public Game {
   enum class Difficulty { Easy, Medium, Hard };
 
   enum class PromptAction { Primary, Secondary };
-
+private:
   // tmp
   glm::mat4 buildCardTransform(const Rect &rect, float rotation);
 
@@ -95,8 +98,10 @@ class KasinoGame : public Game {
   std::string cardTexturePath(const Card &card) const;
   std::string cardRankString(Rank rank) const;
   std::string cardSuitFolder(Suit suit) const;
-
+private:
   std::unique_ptr<InputSystem> m_Input;
+  Ref<IAudioSource> m_GlobAudioSource;
+  Ref<IAudioBuffer> m_Audio_1;
   GameState m_State;
   std::vector<Move> m_LegalMoves;
   std::vector<ActionEntry> m_ActionEntries;
