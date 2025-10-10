@@ -10,131 +10,6 @@
 
 #include "core/Log.h"
 
-using ma_uint32 = std::uint32_t;
-using ma_uint64 = std::uint64_t;
-using ma_int32  = std::int32_t;
-using ma_bool32 = ma_int32;
-using ma_result = ma_int32;
-
-
-inline ma_engine_config ma_engine_config_init() {
-    return ma_engine_config{};
-}
-
-inline ma_result ma_engine_init(const ma_engine_config* config, ma_engine* engine) {
-    if (engine == nullptr) {
-        return MA_INVALID_ARGS;
-    }
-    ma_engine_config cfg = config ? *config : ma_engine_config_init();
-    engine->config = cfg;
-    engine->masterVolume = cfg.volume;
-    return MA_SUCCESS;
-}
-
-inline void ma_engine_uninit(ma_engine* engine) {
-    if (engine) {
-        engine->masterVolume = 1.0f;
-    }
-}
-
-inline void ma_engine_set_volume(ma_engine* engine, float volume) {
-    if (engine) {
-        engine->masterVolume = volume;
-    }
-}
-
-inline ma_result ma_sound_init_from_data(ma_engine* engine,
-                                         ma_sound* sound,
-                                         const void* data,
-                                         ma_uint64 frameCount,
-                                         ma_uint32 channels,
-                                         ma_uint32 sampleRate,
-                                         ma_format format) {
-    if (engine == nullptr || sound == nullptr || data == nullptr || channels == 0 || sampleRate == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    sound->engine = engine;
-    sound->format = format;
-    sound->channels = channels;
-    sound->sampleRate = sampleRate;
-    sound->frameCount = frameCount;
-    sound->looping = false;
-    sound->volume = 1.0f;
-    sound->pitch = 1.0f;
-    sound->pan = 0.0f;
-    sound->playing = false;
-    sound->dataF32.clear();
-    sound->dataS16.clear();
-
-    const ma_uint64 samples = frameCount * channels;
-    if (format == ma_format_f32) {
-        try {
-            const float* src = static_cast<const float*>(data);
-            sound->dataF32.assign(src, src + samples);
-        } catch (...) {
-            return MA_OUT_OF_MEMORY;
-        }
-    } else if (format == ma_format_s16) {
-        try {
-            const int16_t* src = static_cast<const int16_t*>(data);
-            sound->dataS16.assign(src, src + samples);
-        } catch (...) {
-            return MA_OUT_OF_MEMORY;
-        }
-    } else {
-        return MA_INVALID_ARGS;
-    }
-
-    return MA_SUCCESS;
-}
-
-inline void ma_sound_uninit(ma_sound* sound) {
-    if (!sound) return;
-    sound->dataF32.clear();
-    sound->dataS16.clear();
-    sound->playing = false;
-    sound->engine = nullptr;
-}
-
-inline void ma_sound_start(ma_sound* sound) {
-    if (!sound) return;
-    if (sound->frameCount == 0) {
-        sound->playing = false;
-        return;
-    }
-    sound->playing = true;
-}
-
-inline void ma_sound_stop(ma_sound* sound) {
-    if (!sound) return;
-    sound->playing = false;
-}
-
-inline ma_bool32 ma_sound_is_playing(const ma_sound* sound) {
-    return (sound && sound->playing) ? MA_TRUE : MA_FALSE;
-}
-
-inline void ma_sound_set_looping(ma_sound* sound, ma_bool32 looping) {
-    if (!sound) return;
-    sound->looping = looping == MA_TRUE;
-}
-
-inline void ma_sound_set_volume(ma_sound* sound, float volume) {
-    if (!sound) return;
-    sound->volume = volume;
-}
-
-inline void ma_sound_set_pitch(ma_sound* sound, float pitch) {
-    if (!sound) return;
-    sound->pitch = pitch;
-}
-
-inline void ma_sound_set_pan(ma_sound* sound, float pan) {
-    if (!sound) return;
-    sound->pan = pan;
-}
-
 namespace {
 ma_format ToMiniaudioFormat(const MiniaudioBuffer& buffer) {
     return buffer.RawIsFloat32() ? ma_format_f32 : ma_format_s16;
@@ -361,19 +236,19 @@ void MiniaudioSource::SetBuffer(Ref<IAudioBuffer> buffer) {
     }
 
     ma_sound* sound = new ma_sound();
-    ma_result result = ma_sound_init_from_data(
-        m_engine,
-        sound,
-        typed->Raw(),
-        frameCount,
-        static_cast<ma_uint32>(typed->GetChannels()),
-        static_cast<ma_uint32>(typed->GetSampleRate()),
-        ToMiniaudioFormat(*typed));
+    // ma_result result = ma_sound_init_from_data(
+    //     m_engine,
+    //     sound,
+    //     typed->Raw(),
+    //     frameCount,
+    //     static_cast<ma_uint32>(typed->GetChannels()),
+    //     static_cast<ma_uint32>(typed->GetSampleRate()),
+    //     ToMiniaudioFormat(*typed));
 
-    if (result != MA_SUCCESS) {
-        delete sound;
-        return;
-    }
+    // if (result != MA_SUCCESS) {
+    //     delete sound;
+    //     return;
+    // }
 
     DestroySound(m_sound);
     m_sound = sound;
@@ -452,6 +327,9 @@ bool MiniaudioDevice::Initialize() {
     }
 
     ma_engine_set_volume(m_engine, m_master);
+
+    //tmp test    
+    ma_engine_play_sound(m_engine, "Resources/audio_1.wav", NULL);
     return true;
 }
 
