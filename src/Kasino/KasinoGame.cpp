@@ -110,6 +110,16 @@ bool KasinoGame::OnStart() {
   if(!m_Audio_1->LoadWavFile("Resources/audio_1.wav")){
     EN_CORE_ERROR("Failed to load wav file");
   }
+
+  m_card_slide_1 = SoundSystem::GetDevice()->CreateBuffer();
+  if(!m_card_slide_1->LoadWavFile("Resources/audio/card_slide_1.wav")){
+    EN_CORE_ERROR("Failed to load wav file");
+  }
+
+  m_card_slide_2 = SoundSystem::GetDevice()->CreateBuffer();
+  if(!m_card_slide_2->LoadWavFile("Resources/audio/card_slide_2.wav")){
+    EN_CORE_ERROR("Failed to load wav file");
+  }
   return true;
 }
 
@@ -294,7 +304,7 @@ void KasinoGame::beginDealAnimation() {
       const auto &hand = m_State.players[p].hand;
       if (cardIndex >= hand.size()) {
         continue;
-      }
+      }      
 
       DealAnim anim;
       anim.player = p;
@@ -306,6 +316,7 @@ void KasinoGame::beginDealAnimation() {
       currentDelay += kDealDelayStep;
     }
   }
+
 
   if (!m_DealQueue.empty()) {
     m_IsDealing = true;
@@ -1568,6 +1579,7 @@ void KasinoGame::OnUpdate(float dt) {
         ++it;
         continue;
       }
+      
 
       if (kDealAnimDuration > 0.f) {
         anim.progress =
@@ -1591,6 +1603,8 @@ void KasinoGame::OnUpdate(float dt) {
       } else {
         ++it;
       }
+
+      
     }
 
     if (m_DealQueue.empty()) {
@@ -1598,9 +1612,15 @@ void KasinoGame::OnUpdate(float dt) {
     } else {
       m_IsDealing = true;
     }
+
+    if(m_GlobAudioSource->IsPlaying()){
+        SoundSystem::Stop(m_GlobAudioSource);
+      }
+      SoundSystem::Play(m_card_slide_1, m_GlobAudioSource);
   } else if (m_IsDealing) {
     dealFinishedThisFrame = true;
   }
+  
 
   if (dealFinishedThisFrame) {
     m_IsDealing = false;
@@ -1608,6 +1628,7 @@ void KasinoGame::OnUpdate(float dt) {
       if (p < static_cast<int>(m_State.players.size())) {
         m_DealtCounts[p] = static_cast<int>(m_State.players[p].hand.size());
       }
+      
     }
     if (m_Phase == Phase::Playing) {
       updateLegalMoves();
@@ -1641,7 +1662,7 @@ void KasinoGame::OnUpdate(float dt) {
     SoundSystem::Play(m_Audio_1, m_GlobAudioSource, true);
     updateMainMenuLayout();
   } else {
-    SoundSystem::Stop();
+    // SoundSystem::Stop(m_GlobAudioSource);
     updateLayout();
     if (!m_IsDealing) {
       refreshHighlights();

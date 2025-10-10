@@ -102,6 +102,8 @@ private:
   std::unique_ptr<InputSystem> m_Input;
   Ref<IAudioSource> m_GlobAudioSource;
   Ref<IAudioBuffer> m_Audio_1;
+  Ref<IAudioBuffer> m_card_slide_1;
+  Ref<IAudioBuffer> m_card_slide_2;
   GameState m_State;
   std::vector<Move> m_LegalMoves;
   std::vector<ActionEntry> m_ActionEntries;
