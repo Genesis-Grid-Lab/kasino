@@ -21,23 +21,6 @@
 #include "audio/null/NullAudioDevice.h"
 #include "audio/miniaudio/MiniaudioDevice.h"
 
-// Scope<IWindow> CreateWindow(const WindowDesc& desc){
-// #if defined(WINDOW_BACKEND_GLFW)
-//     return CreateScope<GlfwWindow>(desc);
-// #elif defined(WINDOW_BACKEND_NATIVE)
-//     return CreateScope<NativeWindow>(desc);
-// #elif defined(WINDOW_BACKEND_ANDROID)
-//     return CreateScope<AndroidWindow>(desc);
-// #elif defined(WINDOW_BACKEND_IOS)
-//     return CreateScope<IosWindow>(desc);
-// #else
-//     static_assert(false, "No window backend selected");
-//     return {};
-// #endif
-// }
-
-// Scope<IGraphicsDevice> CreateDevice() { return CreateScope<GLDevice>(); }
-
 FactoryDesc Factory::s_Desc = FactoryDesc{};
 
 void Factory::SetDesc(const FactoryDesc& desc){

@@ -27,7 +27,15 @@ bool Game::Init(const FactoryDesc &desc) {
 
   // 4) audio system
   m_Audio = Factory::CreateAudioDevice();
-  SoundSystem::Init(m_Audio);
+  if(!SoundSystem::Init(m_Audio)){
+    EN_CORE_ERROR("failed to init audio");
+  }
+
+  // testing sound
+  auto testSound = m_Audio->CreateBuffer();
+  testSound->LoadWavFile("Resources/audio_1.wav");
+
+  SoundSystem::PlayOneShot(testSound);
 
   // 5) Camera: derive logical size from the window itself
   auto [lw, lh] = m_Window->GetLogicalSize();

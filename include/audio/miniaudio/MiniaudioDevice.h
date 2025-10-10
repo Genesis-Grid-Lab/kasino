@@ -12,7 +12,9 @@ public:
     MiniaudioBuffer();
     ~MiniaudioBuffer() override;
 
-    bool  LoadPCM(const void* data, size_t bytes, int channels, int sampleRate, bool isFloat32) override;
+    bool LoadPCM(const void *data, size_t bytes, int channels, int sampleRate,
+                 bool isFloat32) override;
+  bool  LoadWavFile(const std::string& path) override;
     float GetDurationSec() const override { return m_durationSec; }
     int   GetChannels()   const override { return m_channels; }
     int   GetSampleRate() const override { return m_sampleRate; }

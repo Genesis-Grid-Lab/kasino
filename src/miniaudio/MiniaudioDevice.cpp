@@ -216,6 +216,150 @@ bool MiniaudioBuffer::LoadPCM(const void* data, size_t bytes, int channels, int 
     return true;
 }
 
+namespace {
+struct WavFormatChunk {
+    std::uint16_t audioFormat = 0;
+    std::uint16_t channels = 0;
+    std::uint32_t sampleRate = 0;
+    std::uint16_t bitsPerSample = 0;
+};
+
+bool ReadExact(std::ifstream& file, void* dst, std::size_t bytes) {
+    file.read(reinterpret_cast<char*>(dst), static_cast<std::streamsize>(bytes));
+    return static_cast<std::size_t>(file.gcount()) == bytes;
+}
+} // namespace
+
+bool MiniaudioBuffer::LoadWavFile(const std::string& path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        return false;
+    }
+
+    char riff[4];
+    if (!ReadExact(file, riff, sizeof(riff)) || std::strncmp(riff, "RIFF", 4) != 0) {
+        return false;
+    }
+
+    std::uint32_t riffSize = 0;
+    if (!ReadExact(file, &riffSize, sizeof(riffSize))) {
+        return false;
+    }
+    (void)riffSize; // unused but kept for validation parity
+
+    char wave[4];
+    if (!ReadExact(file, wave, sizeof(wave)) || std::strncmp(wave, "WAVE", 4) != 0) {
+        return false;
+    }
+
+    WavFormatChunk fmt{};
+    bool fmtFound = false;
+    bool dataFound = false;
+    std::vector<unsigned char> data;
+
+    auto skipBytes = [&file](std::uint32_t amount) -> bool {
+        file.seekg(static_cast<std::streamoff>(amount), std::ios::cur);
+        return static_cast<bool>(file);
+    };
+
+    while (file && (!fmtFound || !dataFound)) {
+        char chunkId[4];
+        if (!ReadExact(file, chunkId, sizeof(chunkId))) {
+            break;
+        }
+
+        std::uint32_t chunkSize = 0;
+        if (!ReadExact(file, &chunkSize, sizeof(chunkSize))) {
+            return false;
+        }
+
+        if (std::strncmp(chunkId, "fmt ", 4) == 0) {
+            if (chunkSize < 16) {
+                return false;
+            }
+
+            std::uint16_t audioFormat = 0;
+            std::uint16_t channels = 0;
+            std::uint32_t sampleRate = 0;
+            std::uint32_t byteRate = 0;
+            std::uint16_t blockAlign = 0;
+            std::uint16_t bitsPerSample = 0;
+
+            if (!ReadExact(file, &audioFormat, sizeof(audioFormat)) ||
+                !ReadExact(file, &channels, sizeof(channels)) ||
+                !ReadExact(file, &sampleRate, sizeof(sampleRate)) ||
+                !ReadExact(file, &byteRate, sizeof(byteRate)) ||
+                !ReadExact(file, &blockAlign, sizeof(blockAlign)) ||
+                !ReadExact(file, &bitsPerSample, sizeof(bitsPerSample))) {
+                return false;
+            }
+
+            (void)byteRate;
+            (void)blockAlign;
+
+            if (chunkSize > 16 && !skipBytes(chunkSize - 16)) {
+                return false;
+            }
+
+            fmt.audioFormat = audioFormat;
+            fmt.channels = channels;
+            fmt.sampleRate = sampleRate;
+            fmt.bitsPerSample = bitsPerSample;
+            fmtFound = true;
+
+            // fmt chunks are word aligned; skip padding if present.
+            if ((chunkSize & 1u) != 0u && !skipBytes(1)) {
+                return false;
+            }
+        } else if (std::strncmp(chunkId, "data", 4) == 0) {
+            data.resize(chunkSize);
+            if (chunkSize > 0 && !ReadExact(file, data.data(), data.size())) {
+                return false;
+            }
+
+            if ((chunkSize & 1u) != 0u && !skipBytes(1)) {
+                return false;
+            }
+
+            dataFound = true;
+        } else {
+            if (!skipBytes(chunkSize)) {
+                return false;
+            }
+
+            if ((chunkSize & 1u) != 0u && !skipBytes(1)) {
+                return false;
+            }
+        }
+    }
+
+    if (!fmtFound || !dataFound) {
+        return false;
+    }
+
+    if (fmt.channels == 0 || fmt.sampleRate == 0 || fmt.bitsPerSample == 0) {
+        return false;
+    }
+
+    const std::size_t bytesPerSample = fmt.bitsPerSample / 8;
+    if (bytesPerSample == 0) {
+        return false;
+    }
+
+    const std::size_t frameSize = bytesPerSample * static_cast<std::size_t>(fmt.channels);
+    if (frameSize == 0 || (data.size() % frameSize) != 0) {
+        return false;
+    }
+
+    const bool isFloat32 = (fmt.audioFormat == 3 && fmt.bitsPerSample == 32);
+    const bool isPCM16 = (fmt.audioFormat == 1 && fmt.bitsPerSample == 16);
+    if (!isFloat32 && !isPCM16) {
+        return false; // unsupported format
+    }
+
+    return LoadPCM(data.data(), data.size(), fmt.channels, fmt.sampleRate, isFloat32);
+}
+
 // ---------------- MiniaudioSource ----------------
 namespace {
 void DestroySound(ma_sound*& sound) {

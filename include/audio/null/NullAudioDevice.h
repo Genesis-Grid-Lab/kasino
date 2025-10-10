@@ -5,7 +5,8 @@
 
 class NullAudioBuffer : public IAudioBuffer {
 public:
-    bool LoadPCM(const void*, size_t, int, int, bool) override { return true; }
+  bool LoadPCM(const void *, size_t, int, int, bool) override { return true; }
+  bool  LoadWavFile(const std::string& path) override { return true;}
     float GetDurationSec() const override { return 0.f; }
     int GetChannels() const override { return 2; }
     int GetSampleRate() const override { return 44100; }
@@ -28,7 +29,7 @@ public:
 
 class NullAudioDevice : public IAudioDevice {
 public:
-    bool Initialize() override { return true; }
+  bool Initialize() override { return true; }
     void Shutdown() override {}
     void Update() override {}
     void SetMasterVolume(float) override {}
