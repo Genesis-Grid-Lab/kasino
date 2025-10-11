@@ -11,13 +11,25 @@ set(EXECUTABLE_OUTPUT_PATH $<0:>${CMAKE_BINARY_DIR}/bin)
 
 project(Kasino LANGUAGES CXX)
 
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+  set(EMSCRIPTEN TRUE)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Options
 set(WINDOW_BACKEND "glfw" CACHE STRING "Window backend: glfw or native")
-option(USE_FECTH_GLFW "Fetch GLFW via FetchContent" ON)
+set(USE_FETCH_GLFW_DEFAULT OFF)
+if (DEFINED USE_FECTH_GLFW)
+  set(USE_FETCH_GLFW_DEFAULT ${USE_FECTH_GLFW})
+endif()
+option(USE_FETCH_GLFW "Fetch GLFW via FetchContent" ${USE_FETCH_GLFW_DEFAULT})
+
+if (EMSCRIPTEN)
+  set(USE_FETCH_GLFW OFF CACHE BOOL "Fetch GLFW via FetchContent" FORCE)
+endif()
 
 if(WINDOW_BACKEND STREQUAL "glfw")
   file(GLOB_RECURSE nativeFile)
@@ -75,7 +87,25 @@ target_include_directories(engine PUBLIC
 # Backend selection
 if (WINDOW_BACKEND STREQUAL "glfw")
     target_compile_definitions(engine PUBLIC WINDOW_BACKEND_GLFW=1)
-    if (USE_FETCH_GLFW)
+    if (EMSCRIPTEN)
+        target_link_libraries(engine PUBLIC
+          glad
+          glm
+          spdlog
+          miniaudio
+        )
+        target_compile_options(engine PUBLIC
+          "-sUSE_GLFW=3"
+          "-sUSE_WEBGL2=1"
+          "-sFULL_ES3=1"
+        )
+        target_link_options(engine PUBLIC
+          "-sUSE_GLFW=3"
+          "-sUSE_WEBGL2=1"
+          "-sFULL_ES3=1"
+          "-sALLOW_MEMORY_GROWTH=1"
+        )
+    elseif (USE_FETCH_GLFW)
         include(FetchContent)
         FetchContent_Declare(
             glfw
@@ -84,21 +114,21 @@ if (WINDOW_BACKEND STREQUAL "glfw")
         )
         FetchContent_MakeAvailable(glfw)
         target_link_libraries(engine PUBLIC
-	  glfw
-	  glad
-	  glm
-	  spdlog
-    miniaudio
-	)
+          glfw
+          glad
+          glm
+          spdlog
+          miniaudio
+        )
     else()
         find_package(glfw3 REQUIRED)
         target_link_libraries(engine PUBLIC
-	  glfw
-	  glad
-	  glm
-	  spdlog
-    miniaudio
-	)
+          glfw
+          glad
+          glm
+          spdlog
+          miniaudio
+        )
     endif()
 elseif (WINDOW_BACKEND STREQUAL "native")
   target_compile_definitions(engine PUBLIC WINDOW_BACKEND_NATIVE=1)
@@ -128,7 +158,7 @@ endif()
 
 
 # Linux specifics (GLFW needs this; safe otherwise)
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
     find_package(Threads REQUIRED)
     target_link_libraries(engine PUBLIC Threads::Threads dl X11 Xrandr Xi Xxf86vm Xcursor)
   endif()
@@ -142,6 +172,35 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE engine)
+
+if (EMSCRIPTEN)
+  set(CMAKE_EXECUTABLE_SUFFIX ".html")
+  target_compile_options(${PROJECT_NAME} PRIVATE
+    "-sUSE_GLFW=3"
+    "-sUSE_WEBGL2=1"
+    "-sFULL_ES3=1"
+  )
+  target_link_options(${PROJECT_NAME} PRIVATE
+    "-sUSE_GLFW=3"
+    "-sUSE_WEBGL2=1"
+    "-sFULL_ES3=1"
+    "-sALLOW_MEMORY_GROWTH=1"
+  )
+
+  if (EXISTS ${CMAKE_SOURCE_DIR}/Data)
+    target_link_options(${PROJECT_NAME} PRIVATE
+      "--preload-file"
+      "${CMAKE_SOURCE_DIR}/Data@Data"
+    )
+  endif()
+
+  if (EXISTS ${CMAKE_SOURCE_DIR}/Resources)
+    target_link_options(${PROJECT_NAME} PRIVATE
+      "--preload-file"
+      "${CMAKE_SOURCE_DIR}/Resources@Resources"
+    )
+  endif()
+endif()
 
 
 # copy data

@@ -3,8 +3,10 @@
 #include "gfx/ViewportUtil.h"
 #include "core/Log.h"
 #include "audio/SoundSystem.h"
-// concrete GL device for now
-#include <chrono>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 bool Game::Init(const FactoryDesc &desc) {
   Log::Init();
@@ -51,36 +53,31 @@ bool Game::Init(const FactoryDesc &desc) {
   return OnStart();
 }
 
+namespace {
+#ifdef __EMSCRIPTEN__
+void emscriptenMainLoop(void* userData) {
+  static_cast<Game*>(userData)->runFrame();
+}
+#endif
+}  // namespace
+
 void Game::Run() {
   m_Running = true;
+  m_OnStopCalled = false;
 
   using clock = std::chrono::high_resolution_clock;
-  auto last = clock::now();
-  
-  SoundSystem::GetDevice()->SetMasterVolume(1);    
+  m_LastFrameTime = clock::now();
 
-  while (m_Running && !m_Window->ShouldClose()) {    
-    m_Window->PollEvents();
-    SoundSystem::Update();
-    RenderCommand::SetClearColor(0.5, 0.3, 0.1, 1.0);
-    RenderCommand::Clear();
-    auto now = clock::now();
-    float dt = std::chrono::duration<float>(now - last).count();
-    last = now;
+  SoundSystem::GetDevice()->SetMasterVolume(1);
 
-    OnUpdate(dt);
-
-    m_Device->BeginFrame(m_fbWidth, m_fbHeight);
-
-    m_Camera.Update();
-    Render2D::BeginScene(m_Camera);
-    OnRender();
-    Render2D::EndScene();
-
-    m_Device->EndFrame();
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop_arg(&emscriptenMainLoop, this, 0, true);
+#else
+  while (m_Running && !m_Window->ShouldClose()) {
+    runFrame();
   }
-
-  OnStop();
+  handleStop();
+#endif
 }
 
 void Game::Shutdown() {
@@ -89,4 +86,51 @@ void Game::Shutdown() {
   SoundSystem::Shutdown();
   m_Device.reset();
   m_Window.reset();
+}
+
+void Game::runFrame() {
+  if (!m_Running) {
+#ifdef __EMSCRIPTEN__
+    emscripten_cancel_main_loop();
+#endif
+    handleStop();
+    return;
+  }
+
+  using clock = std::chrono::high_resolution_clock;
+  auto now = clock::now();
+  float dt = std::chrono::duration<float>(now - m_LastFrameTime).count();
+  m_LastFrameTime = now;
+
+  m_Window->PollEvents();
+  SoundSystem::Update();
+
+  if (!m_Running || m_Window->ShouldClose()) {
+    m_Running = false;
+#ifdef __EMSCRIPTEN__
+    emscripten_cancel_main_loop();
+#endif
+    handleStop();
+    return;
+  }
+
+  RenderCommand::SetClearColor(0.5f, 0.3f, 0.1f, 1.0f);
+  RenderCommand::Clear();
+
+  OnUpdate(dt);
+
+  m_Device->BeginFrame(m_fbWidth, m_fbHeight);
+
+  m_Camera.Update();
+  Render2D::BeginScene(m_Camera);
+  OnRender();
+  Render2D::EndScene();
+
+  m_Device->EndFrame();
+}
+
+void Game::handleStop() {
+  if (m_OnStopCalled) return;
+  m_OnStopCalled = true;
+  OnStop();
 }
