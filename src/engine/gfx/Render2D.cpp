@@ -35,7 +35,11 @@ bool Render2D::Initialize() {
   s_VAO    = Factory::CreateVertexArray();
   s_VBO    = Factory::CreateBuffer(BufferType::Vertex);
   s_IBO    = Factory::CreateBuffer(BufferType::Index);
+  #ifdef __EMSCRIPTEN__
+  s_Shader = Factory::CreateShader("Data/Shaders/basicEs.glsl");
+  #else
   s_Shader = Factory::CreateShader("Data/Shaders/basic.glsl");
+  #endif
 
   // std::string log;
   // if (!s_Shader->CompileFromSource(kVS, kFS, &log)) {

@@ -191,15 +191,13 @@ if (EMSCRIPTEN)
 
   if (EXISTS ${CMAKE_SOURCE_DIR}/Data)
     target_link_options(${PROJECT_NAME} PRIVATE
-      "--preload-file"
-      "${CMAKE_SOURCE_DIR}/Data@Data"
+      "--preload-file=${CMAKE_SOURCE_DIR}/Data@Data"
     )
   endif()
 
   if (EXISTS ${CMAKE_SOURCE_DIR}/Resources)
     target_link_options(${PROJECT_NAME} PRIVATE
-      "--preload-file"
-      "${CMAKE_SOURCE_DIR}/Resources@Resources"
+      "--preload-file=${CMAKE_SOURCE_DIR}/Resources@Resources"
     )
   endif()
 endif()
