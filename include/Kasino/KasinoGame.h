@@ -83,8 +83,6 @@ private:
   void drawCardBack(const Rect &r, bool isCurrent, float rotation);
   void drawBuildFace(const Build &build, const Rect &r, bool legal,
                      bool hovered, bool selected);
-  void drawText(const std::string &text, glm::vec2 pos, float scale,
-                const glm::vec4 &color);
 
   std::string moveLabel(const Move &mv) const;
   std::string moveLabelForDifficulty(const Move &mv, Difficulty difficulty) const;

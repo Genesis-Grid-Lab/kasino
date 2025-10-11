@@ -5,6 +5,7 @@
 #include "core/Log.h"
 #include "gfx/Render2D.h"
 #include "input/InputSystem.h"
+#include "ui/UISystem.h"
 #include "Kasino/GameLogic.h"
 #include "Kasino/Scoring.h"
 #include "audio/SoundSystem.h"
@@ -366,9 +367,9 @@ void KasinoGame::updateLegalMoves() {
 void KasinoGame::updateMainMenuLayout() {
   float width = m_Camera.LogicalWidth();
   float height = m_Camera.LogicalHeight();
-  glm::vec2 titleMetrics = measureText(kMainMenuTitleText, kMainMenuTitleScale);
+  glm::vec2 titleMetrics = ui::MeasureText(kMainMenuTitleText, kMainMenuTitleScale);
   glm::vec2 subtitleMetrics =
-      measureText(kMainMenuSubtitleText, kMainMenuSubtitleScale);
+      ui::MeasureText(kMainMenuSubtitleText, kMainMenuSubtitleScale);
   float titleTop = height * 0.25f - titleMetrics.y;
   float titleToSubtitleSpacing = titleMetrics.y * kTitleSubtitleSpacingFactor;
   float subtitleTop = titleTop + titleMetrics.y + titleToSubtitleSpacing;
@@ -1870,8 +1871,8 @@ void KasinoGame::drawCardFace(const Card &card, const Rect &r,
             : glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 
     float scale = r.w / 10.f;
-    drawText(rankString, glm::vec2{r.x + 6.f, r.y + 6.f}, scale, textColor);
-    drawText(suitString,
+    ui::DrawText(rankString, glm::vec2{r.x + 6.f, r.y + 6.f}, scale, textColor);
+    ui::DrawText(suitString,
              glm::vec2{r.x + 6.f, r.y + 6.f + 6.f * scale}, scale, textColor);
   }
 }
@@ -1946,9 +1947,9 @@ void KasinoGame::drawBuildFace(const Build &build, const Rect &r,
     Render2D::DrawQuad(glm::vec2{r.x, r.y}, glm::vec2{r.w, r.h},
                        glm::vec4(0.95f, 0.85f, 0.2f, 0.4f));
 
-  drawText("BUILD", glm::vec2{r.x + 6.f, r.y + 6.f}, r.w / 14.f,
+  ui::DrawText("BUILD", glm::vec2{r.x + 6.f, r.y + 6.f}, r.w / 14.f,
            glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
-  drawText("VAL " + std::to_string(build.value),
+  ui::DrawText("VAL " + std::to_string(build.value),
            glm::vec2{r.x + 6.f, r.y + 22.f}, r.w / 14.f,
            glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
 }
@@ -1979,42 +1980,33 @@ void KasinoGame::drawScoreboard() {
   const float headerSpacing = 10.f;
   const float rowSpacing = 3.f;
   auto measureHeight = [](const std::string &text, float scale) {
-    return measureText(text, scale).y;
+    return ui::MeasureText(text, scale).y;
   };
   float headerHeight = measureHeight("ROUND", 4.f);
 
-  drawText("ROUND " + std::to_string(m_RoundNumber), glm::vec2{12.f, headerTop},
+  ui::DrawText("ROUND " + std::to_string(m_RoundNumber), glm::vec2{12.f, headerTop},
            4.f, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
-  auto drawSettingsButton = [&]() {
-    if (!settingsVisible) {
-      return;
-    }
-    glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
-    glm::vec4 hoverColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
-    glm::vec4 color = m_SettingsButtonHovered ? hoverColor : baseColor;
-    Render2D::DrawQuad(
-        glm::vec2{m_SettingsButtonRect.x - 2.f, m_SettingsButtonRect.y - 2.f},
-        glm::vec2{m_SettingsButtonRect.w + 4.f, m_SettingsButtonRect.h + 4.f},
-        glm::vec4(0.03f, 0.05f, 0.06f, 1.0f));
-    Render2D::DrawQuad(glm::vec2{m_SettingsButtonRect.x, m_SettingsButtonRect.y},
-                       glm::vec2{m_SettingsButtonRect.w, m_SettingsButtonRect.h},
-                       color);
-    std::string label = "SETTINGS";
-    glm::vec2 metrics = measureText(label, 3.2f);
-    float textX = m_SettingsButtonRect.x + m_SettingsButtonRect.w * 0.5f -
-                  metrics.x * 0.5f;
-    float textY = m_SettingsButtonRect.y + m_SettingsButtonRect.h * 0.5f -
-                  metrics.y * 0.5f;
-    drawText(label, glm::vec2{textX, textY}, 3.2f,
-             glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-  };
-  drawSettingsButton();
+  if (settingsVisible) {
+    ui::ButtonStyle style;
+    style.baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
+    style.hoveredColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
+    style.disabledColor = style.baseColor;
+    style.textStyle.scale = 3.2f;
+    style.textStyle.color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
+    style.hoveredTextColor = style.textStyle.color;
+    style.disabledTextColor = glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
+    style.drawOutline = true;
+    style.outlineExtend = glm::vec2{2.f, 2.f};
+    style.outlineColor = glm::vec4(0.03f, 0.05f, 0.06f, 1.0f);
+    ui::DrawButton(m_SettingsButtonRect, "SETTINGS", style,
+                   ui::ButtonState{m_SettingsButtonHovered, true});
+  }
 
   std::string deckText = "DECK " + std::to_string(m_State.stock.size());
-  glm::vec2 deckMetrics = measureText(deckText, 4.f);
+  glm::vec2 deckMetrics = ui::MeasureText(deckText, 4.f);
   float deckX = std::max(columnAreaRight - deckMetrics.x, 12.f);
-  drawText(deckText, glm::vec2{deckX, headerTop}, 4.f,
+  ui::DrawText(deckText, glm::vec2{deckX, headerTop}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   int playerCount = std::max(1, m_State.numPlayers);
@@ -2031,7 +2023,7 @@ void KasinoGame::drawScoreboard() {
     glm::vec4 color = m_PlayerColors[p % m_PlayerColors.size()];
     float currentY = columnStartY;
     std::string playerLabel = "PLAYER " + std::to_string(p + 1);
-    drawText(playerLabel, glm::vec2{offsetX, currentY}, 3.5f, color);
+    ui::DrawText(playerLabel, glm::vec2{offsetX, currentY}, 3.5f, color);
     currentY += measureHeight(playerLabel, 3.5f) + rowSpacing;
     int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
     const RunningScore *runningScore =
@@ -2050,7 +2042,7 @@ void KasinoGame::drawScoreboard() {
     glm::vec2 totalPos{offsetX, currentY};
     glm::vec4 totalColor(0.95f, 0.95f, 0.95f, 1.0f);
     std::string totalText = "TOTAL " + std::to_string(total);
-    drawText(totalText, totalPos, 3.f, totalColor);
+    ui::DrawText(totalText, totalPos, 3.f, totalColor);
     currentY += measureHeight(totalText, 3.f) + rowSpacing;
     int cardPoints = 0;
     int buildBonus = 0;
@@ -2068,7 +2060,7 @@ void KasinoGame::drawScoreboard() {
 
     auto drawStat = [&](const std::string &label, int value, bool addSpacing) {
       std::string text = label + " +" + std::to_string(value);
-      drawText(text, glm::vec2{offsetX, currentY}, 2.6f,
+      ui::DrawText(text, glm::vec2{offsetX, currentY}, 2.6f,
                glm::vec4(0.9f, 0.94f, 0.92f, 1.0f));
       currentY += measureHeight(text, 2.6f);
       if (addSpacing) {
@@ -2082,10 +2074,10 @@ void KasinoGame::drawScoreboard() {
   }
 
   std::string turnText = "TURN P" + std::to_string(m_State.current + 1);
-  glm::vec2 turnMetrics = measureText(turnText, 4.f);
+  glm::vec2 turnMetrics = ui::MeasureText(turnText, 4.f);
   float turnCenter = (columnAreaLeft + columnAreaRight) * 0.5f;
   float turnX = turnCenter - turnMetrics.x * 0.5f;
-  drawText(turnText, glm::vec2{turnX, headerTop}, 4.f,
+  ui::DrawText(turnText, glm::vec2{turnX, headerTop}, 4.f,
            m_PlayerColors[m_State.current % m_PlayerColors.size()]);
 }
 
@@ -2316,13 +2308,13 @@ void KasinoGame::drawActionPanel() {
                      glm::vec2{m_ActionPanelRect.w, m_ActionPanelRect.h},
                      glm::vec4(0.10f, 0.18f, 0.22f, 1.0f));
 
-  drawText("ACTIONS", glm::vec2{m_ActionPanelRect.x + 10.f,
+  ui::DrawText("ACTIONS", glm::vec2{m_ActionPanelRect.x + 10.f,
                                 m_ActionPanelRect.y + 6.f},
            3.f, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 
   if (m_ActiveDifficulty != Difficulty::Easy) {
     std::string diffText = "DIFFICULTY: " + difficultyLabel(m_ActiveDifficulty);
-    drawText(diffText, glm::vec2{m_ActionPanelRect.x + 10.f,
+    ui::DrawText(diffText, glm::vec2{m_ActionPanelRect.x + 10.f,
                                  m_ActionPanelRect.y + 28.f},
              2.6f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
   }
@@ -2335,7 +2327,7 @@ void KasinoGame::drawActionPanel() {
             : glm::vec4(0.2f, 0.3f, 0.35f, 1.0f);
     Render2D::DrawQuad(glm::vec2{entry.rect.x, entry.rect.y},
                        glm::vec2{entry.rect.w, entry.rect.h}, color);
-    drawText(entry.label,
+    ui::DrawText(entry.label,
              glm::vec2{entry.rect.x + 6.f, entry.rect.y + 10.f}, 3.f,
              glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
   }
@@ -2344,31 +2336,33 @@ void KasinoGame::drawActionPanel() {
     bool hovered =
         m_ConfirmButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y);
     bool enabled = m_ConfirmableMove.has_value();
-    glm::vec4 baseColor =
-        enabled ? glm::vec4(0.25f, 0.55f, 0.38f, 1.0f)
-                : glm::vec4(0.18f, 0.22f, 0.24f, 1.0f);
-    if (hovered && enabled) {
-      baseColor = glm::vec4(0.35f, 0.65f, 0.48f, 1.0f);
-    }
-    Render2D::DrawQuad(glm::vec2{m_ConfirmButtonRect.x, m_ConfirmButtonRect.y},
-                       glm::vec2{m_ConfirmButtonRect.w, m_ConfirmButtonRect.h},
-                       baseColor);
-    glm::vec4 textColor =
-        enabled ? glm::vec4(0.05f, 0.05f, 0.05f, 1.0f)
-                 : glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
-    drawText("CONFIRM MOVE",
-             glm::vec2{m_ConfirmButtonRect.x + 12.f,
-                       m_ConfirmButtonRect.y + 8.f},
-             3.f, textColor);
+    ui::ButtonStyle confirmStyle;
+    confirmStyle.baseColor = glm::vec4(0.25f, 0.55f, 0.38f, 1.0f);
+    confirmStyle.hoveredColor = glm::vec4(0.35f, 0.65f, 0.48f, 1.0f);
+    confirmStyle.disabledColor = glm::vec4(0.18f, 0.22f, 0.24f, 1.0f);
+    confirmStyle.textStyle.scale = 3.f;
+    confirmStyle.textStyle.color = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+    confirmStyle.hoveredTextColor = confirmStyle.textStyle.color;
+    confirmStyle.disabledTextColor = glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
+    confirmStyle.drawOutline = false;
+    ui::DrawButton(m_ConfirmButtonRect, "CONFIRM MOVE", confirmStyle,
+                   ui::ButtonState{hovered, enabled});
   }
 
   if (m_Selection.handIndex) {
-    Render2D::DrawQuad(glm::vec2{m_CancelButtonRect.x, m_CancelButtonRect.y},
-                       glm::vec2{m_CancelButtonRect.w, m_CancelButtonRect.h},
-                       glm::vec4(0.35f, 0.18f, 0.18f, 1.0f));
-    drawText("CANCEL", glm::vec2{m_CancelButtonRect.x + 12.f,
-                                 m_CancelButtonRect.y + 8.f},
-             3.2f, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+    bool hovered =
+        m_CancelButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y);
+    ui::ButtonStyle cancelStyle;
+    cancelStyle.baseColor = glm::vec4(0.35f, 0.18f, 0.18f, 1.0f);
+    cancelStyle.hoveredColor = glm::vec4(0.45f, 0.22f, 0.22f, 1.0f);
+    cancelStyle.disabledColor = cancelStyle.baseColor;
+    cancelStyle.textStyle.scale = 3.2f;
+    cancelStyle.textStyle.color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
+    cancelStyle.hoveredTextColor = cancelStyle.textStyle.color;
+    cancelStyle.disabledTextColor = cancelStyle.textStyle.color;
+    cancelStyle.drawOutline = false;
+    ui::DrawButton(m_CancelButtonRect, "CANCEL", cancelStyle,
+                   ui::ButtonState{hovered, true});
   }
 }
 
@@ -2386,7 +2380,7 @@ void KasinoGame::drawPromptOverlay() {
                      glm::vec2{m_PromptBoxRect.w, m_PromptBoxRect.h},
                      glm::vec4(0.12f, 0.16f, 0.18f, 1.0f));
 
-  drawText(m_PromptHeader,
+  ui::DrawText(m_PromptHeader,
            glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 20.f}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
@@ -2401,13 +2395,13 @@ void KasinoGame::drawPromptOverlay() {
         std::string text = "P" + std::to_string(p + 1) + " ROUND " +
                            std::to_string(line.total) + " TOTAL " +
                            std::to_string(total);
-        drawText(text, glm::vec2{m_PromptBoxRect.x + 16.f, lineY}, 3.2f,
+        ui::DrawText(text, glm::vec2{m_PromptBoxRect.x + 16.f, lineY}, 3.2f,
                  glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
         lineY += 24.f;
       }
     }
   } else if (m_PromptMode == PromptMode::PlayerSetup) {
-    drawText("SELECT TOTAL PLAYERS", glm::vec2{m_PromptBoxRect.x + 16.f,
+    ui::DrawText("SELECT TOTAL PLAYERS", glm::vec2{m_PromptBoxRect.x + 16.f,
                                               m_PromptBoxRect.y + 64.f},
              3.f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
     for (size_t i = 0; i < m_MenuPlayerCountRects.size(); ++i) {
@@ -2423,11 +2417,11 @@ void KasinoGame::drawPromptOverlay() {
                          color);
       std::string label = std::to_string(static_cast<int>(i) + 1);
       float textX = rect.x + rect.w * 0.5f - (float)label.size() * 3.f;
-      drawText(label, glm::vec2{textX, rect.y + 10.f}, 3.2f,
+      ui::DrawText(label, glm::vec2{textX, rect.y + 10.f}, 3.2f,
                glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
     }
 
-    drawText("ASSIGN SEAT ROLES", glm::vec2{m_PromptBoxRect.x + 16.f,
+    ui::DrawText("ASSIGN SEAT ROLES", glm::vec2{m_PromptBoxRect.x + 16.f,
                                             m_PromptBoxRect.y + 160.f},
              3.f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
     for (size_t i = 0; i < m_MenuSeatToggleRects.size(); ++i) {
@@ -2443,20 +2437,20 @@ void KasinoGame::drawPromptOverlay() {
                          color);
       std::string label = "SEAT " + std::to_string(static_cast<int>(i) + 1) +
                           " - " + (isAI ? "AI" : "HUMAN");
-      drawText(label, glm::vec2{rect.x + 12.f, rect.y + 8.f}, 3.f,
+      ui::DrawText(label, glm::vec2{rect.x + 12.f, rect.y + 8.f}, 3.f,
                glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
     }
 
     int aiCount = std::max(0, m_MenuSelectedPlayers - m_MenuSelectedHumans);
-    drawText("HUMANS " + std::to_string(m_MenuSelectedHumans) + " | AI " +
+    ui::DrawText("HUMANS " + std::to_string(m_MenuSelectedHumans) + " | AI " +
                  std::to_string(aiCount),
              glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuSummaryTextY},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
-    drawText("CLICK TO TOGGLE HUMAN / AI",
+    ui::DrawText("CLICK TO TOGGLE HUMAN / AI",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuInstructionTextY},
              2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
   } else if (m_PromptMode == PromptMode::MainMenuSettings) {
-    drawText("SELECT DIFFICULTY", glm::vec2{m_PromptBoxRect.x + 16.f,
+    ui::DrawText("SELECT DIFFICULTY", glm::vec2{m_PromptBoxRect.x + 16.f,
                                            m_PromptBoxRect.y + 64.f},
              3.f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
     std::array<Difficulty, 3> difficulties = {Difficulty::Easy,
@@ -2476,14 +2470,14 @@ void KasinoGame::drawPromptOverlay() {
       Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
                          color);
       std::string label = difficultyLabel(difficulties[i]);
-      glm::vec2 metrics = measureText(label, 3.2f);
+      glm::vec2 metrics = ui::MeasureText(label, 3.2f);
       float textX = rect.x + rect.w * 0.5f - metrics.x * 0.5f;
       float textY = rect.y + rect.h * 0.5f - metrics.y * 0.5f;
-      drawText(label, glm::vec2{textX, textY}, 3.2f,
+      ui::DrawText(label, glm::vec2{textX, textY}, 3.2f,
                glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
     }
     std::string desc = difficultyDescription(m_MenuDifficulty);
-    drawText(desc,
+    ui::DrawText(desc,
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 180.f},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
   } else if (m_PromptMode == PromptMode::HowToPlay) {
@@ -2511,87 +2505,58 @@ void KasinoGame::drawPromptOverlay() {
 
     float textY = m_PromptBoxRect.y + 64.f;
     for (const auto &line : lines) {
-      drawText(line, glm::vec2{m_PromptBoxRect.x + 16.f, textY}, 2.6f,
+      ui::DrawText(line, glm::vec2{m_PromptBoxRect.x + 16.f, textY}, 2.6f,
                glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
       textY += 16.f;
     }
   } else if (m_PromptMode == PromptMode::Settings) {
-    drawText("Close resumes play without leaving the table.",
+    ui::DrawText("Close resumes play without leaving the table.",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 64.f},
              3.2f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
-    drawText("Quit Game ends the current match and exits immediately.",
+    ui::DrawText("Quit Game ends the current match and exits immediately.",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 96.f},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
-    drawText("Press ESC or tap Settings to reopen this menu.",
+    ui::DrawText("Press ESC or tap Settings to reopen this menu.",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 128.f},
              3.f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
   }
-
-  auto drawPromptButton = [&](const Rect &rect, const std::string &label,
-                              bool hovered, bool enabled,
-                              const glm::vec4 &baseColor,
-                              const glm::vec4 &hoverColor,
-                              const glm::vec4 &enabledTextColor) {
-    if (rect.w <= 0.f || rect.h <= 0.f || label.empty()) {
-      return;
-    }
-    glm::vec4 color = enabled ? baseColor : glm::vec4(0.2f, 0.2f, 0.22f, 1.0f);
-    if (hovered && enabled) {
-      color = hoverColor;
-    }
-    Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
-                       color);
-    glm::vec4 textColor =
-        enabled ? enabledTextColor : glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
-    glm::vec2 metrics = measureText(label, 3.2f);
-    float textX = rect.x + rect.w * 0.5f - metrics.x * 0.5f;
-    float textY = rect.y + rect.h * 0.5f - metrics.y * 0.5f;
-    drawText(label, glm::vec2{textX, textY}, 3.2f, textColor);
-  };
 
   bool primaryEnabled = true;
   if (m_PromptMode == PromptMode::PlayerSetup) {
     primaryEnabled = m_MenuSelectedHumans > 0 && m_MenuSelectedPlayers > 0;
   }
 
-  drawPromptButton(
-      m_PromptButtonRect, m_PromptButtonLabel,
+  ui::ButtonStyle primaryStyle;
+  primaryStyle.baseColor = glm::vec4(0.25f, 0.55f, 0.85f, 1.0f);
+  primaryStyle.hoveredColor = glm::vec4(0.35f, 0.65f, 0.95f, 1.0f);
+  primaryStyle.disabledColor = glm::vec4(0.2f, 0.2f, 0.22f, 1.0f);
+  primaryStyle.textStyle.scale = 3.2f;
+  primaryStyle.textStyle.color = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+  primaryStyle.hoveredTextColor = primaryStyle.textStyle.color;
+  primaryStyle.disabledTextColor = glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
+  primaryStyle.drawOutline = false;
+  ui::ButtonState primaryState{
       m_PromptButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y),
-      primaryEnabled, glm::vec4(0.25f, 0.55f, 0.85f, 1.0f),
-      glm::vec4(0.35f, 0.65f, 0.95f, 1.0f),
-      glm::vec4(0.05f, 0.05f, 0.05f, 1.0f));
+      primaryEnabled};
+  ui::DrawButton(m_PromptButtonRect, m_PromptButtonLabel, primaryStyle,
+                 primaryState);
 
   if (!m_PromptSecondaryButtonLabel.empty()) {
-    drawPromptButton(
-        m_PromptSecondaryButtonRect, m_PromptSecondaryButtonLabel,
-        m_PromptSecondaryButtonRect.Contains(m_LastMousePos.x, m_LastMousePos.y),
-        true, glm::vec4(0.45f, 0.22f, 0.22f, 1.0f),
-        glm::vec4(0.65f, 0.32f, 0.32f, 1.0f),
-        glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-  }
-}
-
-void KasinoGame::drawText(const std::string &text, glm::vec2 pos, float scale,
-                          const glm::vec4 &color) {
-  float x = pos.x;
-  float y = pos.y;
-  for (char ch : text) {
-    if (ch == '\n') {
-      y += scale * 6.f;
-      x = pos.x;
-      continue;
-    }
-    const Glyph &g = glyphFor(ch);
-    for (int row = 0; row < 5; ++row) {
-      const char *rowStr = g.rows[row];
-      for (int col = 0; col < g.width && rowStr[col] != '\0'; ++col) {
-        if (rowStr[col] != ' ' && rowStr[col] != '\0') {
-          glm::vec2 cellPos{x + (float)col * scale, y + (float)row * scale};
-          Render2D::DrawQuad(cellPos, glm::vec2{scale, scale}, color);
-        }
-      }
-    }
-    x += (float)g.width * scale + scale * 0.5f;
+    ui::ButtonStyle secondaryStyle;
+    secondaryStyle.baseColor = glm::vec4(0.45f, 0.22f, 0.22f, 1.0f);
+    secondaryStyle.hoveredColor = glm::vec4(0.65f, 0.32f, 0.32f, 1.0f);
+    secondaryStyle.disabledColor = secondaryStyle.baseColor;
+    secondaryStyle.textStyle.scale = 3.2f;
+    secondaryStyle.textStyle.color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
+    secondaryStyle.hoveredTextColor = secondaryStyle.textStyle.color;
+    secondaryStyle.disabledTextColor = secondaryStyle.textStyle.color;
+    secondaryStyle.drawOutline = false;
+    ui::ButtonState secondaryState{
+        m_PromptSecondaryButtonRect.Contains(m_LastMousePos.x,
+                                             m_LastMousePos.y),
+        true};
+    ui::DrawButton(m_PromptSecondaryButtonRect, m_PromptSecondaryButtonLabel,
+                   secondaryStyle, secondaryState);
   }
 }
 
@@ -2612,11 +2577,11 @@ void KasinoGame::drawMainMenu() {
   float height = m_Camera.LogicalHeight();
   float centerX = width * 0.5f;
 
-  glm::vec2 titleMetrics = measureText(kMainMenuTitleText, kMainMenuTitleScale);
+  glm::vec2 titleMetrics = ui::MeasureText(kMainMenuTitleText, kMainMenuTitleScale);
   glm::vec2 subtitleMetrics =
-      measureText(kMainMenuSubtitleText, kMainMenuSubtitleScale);
+      ui::MeasureText(kMainMenuSubtitleText, kMainMenuSubtitleScale);
   glm::vec2 footerMetrics =
-      measureText(kMainMenuFooterText, kMainMenuFooterScale);
+      ui::MeasureText(kMainMenuFooterText, kMainMenuFooterScale);
 
   float titleY = height * 0.25f - titleMetrics.y;
   float titleToSubtitleSpacing = titleMetrics.y * kTitleSubtitleSpacingFactor;
@@ -2627,41 +2592,39 @@ void KasinoGame::drawMainMenu() {
   Render2D::DrawQuad(glm::vec2{0.f, 0.f}, glm::vec2{width, height},
                      glm::vec4(0.06f, 0.12f, 0.15f, 1.0f));
 
-  drawText(kMainMenuTitleText,
+  ui::DrawText(kMainMenuTitleText,
            glm::vec2{centerX - titleMetrics.x * 0.5f, titleY},
            kMainMenuTitleScale,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-  drawText(kMainMenuSubtitleText,
+  ui::DrawText(kMainMenuSubtitleText,
            glm::vec2{centerX - subtitleMetrics.x * 0.5f, subtitleY},
            kMainMenuSubtitleScale,
            glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
 
-  auto drawButton = [&](const Rect &rect, const std::string &label,
-                        bool hovered) {
-    glm::vec4 baseColor = hovered ? glm::vec4(0.30f, 0.55f, 0.78f, 1.0f)
-                                  : glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
-    Render2D::DrawQuad(glm::vec2{rect.x - 4.f, rect.y - 4.f},
-                       glm::vec2{rect.w + 8.f, rect.h + 8.f},
-                       glm::vec4(0.03f, 0.05f, 0.06f, 1.0f));
-    Render2D::DrawQuad(glm::vec2{rect.x, rect.y}, glm::vec2{rect.w, rect.h},
-                       baseColor);
-    glm::vec2 labelMetrics = measureText(label, 4.f);
-    float textX = rect.x + rect.w * 0.5f - labelMetrics.x * 0.5f;
-    float textY = rect.y + rect.h * 0.5f - labelMetrics.y * 0.5f;
-    drawText(label, glm::vec2{textX, textY}, 4.f,
-             glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-  };
+  ui::ButtonStyle menuButtonStyle;
+  menuButtonStyle.baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
+  menuButtonStyle.hoveredColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
+  menuButtonStyle.disabledColor = menuButtonStyle.baseColor;
+  menuButtonStyle.textStyle.scale = 4.f;
+  menuButtonStyle.textStyle.color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
+  menuButtonStyle.hoveredTextColor = menuButtonStyle.textStyle.color;
+  menuButtonStyle.disabledTextColor = menuButtonStyle.textStyle.color;
+  menuButtonStyle.drawOutline = true;
+  menuButtonStyle.outlineExtend = glm::vec2{4.f, 4.f};
+  menuButtonStyle.outlineColor = glm::vec4(0.03f, 0.05f, 0.06f, 1.0f);
 
-  drawButton(m_MainMenuStartButtonRect, "START", m_MainMenuStartHovered);
-  drawButton(m_MainMenuSettingsButtonRect, "SETTINGS",
-             m_MainMenuSettingsHovered);
-  drawButton(m_MainMenuHowToButtonRect, "HOW TO PLAY", m_MainMenuHowToHovered);  
+  ui::DrawButton(m_MainMenuStartButtonRect, "START", menuButtonStyle,
+                 ui::ButtonState{m_MainMenuStartHovered, true});
+  ui::DrawButton(m_MainMenuSettingsButtonRect, "SETTINGS", menuButtonStyle,
+                 ui::ButtonState{m_MainMenuSettingsHovered, true});
+  ui::DrawButton(m_MainMenuHowToButtonRect, "HOW TO PLAY", menuButtonStyle,
+                 ui::ButtonState{m_MainMenuHowToHovered, true});
 
   float footerY = m_MainMenuHowToButtonRect.y + m_MainMenuHowToButtonRect.h +
                   buttonsToFooterSpacing;
   float maxFooterY = height - kMainMenuBottomMargin - footerMetrics.y;
   footerY = std::min(footerY, maxFooterY);
-  drawText(kMainMenuFooterText,
+  ui::DrawText(kMainMenuFooterText,
            glm::vec2{centerX - footerMetrics.x * 0.5f, footerY},
            kMainMenuFooterScale,
            glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
