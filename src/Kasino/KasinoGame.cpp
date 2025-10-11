@@ -111,15 +111,28 @@ bool KasinoGame::OnStart() {
     EN_CORE_ERROR("Failed to load wav file");
   }
 
-  m_card_slide_1 = SoundSystem::GetDevice()->CreateBuffer();
-  if(!m_card_slide_1->LoadWavFile("Resources/audio/card_slide_1.wav")){
-    EN_CORE_ERROR("Failed to load wav file");
-  }
+  auto loadBuffer = [](Ref<IAudioBuffer> &buffer, const std::string &path) {
+    buffer = SoundSystem::GetDevice()->CreateBuffer();
+    if (!buffer) {
+      EN_CORE_ERROR("Failed to create audio buffer for {}", path);
+      return;
+    }
+    if (!buffer->LoadWavFile(path.c_str())) {
+      EN_CORE_ERROR("Failed to load wav file: {}", path);
+      buffer.reset();
+    }
+  };
+  
+  loadBuffer(m_card_slide_1, "Resources/audio/card_slide_1.wav");
+  loadBuffer(m_card_slide_2, "Resources/audio/card_slide_2.wav");
+  loadBuffer(m_sndBuild, "Resources/audio/build.wav");
+  loadBuffer(m_sndTrail, "Resources/audio/trail.wav");
+  loadBuffer(m_sndTake, "Resources/audio/take.wav");
+  loadBuffer(m_sndSweep, "Resources/audio/sweep.wav");
+  loadBuffer(m_sndWin, "Resources/audio/win.wav");
+  loadBuffer(m_sndRoundEnd, "Resources/audio/round_end.wav");
+  loadBuffer(m_sndNewGame, "Resources/audio/new_game.wav");
 
-  m_card_slide_2 = SoundSystem::GetDevice()->CreateBuffer();
-  if(!m_card_slide_2->LoadWavFile("Resources/audio/card_slide_2.wav")){
-    EN_CORE_ERROR("Failed to load wav file");
-  }
   return true;
 }
 
@@ -244,6 +257,7 @@ void KasinoGame::startNewMatch() {
   updateActionOptions();
   updateLayout();
   beginDealAnimation();
+  PlayEventSound(m_sndNewGame);
 }
 
 void KasinoGame::startNextRound() {
@@ -1362,7 +1376,31 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
 }
  
 void KasinoGame::applyMove(const Move &mv) {
+  bool tableWasNotEmpty = !m_State.table.loose.empty() ||
+                          !m_State.table.builds.empty();
+  MoveType moveType = mv.type;
+
   if (!ApplyMove(m_State, mv)) return;
+
+  bool sweep = moveType == MoveType::Capture && tableWasNotEmpty &&
+               m_State.table.loose.empty() && m_State.table.builds.empty();
+
+  switch (moveType) {
+  case MoveType::Capture:
+    PlayEventSound(m_sndTake);
+    break;
+  case MoveType::Build:
+  case MoveType::ExtendBuild:
+    PlayEventSound(m_sndBuild);
+    break;
+  case MoveType::Trail:
+    PlayEventSound(m_sndTrail);
+    break;
+  }
+
+  if (sweep) {
+    PlayEventSound(m_sndSweep);
+  }
 
   m_Selection.Clear();
   updateLegalMoves();
@@ -1386,6 +1424,7 @@ void KasinoGame::applyMove(const Move &mv) {
 }
 
 void KasinoGame::handleRoundEnd() {
+  PlayEventSound(m_sndRoundEnd);
   m_LastRoundScores = ScoreRound(m_State);
   if (m_TotalScores.size() != static_cast<size_t>(m_State.numPlayers))
     m_TotalScores.assign(m_State.numPlayers, 0);
@@ -1438,6 +1477,7 @@ void KasinoGame::handleRoundEnd() {
     } else if (m_WinningPlayer >= 0) {
       m_PromptHeader = "PLAYER " + std::to_string(m_WinningPlayer + 1) +
                        " WINS THE MATCH";
+                       PlayEventSound(m_sndWin);
     } else {
       m_PromptHeader = "MATCH COMPLETE";
     }
@@ -1565,8 +1605,13 @@ void KasinoGame::playCardSlideSound() {
     buffer = m_card_slide_2;
   }
 
+  if (buffer) {    
+    SoundSystem::Play(buffer);
+  }
+}
+
+void KasinoGame::PlayEventSound(const Ref<IAudioBuffer> &buffer) {
   if (buffer) {
-    
     SoundSystem::Play(buffer);
   }
 }

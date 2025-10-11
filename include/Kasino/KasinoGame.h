@@ -100,12 +100,20 @@ private:
   std::string cardSuitFolder(Suit suit) const;
 
   void playCardSlideSound();
+  void PlayEventSound(const Ref<IAudioBuffer>& buffer);
 private:
   std::unique_ptr<InputSystem> m_Input;
   Ref<IAudioSource> m_GlobAudioSource;
   Ref<IAudioBuffer> m_Audio_1;
   Ref<IAudioBuffer> m_card_slide_1;
   Ref<IAudioBuffer> m_card_slide_2;
+  Ref<IAudioBuffer> m_sndBuild;
+  Ref<IAudioBuffer> m_sndTrail;
+  Ref<IAudioBuffer> m_sndTake;
+  Ref<IAudioBuffer> m_sndSweep;
+  Ref<IAudioBuffer> m_sndWin;
+  Ref<IAudioBuffer> m_sndRoundEnd;
+  Ref<IAudioBuffer> m_sndNewGame;
   int m_NextCardSlideIndex = 0;
   GameState m_State;
   std::vector<Move> m_LegalMoves;
