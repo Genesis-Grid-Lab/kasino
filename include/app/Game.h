@@ -46,6 +46,10 @@ class Game {
   std::chrono::high_resolution_clock::time_point m_LastFrameTime{};
   bool m_OnStopCalled = false;
 
+  #ifdef __EMSCRIPTEN__
+  static void EmscriptenMainLoop(void* userData);
+#endif
+
   void runFrame();
   void handleStop();
 };

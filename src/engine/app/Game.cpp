@@ -53,13 +53,12 @@ bool Game::Init(const FactoryDesc &desc) {
   return OnStart();
 }
 
-namespace {
+
 #ifdef __EMSCRIPTEN__
-void emscriptenMainLoop(void* userData) {
+void Game::emscriptenMainLoop(void* userData) {
   static_cast<Game*>(userData)->runFrame();
 }
 #endif
-}  // namespace
 
 void Game::Run() {
   m_Running = true;
@@ -71,7 +70,7 @@ void Game::Run() {
   SoundSystem::GetDevice()->SetMasterVolume(1);
 
 #ifdef __EMSCRIPTEN__
-  emscripten_set_main_loop_arg(&emscriptenMainLoop, this, 0, true);
+  emscripten_set_main_loop_arg(&Game::emscriptenMainLoop, this, 0, true);
 #else
   while (m_Running && !m_Window->ShouldClose()) {
     runFrame();

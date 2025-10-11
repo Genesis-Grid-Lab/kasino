@@ -2,6 +2,7 @@
 Build/
 Targets/
 .cache/
+vendor/emsdk
 
 # Prerequisites
 *.d
