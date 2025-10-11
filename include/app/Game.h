@@ -9,6 +9,8 @@
 #include "window/IWindow.h"
 #include "audio/IAudioDevice.h"
 
+#include <chrono>
+
 // forward-declare to avoid depending on its exact fields
 struct FactoryDesc;
 
@@ -41,4 +43,9 @@ class Game {
 
  private:
   bool m_Running = false;
+  std::chrono::high_resolution_clock::time_point m_LastFrameTime{};
+  bool m_OnStopCalled = false;
+
+  void runFrame();
+  void handleStop();
 };
