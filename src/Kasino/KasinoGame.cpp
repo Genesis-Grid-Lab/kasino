@@ -46,6 +46,142 @@ constexpr float kButtonsFooterSpacingFactor = 2.4f;
 constexpr float kButtonVerticalSpacingFactor = 1.75f;
 constexpr float kMainMenuBottomMargin = 48.f;
 
+constexpr const char *kSettingsParagraph1 =
+    "Close resumes play without leaving the table.";
+constexpr const char *kSettingsParagraph2 =
+    "Quit Game ends the current match and exits immediately.";
+constexpr const char *kSettingsParagraph3 =
+    "Press ESC or tap Settings to reopen this menu.";
+
+const std::array<const char *, 19> kHowToPlayLines = {
+    "EACH ROUND STARTS WITH FOUR CARDS PER PLAYER",
+    "AND FOUR FACE UP ON THE TABLE",
+    "ON YOUR TURN CHOOSE ONE ACTION:",
+    " - CAPTURE MATCHING RANKS OR SUM TABLE CARDS",
+    "   TO YOUR CARD VALUE AND TAKE BUILDS OF THAT VALUE",
+    " - BUILD BY COMBINING YOUR CARD WITH TABLE CARDS",
+    "   TO RESERVE A TARGET VALUE FOR LATER CAPTURE",
+    " - EXTEND YOUR OWN BUILDS TO A HIGHER VALUE WHEN",
+    "   YOU HOLD THE NEEDED CARD",
+    " - TRAIL TO PLACE A CARD ON THE TABLE WHEN NO",
+    "   OTHER MOVE FITS",
+    "CAPTURED CARDS GO TO YOUR PILE AND CLEARING THE",
+    "TABLE DURING A CAPTURE EARNS A SWEEP BONUS",
+    "WHEN ALL HANDS ARE EMPTY THE LAST PLAYER TO CAPTURE",
+    "TAKES ANY CARDS LEFT ON THE TABLE",
+    "SCORING EACH ROUND:",
+    " - ONE POINT PER CARD IN YOUR PILE",
+    " - ONE POINT FOR EACH BUILD YOU COLLECT",
+    " - ONE POINT FOR EVERY SWEEP BONUS",
+    "REACH THE TARGET SCORE TO WIN THE MATCH"};
+
+constexpr float kPromptTextStart = 64.f;
+constexpr float kMainMenuSettingsOptionTop = 110.f;
+constexpr float kMainMenuSettingsDescriptionTop = 180.f;
+constexpr float kMainMenuSettingsOptionHeight = 44.f;
+constexpr float kMainMenuSettingsOptionSpacing = 20.f;
+
+float lineAdvanceForStyle(const ui::TextStyle &style) {
+  return style.scale * (5.0f + style.lineSpacing);
+}
+
+float blockHeightForLines(const std::vector<std::string> &lines,
+                          const ui::TextStyle &style) {
+  if (lines.empty()) {
+    return 0.f;
+  }
+  float baseHeight = style.scale * 5.0f;
+  if (lines.size() == 1) {
+    return baseHeight;
+  }
+  return baseHeight +
+         static_cast<float>(lines.size() - 1) * lineAdvanceForStyle(style);
+}
+
+template <size_t N>
+std::string joinLines(const std::array<const char *, N> &lines) {
+  std::string result;
+  for (size_t i = 0; i < lines.size(); ++i) {
+    if (i > 0) {
+      result.push_back('\n');
+    }
+    result.append(lines[i]);
+  }
+  return result;
+}
+
+std::vector<std::string> wrapText(const std::string &text,
+                                  const ui::TextStyle &style,
+                                  float maxWidth) {
+  std::vector<std::string> wrapped;
+  if (text.empty()) {
+    return wrapped;
+  }
+
+  std::stringstream ss(text);
+  std::string paragraph;
+  bool processedAny = false;
+  while (std::getline(ss, paragraph)) {
+    processedAny = true;
+    if (paragraph.empty()) {
+      wrapped.emplace_back();
+      continue;
+    }
+
+    std::istringstream words(paragraph);
+    std::string word;
+    std::string currentLine;
+    while (words >> word) {
+      std::string candidate =
+          currentLine.empty() ? word : currentLine + " " + word;
+      float width = ui::MeasureText(candidate, style).x;
+      if (maxWidth <= 0.f || width <= maxWidth) {
+        currentLine = std::move(candidate);
+      } else {
+        if (!currentLine.empty()) {
+          wrapped.push_back(currentLine);
+        }
+        currentLine = word;
+      }
+    }
+
+    if (!currentLine.empty()) {
+      wrapped.push_back(currentLine);
+    } else if (wrapped.empty() || !wrapped.back().empty()) {
+      wrapped.emplace_back();
+    }
+  }
+
+  if (!processedAny) {
+    return wrapped;
+  }
+
+  while (!wrapped.empty() && wrapped.back().empty()) {
+    wrapped.pop_back();
+  }
+  return wrapped;
+}
+
+float drawWrappedLines(const std::vector<std::string> &lines, glm::vec2 pos,
+                       const ui::TextStyle &style) {
+  if (lines.empty()) {
+    return 0.f;
+  }
+
+  float y = pos.y;
+  float advance = lineAdvanceForStyle(style);
+  for (size_t i = 0; i < lines.size(); ++i) {
+    if (!lines[i].empty()) {
+      ui::DrawText(lines[i], glm::vec2{pos.x, y}, style);
+    }
+    if (i + 1 < lines.size()) {
+      y += advance;
+    }
+  }
+
+  return blockHeightForLines(lines, style);
+}
+
 struct PreviewScoreResult {
   std::vector<ScoreLine> lines;
 };
@@ -417,17 +553,16 @@ void KasinoGame::updateLayout() {
   float topSeatVisibleFraction = 0.2f;
   float sideSeatPeek = m_CardWidth * sideSeatVisibleFraction + margin;
 
-  const float settingsButtonWidth = 140.f;
-  const float settingsButtonHeight = 36.f;
-  const float settingsButtonPadding = 12.f;
-  float settingsX = width - settingsButtonWidth - settingsButtonPadding;
-  float settingsY = m_ScoreboardHeight * 0.5f - settingsButtonHeight * 0.5f;
+  const float settingsButtonSize = 48.f;
+  const float settingsButtonPadding = 16.f;
+  float settingsX = width - settingsButtonSize - settingsButtonPadding;
+  float settingsY = m_ScoreboardHeight * 0.5f - settingsButtonSize * 0.5f;
   settingsX = std::max(settingsButtonPadding, settingsX);
   settingsY = std::clamp(settingsY, settingsButtonPadding,
-                         m_ScoreboardHeight - settingsButtonHeight -
+                         m_ScoreboardHeight - settingsButtonSize -
                              settingsButtonPadding);
   m_SettingsButtonRect =
-      {settingsX, settingsY, settingsButtonWidth, settingsButtonHeight};
+      {settingsX, settingsY, settingsButtonSize, settingsButtonSize};
 
   bool hasLeftSeat = m_State.numPlayers >= 3;
   bool hasRightSeat = m_State.numPlayers >= 4;
@@ -651,9 +786,18 @@ void KasinoGame::updatePromptLayout() {
   case PromptMode::MatchSummary:
     boxHeight = 220.f;
     break;
-  case PromptMode::HowToPlay:
+  case PromptMode::HowToPlay: {
     boxHeight = 420.f;
-    break;
+    ui::TextStyle style;
+    style.scale = 2.6f;
+    float textMaxWidth = boxWidth - 32.f;
+    auto howLines = wrapText(joinLines(kHowToPlayLines), style, textMaxWidth);
+    float textHeight = blockHeightForLines(howLines, style);
+    float contentBottom = kPromptTextStart + textHeight;
+    float requiredHeight =
+        contentBottom + buttonSpacing + buttonHeight + buttonBottomPadding;
+    boxHeight = std::max(boxHeight, requiredHeight);
+  } break;
   case PromptMode::PlayerSetup: {
     boxHeight = 320.f;
     float seatStartOffset = optionYBase + optionHeight + seatHeaderSpacing;
@@ -670,12 +814,45 @@ void KasinoGame::updatePromptLayout() {
         buttonTopOffset + buttonHeight + buttonBottomPadding;
     boxHeight = std::max(boxHeight, requiredHeight);
   } break;
-  case PromptMode::Settings:
+  case PromptMode::Settings: {
     boxHeight = 240.f;
-    break;
-  case PromptMode::MainMenuSettings:
+    float textMaxWidth = boxWidth - 32.f;
+    const float paragraphSpacing = 14.f;
+    ui::TextStyle primary;
+    primary.scale = 3.2f;
+    ui::TextStyle secondary;
+    secondary.scale = 3.f;
+    float totalTextHeight = 0.f;
+    totalTextHeight += blockHeightForLines(
+        wrapText(kSettingsParagraph1, primary, textMaxWidth), primary);
+    totalTextHeight += paragraphSpacing;
+    totalTextHeight += blockHeightForLines(
+        wrapText(kSettingsParagraph2, secondary, textMaxWidth), secondary);
+    totalTextHeight += paragraphSpacing;
+    totalTextHeight += blockHeightForLines(
+        wrapText(kSettingsParagraph3, secondary, textMaxWidth), secondary);
+    float contentBottom = kPromptTextStart + totalTextHeight;
+    float requiredHeight =
+        contentBottom + buttonSpacing + buttonHeight + buttonBottomPadding;
+    boxHeight = std::max(boxHeight, requiredHeight);
+  } break;
+  case PromptMode::MainMenuSettings: {
     boxHeight = 260.f;
-    break;
+    ui::TextStyle descStyle;
+    descStyle.scale = 3.f;
+    float textMaxWidth = boxWidth - 32.f;
+    auto descLines = wrapText(difficultyDescription(m_MenuDifficulty), descStyle,
+                              textMaxWidth);
+    float descHeight = blockHeightForLines(descLines, descStyle);
+    float optionBottom =
+        kMainMenuSettingsOptionTop + kMainMenuSettingsOptionHeight;
+    float descBottom =
+        kMainMenuSettingsDescriptionTop + descHeight;
+    float contentBottom = std::max(optionBottom, descBottom);
+    float requiredHeight =
+        contentBottom + buttonSpacing + buttonHeight + buttonBottomPadding;
+    boxHeight = std::max(boxHeight, requiredHeight);
+  } break;
   case PromptMode::None:
     break;
   }
@@ -735,15 +912,14 @@ void KasinoGame::updatePromptLayout() {
     m_MenuInstructionTextY = 0.f;
     m_DifficultyOptionRects.clear();
     float optionWidth = 120.f;
-    float optionHeightLocal = 44.f;
-    float optionSpacingLocal = 20.f;
-    float totalWidth = optionWidth * 3.f + optionSpacingLocal * 2.f;
+    float totalWidth =
+        optionWidth * 3.f + mainMenuSettingsOptionSpacing * 2.f;
     float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
-    float optionY = m_PromptBoxRect.y + 110.f;
+    float optionY = m_PromptBoxRect.y + kMainMenuSettingsOptionTop;
     for (int i = 0; i < 3; ++i) {
       m_DifficultyOptionRects.push_back(
-          {startX + (float)i * (optionWidth + optionSpacingLocal), optionY,
-           optionWidth, optionHeightLocal});
+          {startX + (float)i * (optionWidth + kMainMenuSettingsOptionSpacing),
+           optionY, optionWidth, kMainMenuSettingsOptionHeight});
     }
     assignButtons(m_PromptBoxRect.y + boxHeight -
                   (buttonHeight + buttonBottomPadding));
@@ -1964,15 +2140,38 @@ void KasinoGame::drawScoreboard() {
 
   const bool settingsVisible =
       m_SettingsButtonRect.w > 0.f && m_SettingsButtonRect.h > 0.f;
-  float columnAreaLeft = 0.f;
-  float columnAreaRight = settingsVisible ? (m_SettingsButtonRect.x - 12.f)
-                                          : width;
-  columnAreaRight = std::clamp(columnAreaRight, columnAreaLeft, width);
+  float leftBound = 16.f;
+  float rightBound = settingsVisible ? (m_SettingsButtonRect.x - 12.f)
+                                     : width - 16.f;
+  if (rightBound < leftBound) {
+    rightBound = leftBound;
+  }
   constexpr float kMinColumnSpan = 160.f;
+  float contentSpan = std::max(rightBound - leftBound, 0.f);
+  float spanTarget = contentSpan;
+  if (contentSpan > 0.f) {
+    spanTarget = std::min(contentSpan, std::max(kMinColumnSpan,
+                                                std::min(m_TableRect.w, contentSpan)));
+  }
+  float hudCenter = m_TableRect.x + m_TableRect.w * 0.5f;
+  float columnAreaLeft = leftBound;
+  float columnAreaRight = leftBound + spanTarget;
+  if (contentSpan > 0.f) {
+    float minLeft = leftBound;
+    float maxLeft = rightBound - spanTarget;
+    if (maxLeft < minLeft) {
+      maxLeft = minLeft;
+    }
+    columnAreaLeft =
+        std::clamp(hudCenter - spanTarget * 0.5f, minLeft, maxLeft);
+    columnAreaRight = columnAreaLeft + spanTarget;
+  }
   float availableSpan = std::max(columnAreaRight - columnAreaLeft, 0.f);
   float constrainedSpan = std::max(availableSpan, kMinColumnSpan);
   float spanScale = constrainedSpan > 0.f ? (availableSpan / constrainedSpan) : 1.f;
-  if (spanScale <= 0.f) {
+  if (availableSpan <= 0.f) {
+    spanScale = 0.f;
+  } else if (spanScale <= 0.f) {
     spanScale = 1.f;
   }
 
@@ -1984,28 +2183,90 @@ void KasinoGame::drawScoreboard() {
   };
   float headerHeight = measureHeight("ROUND", 4.f);
 
-  ui::DrawText("ROUND " + std::to_string(m_RoundNumber), glm::vec2{12.f, headerTop},
-           4.f, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+  ui::DrawText("ROUND " + std::to_string(m_RoundNumber),
+           glm::vec2{columnAreaLeft, headerTop}, 4.f,
+           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   if (settingsVisible) {
-    ui::ButtonStyle style;
-    style.baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
-    style.hoveredColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
-    style.disabledColor = style.baseColor;
-    style.textStyle.scale = 3.2f;
-    style.textStyle.color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
-    style.hoveredTextColor = style.textStyle.color;
-    style.disabledTextColor = glm::vec4(0.45f, 0.45f, 0.45f, 1.0f);
-    style.drawOutline = true;
-    style.outlineExtend = glm::vec2{2.f, 2.f};
-    style.outlineColor = glm::vec4(0.03f, 0.05f, 0.06f, 1.0f);
-    ui::DrawButton(m_SettingsButtonRect, "SETTINGS", style,
-                   ui::ButtonState{m_SettingsButtonHovered, true});
+    glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
+    glm::vec4 hoveredColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
+    glm::vec4 fillColor =
+        m_SettingsButtonHovered ? hoveredColor : baseColor;
+    glm::vec4 outlineColor = glm::vec4(0.03f, 0.05f, 0.06f, 1.0f);
+    glm::vec2 outlineExtend{3.f, 3.f};
+    glm::vec2 buttonPos{m_SettingsButtonRect.x, m_SettingsButtonRect.y};
+    glm::vec2 buttonSize{m_SettingsButtonRect.w, m_SettingsButtonRect.h};
+    Render2D::DrawQuad(buttonPos - outlineExtend,
+                       buttonSize + outlineExtend * 2.f, outlineColor);
+    Render2D::DrawQuad(buttonPos, buttonSize, fillColor);
+
+    glm::vec2 center = m_SettingsButtonRect.Center();
+    float gearSpan = std::min(m_SettingsButtonRect.w, m_SettingsButtonRect.h) * 0.55f;
+    float halfGear = gearSpan * 0.5f;
+    float toothThickness = gearSpan * 0.22f;
+    float toothLength = gearSpan * 0.45f;
+    glm::vec4 gearColor = glm::vec4(0.94f, 0.96f, 0.98f, 1.0f);
+    glm::vec4 hubColor =
+        glm::mix(fillColor, glm::vec4(0.1f, 0.16f, 0.18f, 1.0f), 0.55f);
+
+    Render2D::DrawQuad(
+        glm::vec2{center.x - halfGear, center.y - halfGear},
+        glm::vec2{gearSpan, gearSpan}, gearColor);
+
+    glm::mat4 diagonal = glm::translate(glm::mat4(1.0f),
+                                         glm::vec3(center, 0.0f));
+    diagonal =
+        glm::rotate(diagonal, glm::quarter_pi<float>(), glm::vec3(0.f, 0.f, 1.f));
+    diagonal = glm::scale(diagonal, glm::vec3(gearSpan * 0.75f, gearSpan * 0.75f, 1.f));
+    Render2D::DrawQuad(diagonal, gearColor);
+
+    glm::vec2 horizontalTooth{toothLength, toothThickness};
+    Render2D::DrawQuad(
+        glm::vec2{center.x - horizontalTooth.x * 0.5f,
+                  center.y - halfGear - toothThickness * 0.5f},
+        horizontalTooth, gearColor);
+    Render2D::DrawQuad(
+        glm::vec2{center.x - horizontalTooth.x * 0.5f,
+                  center.y + halfGear - toothThickness * 0.5f},
+        horizontalTooth, gearColor);
+
+    glm::vec2 verticalTooth{toothThickness, toothLength};
+    Render2D::DrawQuad(
+        glm::vec2{center.x - halfGear - toothThickness * 0.5f,
+                  center.y - verticalTooth.y * 0.5f},
+        verticalTooth, gearColor);
+    Render2D::DrawQuad(
+        glm::vec2{center.x + halfGear - toothThickness * 0.5f,
+                  center.y - verticalTooth.y * 0.5f},
+        verticalTooth, gearColor);
+
+    float innerSpan = gearSpan * 0.46f;
+    Render2D::DrawQuad(
+        glm::vec2{center.x - innerSpan * 0.5f, center.y - innerSpan * 0.5f},
+        glm::vec2{innerSpan, innerSpan}, hubColor);
+
+    glm::mat4 innerDiagonal = glm::translate(glm::mat4(1.0f),
+                                             glm::vec3(center, 0.0f));
+    innerDiagonal = glm::rotate(innerDiagonal, glm::quarter_pi<float>(),
+                                glm::vec3(0.f, 0.f, 1.f));
+    innerDiagonal = glm::scale(innerDiagonal,
+                               glm::vec3(innerSpan * 0.68f, innerSpan * 0.68f, 1.f));
+    Render2D::DrawQuad(innerDiagonal, hubColor);
+
+    float hubSize = gearSpan * 0.2f;
+    glm::vec4 hubHighlight = glm::mix(gearColor, hubColor, 0.35f);
+    Render2D::DrawQuad(
+        glm::vec2{center.x - hubSize * 0.5f, center.y - hubSize * 0.5f},
+        glm::vec2{hubSize, hubSize}, gearColor);
+    float hubInset = hubSize * 0.55f;
+    Render2D::DrawQuad(
+        glm::vec2{center.x - hubInset * 0.5f, center.y - hubInset * 0.5f},
+        glm::vec2{hubInset, hubInset}, hubHighlight);
   }
 
   std::string deckText = "DECK " + std::to_string(m_State.stock.size());
   glm::vec2 deckMetrics = ui::MeasureText(deckText, 4.f);
-  float deckX = std::max(columnAreaRight - deckMetrics.x, 12.f);
+  float deckX = std::max(columnAreaRight - deckMetrics.x, columnAreaLeft);
   ui::DrawText(deckText, glm::vec2{deckX, headerTop}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
@@ -2477,48 +2738,48 @@ void KasinoGame::drawPromptOverlay() {
                glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
     }
     std::string desc = difficultyDescription(m_MenuDifficulty);
-    ui::DrawText(desc,
-             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 180.f},
-             3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
+    ui::TextStyle descStyle;
+    descStyle.scale = 3.f;
+    descStyle.color = glm::vec4(0.8f, 0.85f, 0.9f, 1.0f);
+    float descX = m_PromptBoxRect.x + 16.f;
+    float descY = m_PromptBoxRect.y + kMainMenuSettingsDescriptionTop;
+    float descMaxWidth = m_PromptBoxRect.w - 32.f;
+    auto descLines = wrapText(desc, descStyle, descMaxWidth);
+    drawWrappedLines(descLines, glm::vec2{descX, descY}, descStyle);
   } else if (m_PromptMode == PromptMode::HowToPlay) {
-    std::vector<std::string> lines = {
-        "EACH ROUND STARTS WITH FOUR CARDS PER PLAYER",
-        "AND FOUR FACE UP ON THE TABLE",
-        "ON YOUR TURN CHOOSE ONE ACTION:",
-        " - CAPTURE MATCHING RANKS OR SUM TABLE CARDS",
-        "   TO YOUR CARD VALUE AND TAKE BUILDS OF THAT VALUE",
-        " - BUILD BY COMBINING YOUR CARD WITH TABLE CARDS",
-        "   TO RESERVE A TARGET VALUE FOR LATER CAPTURE",
-        " - EXTEND YOUR OWN BUILDS TO A HIGHER VALUE WHEN",
-        "   YOU HOLD THE NEEDED CARD",
-        " - TRAIL TO PLACE A CARD ON THE TABLE WHEN NO",
-        "   OTHER MOVE FITS",
-        "CAPTURED CARDS GO TO YOUR PILE AND CLEARING THE",
-        "TABLE DURING A CAPTURE EARNS A SWEEP BONUS",
-        "WHEN ALL HANDS ARE EMPTY THE LAST PLAYER TO CAPTURE",
-        "TAKES ANY CARDS LEFT ON THE TABLE",
-        "SCORING EACH ROUND:",
-        " - ONE POINT PER CARD IN YOUR PILE",
-        " - ONE POINT FOR EACH BUILD YOU COLLECT",
-        " - ONE POINT FOR EVERY SWEEP BONUS",
-        "REACH THE TARGET SCORE TO WIN THE MATCH"};
-
-    float textY = m_PromptBoxRect.y + 64.f;
-    for (const auto &line : lines) {
-      ui::DrawText(line, glm::vec2{m_PromptBoxRect.x + 16.f, textY}, 2.6f,
-               glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
-      textY += 16.f;
-    }
+    ui::TextStyle howStyle;
+    howStyle.scale = 2.6f;
+    howStyle.color = glm::vec4(0.85f, 0.9f, 0.95f, 1.0f);
+    float textX = m_PromptBoxRect.x + 16.f;
+    float textY = m_PromptBoxRect.y + kPromptTextStart;
+    float maxWidth = m_PromptBoxRect.w - 32.f;
+    auto howLines = wrapText(joinLines(kHowToPlayLines), howStyle, maxWidth);
+    drawWrappedLines(howLines, glm::vec2{textX, textY}, howStyle);
   } else if (m_PromptMode == PromptMode::Settings) {
-    ui::DrawText("Close resumes play without leaving the table.",
-             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 64.f},
-             3.2f, glm::vec4(0.85f, 0.9f, 0.95f, 1.0f));
-    ui::DrawText("Quit Game ends the current match and exits immediately.",
-             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 96.f},
-             3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
-    ui::DrawText("Press ESC or tap Settings to reopen this menu.",
-             glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 128.f},
-             3.f, glm::vec4(0.75f, 0.8f, 0.85f, 1.0f));
+    float textX = m_PromptBoxRect.x + 16.f;
+    float textY = m_PromptBoxRect.y + kPromptTextStart;
+    float maxWidth = m_PromptBoxRect.w - 32.f;
+    const float paragraphSpacing = 14.f;
+
+    ui::TextStyle primaryStyle;
+    primaryStyle.scale = 3.2f;
+    primaryStyle.color = glm::vec4(0.85f, 0.9f, 0.95f, 1.0f);
+    ui::TextStyle secondaryStyle;
+    secondaryStyle.scale = 3.f;
+    secondaryStyle.color = glm::vec4(0.8f, 0.85f, 0.9f, 1.0f);
+
+    auto paragraph1 = wrapText(kSettingsParagraph1, primaryStyle, maxWidth);
+    float height1 = drawWrappedLines(paragraph1, glm::vec2{textX, textY},
+                                     primaryStyle);
+    textY += height1 + paragraphSpacing;
+
+    auto paragraph2 = wrapText(kSettingsParagraph2, secondaryStyle, maxWidth);
+    float height2 = drawWrappedLines(paragraph2, glm::vec2{textX, textY},
+                                     secondaryStyle);
+    textY += height2 + paragraphSpacing;
+
+    auto paragraph3 = wrapText(kSettingsParagraph3, secondaryStyle, maxWidth);
+    drawWrappedLines(paragraph3, glm::vec2{textX, textY}, secondaryStyle);
   }
 
   bool primaryEnabled = true;
