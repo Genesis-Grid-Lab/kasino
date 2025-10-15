@@ -2200,67 +2200,83 @@ void KasinoGame::drawScoreboard() {
   glm::vec2 roundPos{columnAreaLeft, headerTop};
   glm::vec2 deckPos{columnAreaLeft, headerTop};
   glm::vec2 turnPos{columnAreaLeft, headerTop};
-  constexpr float kHeaderMinSpacing = 16.f;
+  constexpr float kHeaderMinSpacing = 20.f;
 
-  bool deckOnTop =
-      availableSpan >= (roundMetrics.x + deckMetrics.x + kHeaderMinSpacing);
-  if (deckMetrics.x > availableSpan) {
-    deckOnTop = false;
-  }
+  auto placeDeckOnTop = [&]() -> bool {
+    if (availableSpan <= 0.f || deckMetrics.x > availableSpan) {
+      return false;
+    }
+    float deckX = columnAreaRight - deckMetrics.x;
+    float minDeckX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
+    if (deckX < minDeckX) {
+      if (minDeckX + deckMetrics.x > columnAreaRight) {
+        return false;
+      }
+      deckX = minDeckX;
+    }
+    deckPos = glm::vec2{deckX, headerTop};
+    return true;
+  };
+
+  auto placeTurnBetweenTopLabels = [&]() -> bool {
+    if (availableSpan <= 0.f || turnMetrics.x > availableSpan) {
+      return false;
+    }
+    float minTurnX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
+    float maxTurnX = deckPos.x - kHeaderMinSpacing - turnMetrics.x;
+    if (maxTurnX < minTurnX) {
+      return false;
+    }
+    float desiredTurnX =
+        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
+    turnPos = glm::vec2{std::clamp(desiredTurnX, minTurnX, maxTurnX), headerTop};
+    return true;
+  };
+
+  auto placeTurnWithRoundRow = [&]() -> bool {
+    if (availableSpan <= 0.f || turnMetrics.x > availableSpan) {
+      return false;
+    }
+    float minTurnX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
+    float maxTurnX = columnAreaRight - turnMetrics.x;
+    if (maxTurnX < minTurnX) {
+      return false;
+    }
+    float desiredTurnX =
+        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
+    turnPos = glm::vec2{std::clamp(desiredTurnX, minTurnX, maxTurnX), headerTop};
+    return true;
+  };
+
+  auto placeTurnBelow = [&](float topY) {
+    float desiredTurnX =
+        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
+    turnPos = glm::vec2{clampWithinColumns(desiredTurnX, turnMetrics.x), topY};
+  };
+
+  bool deckOnTop = placeDeckOnTop();
 
   if (deckOnTop) {
-    float desiredDeckX = columnAreaRight - deckMetrics.x;
-    float minDeckX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
-    float maxDeckX = columnAreaRight - deckMetrics.x;
-    if (maxDeckX < minDeckX) {
-      deckOnTop = false;
-    } else {
-      deckPos =
-          glm::vec2{std::clamp(desiredDeckX, minDeckX, maxDeckX), headerTop};
+    bool turnOnTop = placeTurnBetweenTopLabels();
+    if (!turnOnTop) {
+      float belowY =
+          std::max(roundPos.y + roundMetrics.y, deckPos.y + deckMetrics.y) +
+          rowSpacing;
+      placeTurnBelow(belowY);
     }
   }
 
   if (!deckOnTop) {
-    float belowY = roundPos.y + roundMetrics.y + rowSpacing;
-    deckPos = glm::vec2{columnAreaLeft, belowY};
-  }
-
-  bool turnOnTop = false;
-  if (deckOnTop) {
-    if (availableSpan >= (roundMetrics.x + turnMetrics.x + deckMetrics.x +
-                          2.f * kHeaderMinSpacing)) {
-      float minTurnX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
-      float maxTurnX = deckPos.x - kHeaderMinSpacing - turnMetrics.x;
-      if (maxTurnX >= minTurnX) {
-        float desiredTurnX =
-            (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
-        turnPos = glm::vec2{
-            std::clamp(desiredTurnX, minTurnX, maxTurnX), headerTop};
-        turnOnTop = true;
-      }
+    float deckY = roundPos.y + roundMetrics.y + rowSpacing;
+    float deckX = clampWithinColumns(columnAreaRight - deckMetrics.x, deckMetrics.x);
+    deckPos = glm::vec2{deckX, deckY};
+    bool turnOnTop = placeTurnWithRoundRow();
+    if (!turnOnTop) {
+      float belowY =
+          std::max(roundPos.y + roundMetrics.y, deckPos.y + deckMetrics.y) +
+          rowSpacing;
+      placeTurnBelow(belowY);
     }
-  } else {
-    if (availableSpan >=
-        (roundMetrics.x + turnMetrics.x + kHeaderMinSpacing)) {
-      float minTurnX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
-      float maxTurnX = columnAreaRight - turnMetrics.x;
-      if (maxTurnX >= minTurnX) {
-        float desiredTurnX =
-            (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
-        turnPos = glm::vec2{
-            std::clamp(desiredTurnX, minTurnX, maxTurnX), headerTop};
-        turnOnTop = true;
-      }
-    }
-  }
-
-  if (!turnOnTop) {
-    float belowY = roundPos.y + roundMetrics.y + rowSpacing;
-    float deckBottom = deckPos.y + deckMetrics.y;
-    belowY = std::max(belowY, deckBottom + rowSpacing);
-    float desiredTurnX =
-        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
-    turnPos = glm::vec2{clampWithinColumns(desiredTurnX, turnMetrics.x), belowY};
   }
 
   float headerBottom = std::max(roundPos.y + roundMetrics.y,
