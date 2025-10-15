@@ -913,7 +913,7 @@ void KasinoGame::updatePromptLayout() {
     m_DifficultyOptionRects.clear();
     float optionWidth = 120.f;
     float totalWidth =
-        optionWidth * 3.f + kMainMenuSettingsOptionSpacing * 2.f;
+        optionWidth * 3.f + mainMenuSettingsOptionSpacing * 2.f;
     float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
     float optionY = m_PromptBoxRect.y + kMainMenuSettingsOptionTop;
     for (int i = 0; i < 3; ++i) {
