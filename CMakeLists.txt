@@ -14,7 +14,7 @@ set(EXECUTABLE_OUTPUT_PATH $<0:>${CMAKE_BINARY_DIR}/bin)
 project(Kasino LANGUAGES CXX)
 
 # if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
-  set(EMSCRIPTEN TRUE)
+option(EMSCRIPTEN "web build" FALSE)
 # endif()
 
 set(CMAKE_CXX_STANDARD 20)
