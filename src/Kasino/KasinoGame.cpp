@@ -2183,109 +2183,11 @@ void KasinoGame::drawScoreboard() {
   };
   std::string roundLabel = "ROUND " + std::to_string(m_RoundNumber);
   glm::vec2 roundMetrics = ui::MeasureText(roundLabel, 4.f);
-  std::string deckText = "DECK " + std::to_string(m_State.stock.size());
-  glm::vec2 deckMetrics = ui::MeasureText(deckText, 4.f);
-  std::string turnText = "TURN P" + std::to_string(m_State.current + 1);
-  glm::vec2 turnMetrics = ui::MeasureText(turnText, 4.f);
-
-  auto clampWithinColumns = [&](float desiredX, float width) {
-    float minX = columnAreaLeft;
-    float maxX = columnAreaRight - width;
-    if (maxX < minX) {
-      return minX;
-    }
-    return std::clamp(desiredX, minX, maxX);
-  };
+  float headerHeight = roundMetrics.y;
 
   glm::vec2 roundPos{columnAreaLeft, headerTop};
-  glm::vec2 deckPos{columnAreaLeft, headerTop};
-  glm::vec2 turnPos{columnAreaLeft, headerTop};
-  constexpr float kHeaderMinSpacing = 20.f;
-
-  auto placeDeckOnTop = [&]() -> bool {
-    if (availableSpan <= 0.f || deckMetrics.x > availableSpan) {
-      return false;
-    }
-    float deckX = columnAreaRight - deckMetrics.x;
-    float minDeckX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
-    if (deckX < minDeckX) {
-      if (minDeckX + deckMetrics.x > columnAreaRight) {
-        return false;
-      }
-      deckX = minDeckX;
-    }
-    deckPos = glm::vec2{deckX, headerTop};
-    return true;
-  };
-
-  auto placeTurnBetweenTopLabels = [&]() -> bool {
-    if (availableSpan <= 0.f || turnMetrics.x > availableSpan) {
-      return false;
-    }
-    float minTurnX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
-    float maxTurnX = deckPos.x - kHeaderMinSpacing - turnMetrics.x;
-    if (maxTurnX < minTurnX) {
-      return false;
-    }
-    float desiredTurnX =
-        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
-    turnPos = glm::vec2{std::clamp(desiredTurnX, minTurnX, maxTurnX), headerTop};
-    return true;
-  };
-
-  auto placeTurnWithRoundRow = [&]() -> bool {
-    if (availableSpan <= 0.f || turnMetrics.x > availableSpan) {
-      return false;
-    }
-    float minTurnX = roundPos.x + roundMetrics.x + kHeaderMinSpacing;
-    float maxTurnX = columnAreaRight - turnMetrics.x;
-    if (maxTurnX < minTurnX) {
-      return false;
-    }
-    float desiredTurnX =
-        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
-    turnPos = glm::vec2{std::clamp(desiredTurnX, minTurnX, maxTurnX), headerTop};
-    return true;
-  };
-
-  auto placeTurnBelow = [&](float topY) {
-    float desiredTurnX =
-        (columnAreaLeft + columnAreaRight) * 0.5f - turnMetrics.x * 0.5f;
-    turnPos = glm::vec2{clampWithinColumns(desiredTurnX, turnMetrics.x), topY};
-  };
-
-  bool deckOnTop = placeDeckOnTop();
-
-  if (deckOnTop) {
-    bool turnOnTop = placeTurnBetweenTopLabels();
-    if (!turnOnTop) {
-      float belowY =
-          std::max(roundPos.y + roundMetrics.y, deckPos.y + deckMetrics.y) +
-          rowSpacing;
-      placeTurnBelow(belowY);
-    }
-  }
-
-  if (!deckOnTop) {
-    float deckY = roundPos.y + roundMetrics.y + rowSpacing;
-    float deckX = clampWithinColumns(columnAreaRight - deckMetrics.x, deckMetrics.x);
-    deckPos = glm::vec2{deckX, deckY};
-    bool turnOnTop = placeTurnWithRoundRow();
-    if (!turnOnTop) {
-      float belowY =
-          std::max(roundPos.y + roundMetrics.y, deckPos.y + deckMetrics.y) +
-          rowSpacing;
-      placeTurnBelow(belowY);
-    }
-  }
-
-  float headerBottom = std::max(roundPos.y + roundMetrics.y,
-                                deckPos.y + deckMetrics.y);
-  headerBottom = std::max(headerBottom, turnPos.y + turnMetrics.y);
-  float headerHeight = std::max(headerBottom - headerTop, roundMetrics.y);
-
   ui::DrawText(roundLabel, roundPos, 4.f,
-               glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   if (settingsVisible) {
     glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
@@ -2364,12 +2266,18 @@ void KasinoGame::drawScoreboard() {
         glm::vec2{hubInset, hubInset}, hubHighlight);
   }
 
-  ui::DrawText(deckText, deckPos, 4.f,
-               glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-
-  glm::vec4 turnColor =
-      m_PlayerColors[m_State.current % m_PlayerColors.size()];
-  ui::DrawText(turnText, turnPos, 4.f, turnColor);
+  std::string deckText = "DECK " + std::to_string(m_State.stock.size());
+  glm::vec2 deckMetrics = ui::MeasureText(deckText, 4.f);
+  float deckX = std::max(columnAreaRight - deckMetrics.x, columnAreaLeft);
+  float deckY = headerTop;
+  float roundRight = roundPos.x + roundMetrics.x;
+  constexpr float kHeaderMinSpacing = 12.f;
+  if (deckX < roundRight + kHeaderMinSpacing) {
+    deckX = columnAreaLeft;
+    deckY = headerTop + headerHeight + rowSpacing;
+  }
+  ui::DrawText(deckText, glm::vec2{deckX, deckY}, 4.f,
+           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   if (deckY > headerTop) {
     headerHeight = (deckY - headerTop) + deckMetrics.y;
@@ -2441,6 +2349,12 @@ void KasinoGame::drawScoreboard() {
     drawStat("SWEEPS", sweepBonus, false);
   }
 
+  std::string turnText = "TURN P" + std::to_string(m_State.current + 1);
+  glm::vec2 turnMetrics = ui::MeasureText(turnText, 4.f);
+  float turnCenter = (columnAreaLeft + columnAreaRight) * 0.5f;
+  float turnX = turnCenter - turnMetrics.x * 0.5f;
+  ui::DrawText(turnText, glm::vec2{turnX, headerTop}, 4.f,
+           m_PlayerColors[m_State.current % m_PlayerColors.size()]);
 }
 
 void KasinoGame::drawHands() {
@@ -2993,4 +2907,3 @@ void KasinoGame::drawMainMenu() {
 }
 
 void KasinoGame::OnRender() { drawScene(); }
-
