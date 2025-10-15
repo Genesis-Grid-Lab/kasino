@@ -2,6 +2,7 @@
 Build/
 Build-web/
 Targets/
+Targets-web/
 .cache/
 vendor/emsdk
 
