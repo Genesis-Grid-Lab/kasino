@@ -913,7 +913,7 @@ void KasinoGame::updatePromptLayout() {
     m_DifficultyOptionRects.clear();
     float optionWidth = 120.f;
     float totalWidth =
-        optionWidth * 3.f + mainMenuSettingsOptionSpacing * 2.f;
+        optionWidth * 3.f + kMainMenuSettingsOptionSpacing * 2.f;
     float startX = m_PromptBoxRect.x + (boxWidth - totalWidth) * 0.5f;
     float optionY = m_PromptBoxRect.y + kMainMenuSettingsOptionTop;
     for (int i = 0; i < 3; ++i) {
@@ -2141,7 +2141,7 @@ void KasinoGame::drawScoreboard() {
   const bool settingsVisible =
       m_SettingsButtonRect.w > 0.f && m_SettingsButtonRect.h > 0.f;
   float leftBound = 16.f;
-  float rightBound = settingsVisible ? (m_SettingsButtonRect.x - 12.f)
+  float rightBound = settingsVisible ? (m_SettingsButtonRect.x - 6.f)
                                      : width - 16.f;
   if (rightBound < leftBound) {
     rightBound = leftBound;
@@ -2181,10 +2181,12 @@ void KasinoGame::drawScoreboard() {
   auto measureHeight = [](const std::string &text, float scale) {
     return ui::MeasureText(text, scale).y;
   };
-  float headerHeight = measureHeight("ROUND", 4.f);
+  std::string roundLabel = "ROUND " + std::to_string(m_RoundNumber);
+  glm::vec2 roundMetrics = ui::MeasureText(roundLabel, 4.f);
+  float headerHeight = roundMetrics.y;
 
-  ui::DrawText("ROUND " + std::to_string(m_RoundNumber),
-           glm::vec2{columnAreaLeft, headerTop}, 4.f,
+  glm::vec2 roundPos{columnAreaLeft, headerTop};
+  ui::DrawText(roundLabel, roundPos, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
   if (settingsVisible) {
@@ -2267,9 +2269,22 @@ void KasinoGame::drawScoreboard() {
   std::string deckText = "DECK " + std::to_string(m_State.stock.size());
   glm::vec2 deckMetrics = ui::MeasureText(deckText, 4.f);
   float deckX = std::max(columnAreaRight - deckMetrics.x, columnAreaLeft);
-  ui::DrawText(deckText, glm::vec2{deckX, headerTop}, 4.f,
+  float deckY = headerTop;
+  float roundRight = roundPos.x + roundMetrics.x;
+  constexpr float kHeaderMinSpacing = 12.f;
+  if (deckX < roundRight + kHeaderMinSpacing) {
+    deckX = columnAreaLeft;
+    deckY = headerTop + headerHeight + rowSpacing;
+  }
+  ui::DrawText(deckText, glm::vec2{deckX, deckY}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
+  if (deckY > headerTop) {
+    headerHeight = (deckY - headerTop) + deckMetrics.y;
+  } else {
+    headerHeight = std::max(headerHeight, deckMetrics.y);
+  }
+             
   int playerCount = std::max(1, m_State.numPlayers);
   float columnWidth = constrainedSpan / static_cast<float>(playerCount);
   float effectiveColumnWidth = columnWidth * spanScale;
