@@ -53,7 +53,7 @@ constexpr const char *kSettingsParagraph2 =
 constexpr const char *kSettingsParagraph3 =
     "Press ESC or tap Settings to reopen this menu.";
 
-const std::array<const char *, 19> kHowToPlayLines = {
+const std::array<const char *, 20> kHowToPlayLines = {
     "EACH ROUND STARTS WITH FOUR CARDS PER PLAYER",
     "AND FOUR FACE UP ON THE TABLE",
     "ON YOUR TURN CHOOSE ONE ACTION:",
