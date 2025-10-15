@@ -2,7 +2,7 @@
 
 # output directory
 
-target="Build/$1"
+target="Build-web/$1"
 
 # generate cmake build files
 

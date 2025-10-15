@@ -1,6 +1,6 @@
 #!/bin/bash
 
-target="Build"
+target="Build-web"
 
 if [[ -d "$target" ]]; then
     if [[ -d "$target/Debug/bin" ]]; then

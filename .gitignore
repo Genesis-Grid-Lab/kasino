@@ -1,5 +1,6 @@
 .vscode/
 Build/
+Build-web/
 Targets/
 .cache/
 vendor/emsdk

@@ -1,211 +1,217 @@
 [
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/Factory.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Factory.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/Factory.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Factory.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/Factory.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/Factory.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/Log.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Log.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/Log.cpp.o -c /home/nephilim/Projects/kasino/src/engine/Log.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/Log.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/Log.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/app/Game.cpp.o -c /home/nephilim/Projects/kasino/src/engine/app/Game.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/app/Game.cpp.o -c /home/nephilim/Projects/kasino/src/engine/app/Game.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/app/Game.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/app/Game.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/audio/SoundSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/audio/SoundSystem.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/audio/SoundSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/audio/SoundSystem.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/audio/SoundSystem.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/audio/SoundSystem.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o -c /home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o -c /home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/events/EventBus.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/events/EventBus.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/gfx/Camera2D.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/Camera2D.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/gfx/Camera2D.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/Camera2D.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/gfx/Camera2D.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/gfx/Camera2D.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/gfx/Render2D.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/Render2D.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/gfx/Render2D.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/Render2D.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/gfx/Render2D.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/gfx/Render2D.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/gfx/RenderCommand.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/RenderCommand.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/gfx/RenderCommand.cpp.o -c /home/nephilim/Projects/kasino/src/engine/gfx/RenderCommand.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/gfx/RenderCommand.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/gfx/RenderCommand.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/input/InputSystem.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/input/InputSystem.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/engine/ui/UISystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/ui/UISystem.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/engine/ui/UISystem.cpp.o -c /home/nephilim/Projects/kasino/src/engine/ui/UISystem.cpp",
   "file": "/home/nephilim/Projects/kasino/src/engine/ui/UISystem.cpp",
   "output": "CMakeFiles/engine.dir/src/engine/ui/UISystem.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o -c /home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o -c /home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
   "file": "/home/nephilim/Projects/kasino/src/window/glfw/GlfwWindow.cpp",
   "output": "CMakeFiles/engine.dir/src/window/glfw/GlfwWindow.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/glad/GLBuffer.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLBuffer.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLBuffer.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLBuffer.cpp",
   "file": "/home/nephilim/Projects/kasino/src/glad/GLBuffer.cpp",
   "output": "CMakeFiles/engine.dir/src/glad/GLBuffer.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/glad/GLDevice.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLDevice.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLDevice.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLDevice.cpp",
   "file": "/home/nephilim/Projects/kasino/src/glad/GLDevice.cpp",
   "output": "CMakeFiles/engine.dir/src/glad/GLDevice.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/glad/GLRendererAPI.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLRendererAPI.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLRendererAPI.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLRendererAPI.cpp",
   "file": "/home/nephilim/Projects/kasino/src/glad/GLRendererAPI.cpp",
   "output": "CMakeFiles/engine.dir/src/glad/GLRendererAPI.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/glad/GLShader.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLShader.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLShader.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLShader.cpp",
   "file": "/home/nephilim/Projects/kasino/src/glad/GLShader.cpp",
   "output": "CMakeFiles/engine.dir/src/glad/GLShader.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/glad/GLTexture2D.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLTexture2D.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLTexture2D.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLTexture2D.cpp",
   "file": "/home/nephilim/Projects/kasino/src/glad/GLTexture2D.cpp",
   "output": "CMakeFiles/engine.dir/src/glad/GLTexture2D.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/glad/GLVertexArray.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLVertexArray.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/glad/GLVertexArray.cpp.o -c /home/nephilim/Projects/kasino/src/glad/GLVertexArray.cpp",
   "file": "/home/nephilim/Projects/kasino/src/glad/GLVertexArray.cpp",
   "output": "CMakeFiles/engine.dir/src/glad/GLVertexArray.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/engine.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/engine.dir/src/miniaudio/MiniaudioDevice.cpp.o -c /home/nephilim/Projects/kasino/src/miniaudio/MiniaudioDevice.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/engine.dir/src/miniaudio/MiniaudioDevice.cpp.o -c /home/nephilim/Projects/kasino/src/miniaudio/MiniaudioDevice.cpp",
   "file": "/home/nephilim/Projects/kasino/src/miniaudio/MiniaudioDevice.cpp",
   "output": "CMakeFiles/engine.dir/src/miniaudio/MiniaudioDevice.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/Kasino.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/Kasino.dir/src/main.cpp.o -c /home/nephilim/Projects/kasino/src/main.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/main.cpp.o -c /home/nephilim/Projects/kasino/src/main.cpp",
   "file": "/home/nephilim/Projects/kasino/src/main.cpp",
   "output": "CMakeFiles/Kasino.dir/src/main.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/Kasino.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/Kasino.dir/src/Kasino/GameLogic.cpp.o -c /home/nephilim/Projects/kasino/src/Kasino/GameLogic.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/Kasino/GameLogic.cpp.o -c /home/nephilim/Projects/kasino/src/Kasino/GameLogic.cpp",
   "file": "/home/nephilim/Projects/kasino/src/Kasino/GameLogic.cpp",
   "output": "CMakeFiles/Kasino.dir/src/Kasino/GameLogic.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 @CMakeFiles/Kasino.dir/includes_CXX.rsp -g -std=gnu++20 -sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -o CMakeFiles/Kasino.dir/src/Kasino/KasinoGame.cpp.o -c /home/nephilim/Projects/kasino/src/Kasino/KasinoGame.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -DWINDOW_BACKEND_GLFW=1 -I/home/nephilim/Projects/kasino/include -I/home/nephilim/Projects/kasino/vendor/glad/include -I/home/nephilim/Projects/kasino/vendor/glm -I/home/nephilim/Projects/kasino/vendor/stb_image -I/home/nephilim/Projects/kasino/vendor/spdlog/include -I/home/nephilim/Projects/kasino/vendor/miniaudio -I/home/nephilim/Projects/kasino/vendor/glm/glm/.. -g -std=gnu++20 -o CMakeFiles/Kasino.dir/src/Kasino/KasinoGame.cpp.o -c /home/nephilim/Projects/kasino/src/Kasino/KasinoGame.cpp",
   "file": "/home/nephilim/Projects/kasino/src/Kasino/KasinoGame.cpp",
   "output": "CMakeFiles/Kasino.dir/src/Kasino/KasinoGame.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/glad",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc  @CMakeFiles/glad.dir/includes_C.rsp -g -fPIC -o CMakeFiles/glad.dir/src/glad.c.o -c /home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/glad/include -g -fPIC -o CMakeFiles/glad.dir/src/glad.c.o -c /home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
   "file": "/home/nephilim/Projects/kasino/vendor/glad/src/glad.c",
   "output": "vendor/glad/CMakeFiles/glad.dir/src/glad.c.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/spdlog.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/spdlog.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/spdlog.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/spdlog.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/spdlog.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/spdlog.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/stdout_sinks.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/stdout_sinks.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/stdout_sinks.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/color_sinks.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/color_sinks.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/color_sinks.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/color_sinks.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/color_sinks.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/color_sinks.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/file_sinks.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/file_sinks.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/file_sinks.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/file_sinks.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/file_sinks.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/file_sinks.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/async.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/async.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/async.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/async.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/async.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/async.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/cfg.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/cfg.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/cfg.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/cfg.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/cfg.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/cfg.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/spdlog",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/em++ -DSPDLOG_COMPILED_LIB @CMakeFiles/spdlog.dir/includes_CXX.rsp -g -std=c++20 -o CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/bundled_fmtlib_format.cpp",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/nephilim/Projects/kasino/vendor/spdlog/include -g -std=c++20 -o CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o -c /home/nephilim/Projects/kasino/vendor/spdlog/src/bundled_fmtlib_format.cpp",
   "file": "/home/nephilim/Projects/kasino/vendor/spdlog/src/bundled_fmtlib_format.cpp",
   "output": "vendor/spdlog/CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS -DMA_ENABLE_WEBAUDIO -DMA_NO_RUNTIME_LINKING @CMakeFiles/miniaudio.dir/includes_C.rsp -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio.dir/miniaudio.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/miniaudio.c",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/miniaudio -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio.dir/miniaudio.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/miniaudio.c",
   "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/miniaudio.c",
   "output": "vendor/miniaudio/CMakeFiles/miniaudio.dir/miniaudio.c.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS -DMA_ENABLE_WEBAUDIO -DMA_NO_RUNTIME_LINKING @CMakeFiles/miniaudio_channel_combiner_node.dir/includes_C.rsp -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_channel_combiner_node.dir/extras/nodes/ma_channel_combiner_node/ma_channel_combiner_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_combiner_node/ma_channel_combiner_node.c",
+  "command": "/usr/bin/cc   -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_libvorbis.dir/extras/decoders/libvorbis/miniaudio_libvorbis.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/decoders/libvorbis/miniaudio_libvorbis.c",
+  "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/extras/decoders/libvorbis/miniaudio_libvorbis.c",
+  "output": "vendor/miniaudio/CMakeFiles/miniaudio_libvorbis.dir/extras/decoders/libvorbis/miniaudio_libvorbis.c.o"
+},
+{
+  "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_combiner_node -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_channel_combiner_node.dir/extras/nodes/ma_channel_combiner_node/ma_channel_combiner_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_combiner_node/ma_channel_combiner_node.c",
   "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_combiner_node/ma_channel_combiner_node.c",
   "output": "vendor/miniaudio/CMakeFiles/miniaudio_channel_combiner_node.dir/extras/nodes/ma_channel_combiner_node/ma_channel_combiner_node.c.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS -DMA_ENABLE_WEBAUDIO -DMA_NO_RUNTIME_LINKING @CMakeFiles/miniaudio_channel_separator_node.dir/includes_C.rsp -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_channel_separator_node.dir/extras/nodes/ma_channel_separator_node/ma_channel_separator_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_separator_node/ma_channel_separator_node.c",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_separator_node -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_channel_separator_node.dir/extras/nodes/ma_channel_separator_node/ma_channel_separator_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_separator_node/ma_channel_separator_node.c",
   "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_channel_separator_node/ma_channel_separator_node.c",
   "output": "vendor/miniaudio/CMakeFiles/miniaudio_channel_separator_node.dir/extras/nodes/ma_channel_separator_node/ma_channel_separator_node.c.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS -DMA_ENABLE_WEBAUDIO -DMA_NO_RUNTIME_LINKING @CMakeFiles/miniaudio_ltrim_node.dir/includes_C.rsp -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_ltrim_node.dir/extras/nodes/ma_ltrim_node/ma_ltrim_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_ltrim_node/ma_ltrim_node.c",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_ltrim_node -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_ltrim_node.dir/extras/nodes/ma_ltrim_node/ma_ltrim_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_ltrim_node/ma_ltrim_node.c",
   "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_ltrim_node/ma_ltrim_node.c",
   "output": "vendor/miniaudio/CMakeFiles/miniaudio_ltrim_node.dir/extras/nodes/ma_ltrim_node/ma_ltrim_node.c.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS -DMA_ENABLE_WEBAUDIO -DMA_NO_RUNTIME_LINKING @CMakeFiles/miniaudio_reverb_node.dir/includes_C.rsp -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_reverb_node.dir/extras/nodes/ma_reverb_node/ma_reverb_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_reverb_node/ma_reverb_node.c",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_reverb_node -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_reverb_node.dir/extras/nodes/ma_reverb_node/ma_reverb_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_reverb_node/ma_reverb_node.c",
   "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_reverb_node/ma_reverb_node.c",
   "output": "vendor/miniaudio/CMakeFiles/miniaudio_reverb_node.dir/extras/nodes/ma_reverb_node/ma_reverb_node.c.o"
 },
 {
   "directory": "/home/nephilim/Projects/kasino/Build/Debug/vendor/miniaudio",
-  "command": "/home/nephilim/Projects/kasino/vendor/emsdk/upstream/emscripten/emcc -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS -DMA_ENABLE_WEBAUDIO -DMA_NO_RUNTIME_LINKING @CMakeFiles/miniaudio_vocoder_node.dir/includes_C.rsp -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_vocoder_node.dir/extras/nodes/ma_vocoder_node/ma_vocoder_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_vocoder_node/ma_vocoder_node.c",
+  "command": "/usr/bin/cc  -I/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_vocoder_node -g -Wall -Wextra -Wpedantic -o CMakeFiles/miniaudio_vocoder_node.dir/extras/nodes/ma_vocoder_node/ma_vocoder_node.c.o -c /home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_vocoder_node/ma_vocoder_node.c",
   "file": "/home/nephilim/Projects/kasino/vendor/miniaudio/extras/nodes/ma_vocoder_node/ma_vocoder_node.c",
   "output": "vendor/miniaudio/CMakeFiles/miniaudio_vocoder_node.dir/extras/nodes/ma_vocoder_node/ma_vocoder_node.c.o"
 }
