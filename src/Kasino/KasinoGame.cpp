@@ -2131,231 +2131,220 @@ void KasinoGame::drawBuildFace(const Build &build, const Rect &r,
 }
 
 void KasinoGame::drawScoreboard() {
-  float width = m_Camera.LogicalWidth();
-  Rect bar{0.f, 0.f, width, m_ScoreboardHeight};
-  Render2D::DrawQuad(glm::vec2{bar.x, bar.y}, glm::vec2{bar.w, bar.h},
-                     glm::vec4(0.07f, 0.18f, 0.11f, 1.0f));
-  Render2D::DrawQuad(glm::vec2{bar.x, bar.y}, glm::vec2{bar.w, 4.f},
-                     glm::vec4(0.02f, 0.05f, 0.03f, 1.0f));
+    float width = m_Camera.LogicalWidth();
+    Rect bar{0.f, 0.f, width, m_ScoreboardHeight};
+    Render2D::DrawQuad(glm::vec2{bar.x, bar.y}, glm::vec2{bar.w, bar.h},
+                       glm::vec4(0.07f, 0.18f, 0.11f, 1.0f));
+    Render2D::DrawQuad(glm::vec2{bar.x, bar.y}, glm::vec2{bar.w, 4.f},
+                       glm::vec4(0.02f, 0.05f, 0.03f, 1.0f));
 
-  const bool settingsVisible =
-      m_SettingsButtonRect.w > 0.f && m_SettingsButtonRect.h > 0.f;
-  float leftBound = 16.f;
-  float rightBound = settingsVisible ? (m_SettingsButtonRect.x - 6.f)
-                                     : width - 16.f;
-  if (rightBound < leftBound) {
-    rightBound = leftBound;
-  }
-  constexpr float kMinColumnSpan = 160.f;
-  float contentSpan = std::max(rightBound - leftBound, 0.f);
-  float spanTarget = contentSpan;
-  if (contentSpan > 0.f) {
-    spanTarget = std::min(contentSpan, std::max(kMinColumnSpan,
-                                                std::min(m_TableRect.w, contentSpan)));
-  }
-  float hudCenter = m_TableRect.x + m_TableRect.w * 0.5f;
-  float columnAreaLeft = leftBound;
-  float columnAreaRight = leftBound + spanTarget;
-  if (contentSpan > 0.f) {
-    float minLeft = leftBound;
-    float maxLeft = rightBound - spanTarget;
-    if (maxLeft < minLeft) {
-      maxLeft = minLeft;
+    const bool settingsVisible =
+        m_SettingsButtonRect.w > 0.f && m_SettingsButtonRect.h > 0.f;
+    float leftBound = 16.f;
+    float rightBound = settingsVisible ? (m_SettingsButtonRect.x - 6.f)
+                                       : width - 16.f;
+    if (rightBound < leftBound) rightBound = leftBound;
+
+    constexpr float kMinColumnSpan = 160.f;
+    float contentSpan = std::max(rightBound - leftBound, 0.f);
+    float spanTarget = contentSpan;
+    if (contentSpan > 0.f) {
+        spanTarget = std::min(contentSpan, std::max(kMinColumnSpan,
+                                                    std::min(m_TableRect.w, contentSpan)));
     }
-    columnAreaLeft =
-        std::clamp(hudCenter - spanTarget * 0.5f, minLeft, maxLeft);
-    columnAreaRight = columnAreaLeft + spanTarget;
-  }
-  float availableSpan = std::max(columnAreaRight - columnAreaLeft, 0.f);
-  float constrainedSpan = std::max(availableSpan, kMinColumnSpan);
-  float spanScale = constrainedSpan > 0.f ? (availableSpan / constrainedSpan) : 1.f;
-  if (availableSpan <= 0.f) {
-    spanScale = 0.f;
-  } else if (spanScale <= 0.f) {
-    spanScale = 1.f;
-  }
-
-  const float headerTop = 14.f;
-  const float headerSpacing = 10.f;
-  const float rowSpacing = 3.f;
-  auto measureHeight = [](const std::string &text, float scale) {
-    return ui::MeasureText(text, scale).y;
-  };
-  std::string roundLabel = "ROUND " + std::to_string(m_RoundNumber);
-  glm::vec2 roundMetrics = ui::MeasureText(roundLabel, 4.f);
-  float headerHeight = roundMetrics.y;
-
-  glm::vec2 roundPos{columnAreaLeft, headerTop};
-  ui::DrawText(roundLabel, roundPos, 4.f,
-           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-
-  if (settingsVisible) {
-    glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
-    glm::vec4 hoveredColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
-    glm::vec4 fillColor =
-        m_SettingsButtonHovered ? hoveredColor : baseColor;
-    glm::vec4 outlineColor = glm::vec4(0.03f, 0.05f, 0.06f, 1.0f);
-    glm::vec2 outlineExtend{3.f, 3.f};
-    glm::vec2 buttonPos{m_SettingsButtonRect.x, m_SettingsButtonRect.y};
-    glm::vec2 buttonSize{m_SettingsButtonRect.w, m_SettingsButtonRect.h};
-    Render2D::DrawQuad(buttonPos - outlineExtend,
-                       buttonSize + outlineExtend * 2.f, outlineColor);
-    Render2D::DrawQuad(buttonPos, buttonSize, fillColor);
-
-    glm::vec2 center = m_SettingsButtonRect.Center();
-    float gearSpan = std::min(m_SettingsButtonRect.w, m_SettingsButtonRect.h) * 0.55f;
-    float halfGear = gearSpan * 0.5f;
-    float toothThickness = gearSpan * 0.22f;
-    float toothLength = gearSpan * 0.45f;
-    glm::vec4 gearColor = glm::vec4(0.94f, 0.96f, 0.98f, 1.0f);
-    glm::vec4 hubColor =
-        glm::mix(fillColor, glm::vec4(0.1f, 0.16f, 0.18f, 1.0f), 0.55f);
-
-    Render2D::DrawQuad(
-        glm::vec2{center.x - halfGear, center.y - halfGear},
-        glm::vec2{gearSpan, gearSpan}, gearColor);
-
-    glm::mat4 diagonal = glm::translate(glm::mat4(1.0f),
-                                         glm::vec3(center, 0.0f));
-    diagonal =
-        glm::rotate(diagonal, glm::quarter_pi<float>(), glm::vec3(0.f, 0.f, 1.f));
-    diagonal = glm::scale(diagonal, glm::vec3(gearSpan * 0.75f, gearSpan * 0.75f, 1.f));
-    Render2D::DrawQuad(diagonal, gearColor);
-
-    glm::vec2 horizontalTooth{toothLength, toothThickness};
-    Render2D::DrawQuad(
-        glm::vec2{center.x - horizontalTooth.x * 0.5f,
-                  center.y - halfGear - toothThickness * 0.5f},
-        horizontalTooth, gearColor);
-    Render2D::DrawQuad(
-        glm::vec2{center.x - horizontalTooth.x * 0.5f,
-                  center.y + halfGear - toothThickness * 0.5f},
-        horizontalTooth, gearColor);
-
-    glm::vec2 verticalTooth{toothThickness, toothLength};
-    Render2D::DrawQuad(
-        glm::vec2{center.x - halfGear - toothThickness * 0.5f,
-                  center.y - verticalTooth.y * 0.5f},
-        verticalTooth, gearColor);
-    Render2D::DrawQuad(
-        glm::vec2{center.x + halfGear - toothThickness * 0.5f,
-                  center.y - verticalTooth.y * 0.5f},
-        verticalTooth, gearColor);
-
-    float innerSpan = gearSpan * 0.46f;
-    Render2D::DrawQuad(
-        glm::vec2{center.x - innerSpan * 0.5f, center.y - innerSpan * 0.5f},
-        glm::vec2{innerSpan, innerSpan}, hubColor);
-
-    glm::mat4 innerDiagonal = glm::translate(glm::mat4(1.0f),
-                                             glm::vec3(center, 0.0f));
-    innerDiagonal = glm::rotate(innerDiagonal, glm::quarter_pi<float>(),
-                                glm::vec3(0.f, 0.f, 1.f));
-    innerDiagonal = glm::scale(innerDiagonal,
-                               glm::vec3(innerSpan * 0.68f, innerSpan * 0.68f, 1.f));
-    Render2D::DrawQuad(innerDiagonal, hubColor);
-
-    float hubSize = gearSpan * 0.2f;
-    glm::vec4 hubHighlight = glm::mix(gearColor, hubColor, 0.35f);
-    Render2D::DrawQuad(
-        glm::vec2{center.x - hubSize * 0.5f, center.y - hubSize * 0.5f},
-        glm::vec2{hubSize, hubSize}, gearColor);
-    float hubInset = hubSize * 0.55f;
-    Render2D::DrawQuad(
-        glm::vec2{center.x - hubInset * 0.5f, center.y - hubInset * 0.5f},
-        glm::vec2{hubInset, hubInset}, hubHighlight);
-  }
-
-  std::string deckText = "DECK " + std::to_string(m_State.stock.size());
-  glm::vec2 deckMetrics = ui::MeasureText(deckText, 4.f);
-  float deckX = std::max(columnAreaRight - deckMetrics.x, columnAreaLeft);
-  float deckY = headerTop;
-  float roundRight = roundPos.x + roundMetrics.x;
-  constexpr float kHeaderMinSpacing = 12.f;
-  if (deckX < roundRight + kHeaderMinSpacing) {
-    deckX = columnAreaLeft;
-    deckY = headerTop + headerHeight + rowSpacing;
-  }
-  ui::DrawText(deckText, glm::vec2{deckX, deckY}, 4.f,
-           glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
-
-  if (deckY > headerTop) {
-    headerHeight = (deckY - headerTop) + deckMetrics.y;
-  } else {
-    headerHeight = std::max(headerHeight, deckMetrics.y);
-  }
-             
-  int playerCount = std::max(1, m_State.numPlayers);
-  float columnWidth = constrainedSpan / static_cast<float>(playerCount);
-  float effectiveColumnWidth = columnWidth * spanScale;
-  constexpr float columnPadding = 12.f;
-  float columnStartY = headerTop + headerHeight + headerSpacing;
-
-  for (int p = 0; p < m_State.numPlayers; ++p) {
-    float columnLeft = columnAreaLeft + effectiveColumnWidth * static_cast<float>(p);
-    float offsetX = columnLeft + columnPadding;
-    offsetX = std::min(offsetX, columnAreaRight - columnPadding);
-    offsetX = std::max(offsetX, columnAreaLeft + columnPadding);
-    glm::vec4 color = m_PlayerColors[p % m_PlayerColors.size()];
-    float currentY = columnStartY;
-    std::string playerLabel = "PLAYER " + std::to_string(p + 1);
-    ui::DrawText(playerLabel, glm::vec2{offsetX, currentY}, 3.5f, color);
-    currentY += measureHeight(playerLabel, 3.5f) + rowSpacing;
-    int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
-    const RunningScore *runningScore =
-        (p < static_cast<int>(m_CurrentRoundScores.size()))
-            ? &m_CurrentRoundScores[p]
-            : nullptr;
-    if (m_Phase == Phase::Playing) {
-      if (runningScore) {
-        total += runningScore->line.total;
-      } else if (p < static_cast<int>(m_State.players.size())) {
-        const auto &player = m_State.players[p];
-        total += player.capturedCardPoints + player.buildBonus +
-                 player.sweepBonus;
-      }
+    float hudCenter = m_TableRect.x + m_TableRect.w * 0.5f;
+    float columnAreaLeft = leftBound;
+    float columnAreaRight = leftBound + spanTarget;
+    if (contentSpan > 0.f) {
+        float minLeft = leftBound;
+        float maxLeft = rightBound - spanTarget;
+        if (maxLeft < minLeft) maxLeft = minLeft;
+        columnAreaLeft =
+            std::clamp(hudCenter - spanTarget * 0.5f, minLeft, maxLeft);
+        columnAreaRight = columnAreaLeft + spanTarget;
     }
-    glm::vec2 totalPos{offsetX, currentY};
-    glm::vec4 totalColor(0.95f, 0.95f, 0.95f, 1.0f);
-    std::string totalText = "TOTAL " + std::to_string(total);
-    ui::DrawText(totalText, totalPos, 3.f, totalColor);
-    currentY += measureHeight(totalText, 3.f) + rowSpacing;
-    int cardPoints = 0;
-    int buildBonus = 0;
-    int sweepBonus = 0;
-    if (runningScore) {
-      cardPoints = runningScore->line.capturedCardPoints;
-      buildBonus = runningScore->line.buildBonus;
-      sweepBonus = runningScore->line.sweepBonus;
-    } else if (p < static_cast<int>(m_State.players.size())) {
-      const auto &player = m_State.players[p];
-      cardPoints = player.capturedCardPoints;
-      buildBonus = player.buildBonus;
-      sweepBonus = player.sweepBonus;
-    }
+    float availableSpan = std::max(columnAreaRight - columnAreaLeft, 0.f);
+    float constrainedSpan = std::max(availableSpan, kMinColumnSpan);
+    float spanScale = constrainedSpan > 0.f ? (availableSpan / constrainedSpan) : 1.f;
+    if (availableSpan <= 0.f) spanScale = 0.f;
+    else if (spanScale <= 0.f) spanScale = 1.f;
 
-    auto drawStat = [&](const std::string &label, int value, bool addSpacing) {
-      std::string text = label + " +" + std::to_string(value);
-      ui::DrawText(text, glm::vec2{offsetX, currentY}, 2.6f,
-               glm::vec4(0.9f, 0.94f, 0.92f, 1.0f));
-      currentY += measureHeight(text, 2.6f);
-      if (addSpacing) {
-        currentY += rowSpacing;
-      }
+    // ===== HEADER (ROUND / TURN / DECK) =====
+    auto fitPx = [&](const std::string& s, float wantPx, float maxW) -> float {
+        glm::vec2 m = ui::MeasureText(s, wantPx);
+        if (m.x <= 0.0001f || maxW <= 0.f) return wantPx;
+        if (m.x <= maxW) return wantPx;
+        return wantPx * (maxW / m.x);
     };
 
-    drawStat("CARDS", cardPoints, true);
-    drawStat("BUILDS", buildBonus, true);
-    drawStat("SWEEPS", sweepBonus, false);
-  }
+    const float headerTop = 14.f;
+    const float wantPx = 4.f;
+    const float rowSpacing = 3.f;
+    const float headerSpacing = 10.f;
 
-  std::string turnText = "TURN P" + std::to_string(m_State.current + 1);
-  glm::vec2 turnMetrics = ui::MeasureText(turnText, 4.f);
-  float turnCenter = (columnAreaLeft + columnAreaRight) * 0.5f;
-  float turnX = turnCenter - turnMetrics.x * 0.5f;
-  ui::DrawText(turnText, glm::vec2{turnX, headerTop}, 4.f,
-           m_PlayerColors[m_State.current % m_PlayerColors.size()]);
+    std::string roundLabel = "ROUND " + std::to_string(m_RoundNumber);
+    std::string turnText   = "TURN P" + std::to_string(m_State.current + 1);
+    std::string deckText   = "DECK " + std::to_string((int)m_State.stock.size());
+
+    // 3 equal slots in available area
+    float L0 = columnAreaLeft;
+    float R1 = columnAreaRight;
+    float slotW = std::max(0.f, (R1 - L0) / 3.f);
+    float C0 = L0 + slotW;
+    float C1 = L0 + 2.f * slotW;
+
+    // Fit text into slots
+    float pxL = fitPx(roundLabel, wantPx, slotW - 8.f);
+    float pxC = fitPx(turnText,   wantPx, slotW - 8.f);
+    float pxR = fitPx(deckText,   wantPx, slotW - 8.f);
+
+    // Draw: left, center, right
+    glm::vec2 roundPos{L0, headerTop};
+    ui::DrawText(roundLabel, roundPos, pxL, glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+
+    glm::vec2 turnMetrics = ui::MeasureText(turnText, pxC);
+    float turnX = C0 + (slotW - turnMetrics.x) * 0.5f;
+    ui::DrawText(turnText, glm::vec2{turnX, headerTop}, pxC,
+                 m_PlayerColors[m_State.current % m_PlayerColors.size()]);
+
+    glm::vec2 deckMetrics = ui::MeasureText(deckText, pxR);
+    float deckX = C1 + (slotW - deckMetrics.x) * 0.5f;
+    ui::DrawText(deckText, glm::vec2{deckX, headerTop}, pxR,
+                 glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+
+    float headerHeight = std::max({ ui::MeasureText(roundLabel, pxL).y,
+                                    turnMetrics.y,
+                                    deckMetrics.y });
+
+    // ===== PLAYER GRID (SINGLE ROW) =====
+    int playerCount = std::max(1, m_State.numPlayers);
+    int cols = std::min(playerCount, 4);
+    int rows = (playerCount + cols - 1) / cols; // should be 1
+
+    const float pad = 12.f;
+    float gridTop = headerTop + headerHeight + headerSpacing;
+    float totalW = std::max(0.f, columnAreaRight - columnAreaLeft);
+    float cellW = std::max(0.f, (totalW - pad * (cols + 1)) / cols);
+    float cellH = 76.f;
+
+    auto clampFitPx = [&](const std::string& s, float want, float maxWidth) -> float {
+        glm::vec2 m = ui::MeasureText(s, want);
+        if (m.x <= 0.0001f) return want;
+        if (m.x <= maxWidth) return want;
+        return want * (maxWidth / m.x);
+    };
+
+    for (int i = 0; i < playerCount; ++i) {
+        int c = i % cols;
+        float x0 = columnAreaLeft + pad + c * (cellW + pad);
+        float y0 = gridTop;
+
+        glm::vec4 color = m_PlayerColors[i % m_PlayerColors.size()];
+        float innerX = x0 + 8.f;
+        float curY = y0 + 10.f;
+        float textMax = std::max(0.f, cellW - 16.f);
+
+        std::string playerLabel = "PLAYER " + std::to_string(i + 1);
+        float pxLabel = clampFitPx(playerLabel, 3.5f, textMax);
+        ui::DrawText(playerLabel, glm::vec2{innerX, curY}, pxLabel, color);
+        curY += ui::MeasureText(playerLabel, pxLabel).y + 3.f;
+
+        int total = (i < (int)m_TotalScores.size()) ? m_TotalScores[i] : 0;
+        const RunningScore* runningScore =
+            (i < (int)m_CurrentRoundScores.size()) ? &m_CurrentRoundScores[i] : nullptr;
+
+        if (m_Phase == Phase::Playing) {
+            if (runningScore) {
+                total += runningScore->line.total;
+            } else if (i < (int)m_State.players.size()) {
+                const auto& player = m_State.players[i];
+                total += player.capturedCardPoints + player.buildBonus + player.sweepBonus;
+            }
+        }
+
+        std::string totalText = "TOTAL " + std::to_string(total);
+        float pxTotal = clampFitPx(totalText, 3.0f, textMax);
+        ui::DrawText(totalText, glm::vec2{innerX, curY}, pxTotal,
+                     glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
+        curY += ui::MeasureText(totalText, pxTotal).y + 3.f;
+
+        auto drawStat = [&](const std::string& label, int value) {
+            std::string text = label + " +" + std::to_string(value);
+            float px = clampFitPx(text, 2.6f, textMax);
+            ui::DrawText(text, glm::vec2{innerX, curY}, px,
+                         glm::vec4(0.9f, 0.94f, 0.92f, 1.0f));
+            curY += ui::MeasureText(text, px).y;
+        };
+
+        int cardPoints = 0, buildBonus = 0, sweepBonus = 0;
+        if (runningScore) {
+            cardPoints = runningScore->line.capturedCardPoints;
+            buildBonus = runningScore->line.buildBonus;
+            sweepBonus = runningScore->line.sweepBonus;
+        } else if (i < (int)m_State.players.size()) {
+            const auto& player = m_State.players[i];
+            cardPoints = player.capturedCardPoints;
+            buildBonus = player.buildBonus;
+            sweepBonus = player.sweepBonus;
+        }
+
+        drawStat("CARDS", cardPoints);
+        drawStat("BUILDS", buildBonus);
+        drawStat("SWEEPS", sweepBonus);
+    }
+
+    // ===== SETTINGS GEAR (DRAW LAST) =====
+    if (settingsVisible) {
+        glm::vec4 baseColor = glm::vec4(0.18f, 0.32f, 0.38f, 1.0f);
+        glm::vec4 hoveredColor = glm::vec4(0.30f, 0.55f, 0.78f, 1.0f);
+        glm::vec4 fillColor = m_SettingsButtonHovered ? hoveredColor : baseColor;
+        glm::vec4 outlineColor = glm::vec4(0.03f, 0.05f, 0.06f, 1.0f);
+        glm::vec2 outlineExtend{3.f, 3.f};
+        glm::vec2 buttonPos{m_SettingsButtonRect.x, m_SettingsButtonRect.y};
+        glm::vec2 buttonSize{m_SettingsButtonRect.w, m_SettingsButtonRect.h};
+
+        Render2D::DrawQuad(buttonPos - outlineExtend, buttonSize + outlineExtend * 2.f, outlineColor);
+        Render2D::DrawQuad(buttonPos, buttonSize, fillColor);
+
+        glm::vec2 center = m_SettingsButtonRect.Center();
+        float gearSpan = std::min(m_SettingsButtonRect.w, m_SettingsButtonRect.h) * 0.55f;
+        float halfGear = gearSpan * 0.5f;
+        float toothThickness = gearSpan * 0.22f;
+        float toothLength = gearSpan * 0.45f;
+        glm::vec4 gearColor = glm::vec4(0.94f, 0.96f, 0.98f, 1.0f);
+        glm::vec4 hubColor = glm::mix(fillColor, glm::vec4(0.1f, 0.16f, 0.18f, 1.0f), 0.55f);
+
+        Render2D::DrawQuad({center.x - halfGear, center.y - halfGear}, {gearSpan, gearSpan}, gearColor);
+
+        glm::mat4 diagonal = glm::translate(glm::mat4(1.0f), glm::vec3(center, 0.0f));
+        diagonal = glm::rotate(diagonal, glm::quarter_pi<float>(), {0.f,0.f,1.f});
+        diagonal = glm::scale(diagonal, {gearSpan * 0.75f, gearSpan * 0.75f, 1.f});
+        Render2D::DrawQuad(diagonal, gearColor);
+
+        glm::vec2 horizontalTooth{toothLength, toothThickness};
+        Render2D::DrawQuad({center.x - horizontalTooth.x * 0.5f, center.y - halfGear - toothThickness * 0.5f}, horizontalTooth, gearColor);
+        Render2D::DrawQuad({center.x - horizontalTooth.x * 0.5f, center.y + halfGear - toothThickness * 0.5f}, horizontalTooth, gearColor);
+
+        glm::vec2 verticalTooth{toothThickness, toothLength};
+        Render2D::DrawQuad({center.x - halfGear - toothThickness * 0.5f, center.y - verticalTooth.y * 0.5f}, verticalTooth, gearColor);
+        Render2D::DrawQuad({center.x + halfGear - toothThickness * 0.5f, center.y - verticalTooth.y * 0.5f}, verticalTooth, gearColor);
+
+        float innerSpan = gearSpan * 0.46f;
+        Render2D::DrawQuad({center.x - innerSpan * 0.5f, center.y - innerSpan * 0.5f}, {innerSpan, innerSpan}, hubColor);
+
+        glm::mat4 innerDiagonal = glm::translate(glm::mat4(1.0f), glm::vec3(center, 0.0f));
+        innerDiagonal = glm::rotate(innerDiagonal, glm::quarter_pi<float>(), {0.f,0.f,1.f});
+        innerDiagonal = glm::scale(innerDiagonal, {innerSpan * 0.68f, innerSpan * 0.68f, 1.f});
+        Render2D::DrawQuad(innerDiagonal, hubColor);
+
+        float hubSize = gearSpan * 0.2f;
+        glm::vec4 hubHighlight = glm::mix(gearColor, hubColor, 0.35f);
+        Render2D::DrawQuad({center.x - hubSize * 0.5f, center.y - hubSize * 0.5f}, {hubSize, hubSize}, gearColor);
+        float hubInset = hubSize * 0.55f;
+        Render2D::DrawQuad({center.x - hubInset * 0.5f, center.y - hubInset * 0.5f}, {hubInset, hubInset}, hubHighlight);
+    }
 }
+
 
 void KasinoGame::drawHands() {
   float viewWidth = m_Camera.LogicalWidth();
