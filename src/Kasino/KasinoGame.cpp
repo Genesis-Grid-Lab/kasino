@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <optional>
 #include <random>
 #include <set>
@@ -47,11 +48,11 @@ constexpr float kButtonVerticalSpacingFactor = 1.75f;
 constexpr float kMainMenuBottomMargin = 48.f;
 
 constexpr const char *kSettingsParagraph1 =
-    "Close resumes play without leaving the table.";
+    "Resume closes this menu and keeps the current round active.";
 constexpr const char *kSettingsParagraph2 =
-    "Quit Game ends the current match and exits immediately.";
+    "Main Menu ends the match in progress and returns to the title screen.";
 constexpr const char *kSettingsParagraph3 =
-    "Press ESC or tap Settings to reopen this menu.";
+    "Use the volume slider below to adjust audio. Press ESC or tap Settings to reopen this menu.";
 
 const std::array<const char *, 20> kHowToPlayLines = {
     "EACH ROUND STARTS WITH FOUR CARDS PER PLAYER",
@@ -80,6 +81,14 @@ constexpr float kMainMenuSettingsOptionTop = 110.f;
 constexpr float kMainMenuSettingsDescriptionTop = 180.f;
 constexpr float kMainMenuSettingsOptionHeight = 44.f;
 constexpr float kMainMenuSettingsOptionSpacing = 20.f;
+constexpr float kVolumeSectionSpacing = 24.f;
+constexpr float kVolumeLabelScale = 3.f;
+constexpr float kVolumeLabelSpacing = 8.f;
+constexpr float kVolumeTrackHeight = 10.f;
+constexpr float kVolumeHandleWidth = 16.f;
+constexpr float kVolumeHandleHeight = 30.f;
+constexpr float kSettingsMainMenuButtonHeight = 44.f;
+constexpr float kSettingsMainMenuButtonSpacing = 24.f;
 
 float lineAdvanceForStyle(const ui::TextStyle &style) {
   return style.scale * (5.0f + style.lineSpacing);
@@ -248,6 +257,8 @@ bool KasinoGame::OnStart() {
     EN_CORE_ERROR("Failed to load wav file");
   }
 
+  setMasterVolume(m_MasterVolume);
+
   auto loadBuffer = [](Ref<IAudioBuffer> &buffer, const std::string &path) {
     buffer = SoundSystem::GetDevice()->CreateBuffer();
     if (!buffer) {
@@ -358,6 +369,31 @@ void KasinoGame::OnStop() {
   m_CardTextures.clear();
   m_CardBackTexture.reset();
   Render2D::Shutdown();
+}
+
+void KasinoGame::setMasterVolume(float volume) {
+  m_MasterVolume = std::clamp(volume, 0.f, 1.f);
+  auto &device = SoundSystem::GetDevice();
+  if (device) {
+    device->SetMasterVolume(m_MasterVolume);
+  }
+  updateVolumeHandleRect();
+}
+
+void KasinoGame::updateVolumeHandleRect() {
+  m_PromptVolumeHandleRect = {};
+  if (m_PromptVolumeTrackRect.w <= 0.f || m_PromptVolumeTrackRect.h <= 0.f) {
+    return;
+  }
+
+  float handleCenterX =
+      m_PromptVolumeTrackRect.x + m_PromptVolumeTrackRect.w * m_MasterVolume;
+  float handleTop = m_PromptVolumeTrackRect.y +
+                    m_PromptVolumeTrackRect.h * 0.5f -
+                    kVolumeHandleHeight * 0.5f;
+  m_PromptVolumeHandleRect =
+      {handleCenterX - kVolumeHandleWidth * 0.5f, handleTop, kVolumeHandleWidth,
+       kVolumeHandleHeight};
 }
 
 void KasinoGame::startNewMatch() {
@@ -756,6 +792,9 @@ void KasinoGame::updatePromptLayout() {
     m_MenuInstructionTextY = 0.f;
     m_PromptButtonRect = {};
     m_PromptSecondaryButtonRect = {};
+    m_PromptVolumeTrackRect = {};
+    m_PromptVolumeHandleRect = {};
+    m_SettingsMainMenuButtonRect = {};
     return;
   }
 
@@ -778,6 +817,12 @@ void KasinoGame::updatePromptLayout() {
   const float seatHeaderSpacing = 60.f;
 
   m_PromptSecondaryButtonRect = {};
+  m_PromptVolumeTrackRect = {};
+  m_PromptVolumeHandleRect = {};
+  m_SettingsMainMenuButtonRect = {};
+
+  float settingsParagraphHeight = 0.f;
+  float mainMenuSettingsDescHeight = 0.f;
 
   switch (m_PromptMode) {
   case PromptMode::RoundSummary:
@@ -831,7 +876,16 @@ void KasinoGame::updatePromptLayout() {
     totalTextHeight += paragraphSpacing;
     totalTextHeight += blockHeightForLines(
         wrapText(kSettingsParagraph3, secondary, textMaxWidth), secondary);
+    settingsParagraphHeight = totalTextHeight;
+    ui::TextStyle volumeLabelStyle;
+    volumeLabelStyle.scale = kVolumeLabelScale;
+    float volumeLabelHeight = ui::MeasureText("VOLUME", volumeLabelStyle).y;
     float contentBottom = kPromptTextStart + totalTextHeight;
+    contentBottom +=
+        kVolumeSectionSpacing + volumeLabelHeight + kVolumeLabelSpacing +
+        kVolumeHandleHeight;
+    contentBottom +=
+        kSettingsMainMenuButtonSpacing + kSettingsMainMenuButtonHeight;
     float requiredHeight =
         contentBottom + buttonSpacing + buttonHeight + buttonBottomPadding;
     boxHeight = std::max(boxHeight, requiredHeight);
@@ -844,11 +898,18 @@ void KasinoGame::updatePromptLayout() {
     auto descLines = wrapText(difficultyDescription(m_MenuDifficulty), descStyle,
                               textMaxWidth);
     float descHeight = blockHeightForLines(descLines, descStyle);
+    mainMenuSettingsDescHeight = descHeight;
     float optionBottom =
         kMainMenuSettingsOptionTop + kMainMenuSettingsOptionHeight;
     float descBottom =
         kMainMenuSettingsDescriptionTop + descHeight;
+    ui::TextStyle volumeLabelStyle;
+    volumeLabelStyle.scale = kVolumeLabelScale;
+    float volumeLabelHeight = ui::MeasureText("VOLUME", volumeLabelStyle).y;
     float contentBottom = std::max(optionBottom, descBottom);
+    contentBottom +=
+        kVolumeSectionSpacing + volumeLabelHeight + kVolumeLabelSpacing +
+        kVolumeHandleHeight;
     float requiredHeight =
         contentBottom + buttonSpacing + buttonHeight + buttonBottomPadding;
     boxHeight = std::max(boxHeight, requiredHeight);
@@ -931,6 +992,41 @@ void KasinoGame::updatePromptLayout() {
     m_DifficultyOptionRects.clear();
     assignButtons(m_PromptBoxRect.y + boxHeight -
                   (buttonHeight + buttonBottomPadding));
+  }
+
+  auto setupVolumeControls = [&](float textBottom) {
+    ui::TextStyle volumeLabelStyle;
+    volumeLabelStyle.scale = kVolumeLabelScale;
+    float labelHeight = ui::MeasureText("VOLUME", volumeLabelStyle).y;
+    float labelTop = textBottom + kVolumeSectionSpacing;
+    float labelBottom = labelTop + labelHeight;
+    float handleTop = labelBottom + kVolumeLabelSpacing;
+    float trackWidth = std::max(0.f, m_PromptBoxRect.w - 48.f);
+    float trackLeft = m_PromptBoxRect.x + 24.f;
+    float trackTop = handleTop + kVolumeHandleHeight * 0.5f -
+                     kVolumeTrackHeight * 0.5f;
+    m_PromptVolumeTrackRect =
+        {trackLeft, trackTop, trackWidth, kVolumeTrackHeight};
+    updateVolumeHandleRect();
+    return handleTop + kVolumeHandleHeight;
+  };
+
+  if (m_PromptMode == PromptMode::Settings) {
+    float textBottom =
+        m_PromptBoxRect.y + kPromptTextStart + settingsParagraphHeight;
+    float sliderBottom = setupVolumeControls(textBottom);
+    float buttonWidth = std::max(0.f, m_PromptBoxRect.w - 48.f);
+    float buttonLeft = m_PromptBoxRect.x + 24.f;
+    m_SettingsMainMenuButtonRect =
+        {buttonLeft, sliderBottom + kSettingsMainMenuButtonSpacing, buttonWidth,
+         kSettingsMainMenuButtonHeight};
+  } else if (m_PromptMode == PromptMode::MainMenuSettings) {
+    float textBottom =
+        std::max(m_PromptBoxRect.y + kMainMenuSettingsOptionTop +
+                     kMainMenuSettingsOptionHeight,
+                 m_PromptBoxRect.y + kMainMenuSettingsDescriptionTop +
+                     mainMenuSettingsDescHeight);
+    setupVolumeControls(textBottom);
   }
 }
 
@@ -1472,7 +1568,35 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
   if (!m_ShowPrompt || !m_Input) return false;
 
   bool click = m_Input->WasMousePressed(MouseButton::Left);
+  bool release = m_Input->WasMouseReleased(MouseButton::Left);
+  bool mouseDown = m_Input->IsMouseDown(MouseButton::Left);
   bool handled = false;
+
+  auto handleVolumeDrag = [&](float x) {
+    if (m_PromptVolumeTrackRect.w <= 0.f) return;
+    float local = (x - m_PromptVolumeTrackRect.x) / m_PromptVolumeTrackRect.w;
+    setMasterVolume(local);
+    handled = true;
+  };
+
+  if (m_PromptMode == PromptMode::Settings ||
+      m_PromptMode == PromptMode::MainMenuSettings) {
+    bool insideSlider =
+        m_PromptVolumeTrackRect.Contains(mx, my) ||
+        m_PromptVolumeHandleRect.Contains(mx, my);
+    if (click && insideSlider) {
+      m_AdjustingVolume = true;
+      handleVolumeDrag(mx);
+    } else if (m_AdjustingVolume && mouseDown) {
+      handleVolumeDrag(mx);
+    }
+
+    if (release) {
+      m_AdjustingVolume = false;
+    }
+  } else if (release) {
+    m_AdjustingVolume = false;
+  }
 
   if (m_PromptMode == PromptMode::PlayerSetup) {
     if (click) {
@@ -1530,6 +1654,13 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
         }
       }
     }
+  }
+
+  if (click && m_PromptMode == PromptMode::Settings &&
+      m_SettingsMainMenuButtonRect.Contains(mx, my)) {
+    returnToMainMenu();
+    handled = true;
+    return true;
   }
 
   bool primaryEnabled = true;
@@ -1669,6 +1800,33 @@ void KasinoGame::handleRoundEnd() {
   updatePromptLayout();
 }
 
+void KasinoGame::returnToMainMenu() {
+  m_Phase = Phase::MainMenu;
+  m_ShowPrompt = false;
+  m_PromptMode = PromptMode::None;
+  m_PromptHeader.clear();
+  m_PromptButtonLabel.clear();
+  m_PromptSecondaryButtonLabel.clear();
+  m_SettingsButtonHovered = false;
+  m_MainMenuStartHovered = false;
+  m_MainMenuSettingsHovered = false;
+  m_MainMenuHowToHovered = false;
+  m_AdjustingVolume = false;
+  m_PromptVolumeTrackRect = {};
+  m_PromptVolumeHandleRect = {};
+  m_SettingsMainMenuButtonRect = {};
+  m_DealQueue.clear();
+  m_PendingMove.reset();
+  m_PendingLooseHighlights.clear();
+  m_PendingBuildHighlights.clear();
+  m_ActionEntries.clear();
+  m_LegalMoves.clear();
+  m_Selection.Clear();
+  m_HoveredAction = -1;
+  m_IsDealing = false;
+  updateMainMenuLayout();
+}
+
 void KasinoGame::handlePrompt(PromptAction action) {
   switch (m_PromptMode) {
   case PromptMode::MatchSummary:
@@ -1737,6 +1895,7 @@ void KasinoGame::handlePrompt(PromptAction action) {
     if (action == PromptAction::Secondary) {
       Stop();
     }
+    m_AdjustingVolume = false;
     m_ShowPrompt = false;
     m_PromptMode = PromptMode::None;
     m_PromptButtonLabel.clear();
@@ -1799,6 +1958,7 @@ void KasinoGame::OnUpdate(float dt) {
   bool escapePressed = m_Input->WasKeyPressed(Key::Escape);
   if (escapePressed) {
     if (m_ShowPrompt && m_PromptMode == PromptMode::Settings) {
+      m_AdjustingVolume = false;
       m_ShowPrompt = false;
       m_PromptMode = PromptMode::None;
       m_PromptButtonLabel.clear();
@@ -1808,7 +1968,7 @@ void KasinoGame::OnUpdate(float dt) {
       m_ShowPrompt = true;
       m_PromptMode = PromptMode::Settings;
       m_PromptHeader = "SETTINGS";
-      m_PromptButtonLabel = "CLOSE";
+      m_PromptButtonLabel = "RESUME";
       m_PromptSecondaryButtonLabel = "QUIT GAME";
       updatePromptLayout();
     }
@@ -1945,7 +2105,7 @@ void KasinoGame::OnUpdate(float dt) {
         m_ShowPrompt = true;
         m_PromptMode = PromptMode::Settings;
         m_PromptHeader = "SETTINGS";
-        m_PromptButtonLabel = "CLOSE";
+        m_PromptButtonLabel = "RESUME";
         m_PromptSecondaryButtonLabel = "QUIT GAME";
         updatePromptLayout();
       }
@@ -2649,6 +2809,67 @@ void KasinoGame::drawPromptOverlay() {
            glm::vec2{m_PromptBoxRect.x + 16.f, m_PromptBoxRect.y + 20.f}, 4.f,
            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f));
 
+  auto drawVolumeControls = [&]() {
+    if (m_PromptVolumeTrackRect.w <= 0.f ||
+        m_PromptVolumeTrackRect.h <= 0.f) {
+      return;
+    }
+
+    ui::TextStyle labelStyle;
+    labelStyle.scale = kVolumeLabelScale;
+    labelStyle.color = glm::vec4(0.85f, 0.9f, 0.95f, 1.0f);
+    float handleTop = m_PromptVolumeTrackRect.y +
+                      m_PromptVolumeTrackRect.h * 0.5f -
+                      kVolumeHandleHeight * 0.5f;
+    float labelHeight = ui::MeasureText("VOLUME", labelStyle).y;
+    float labelTop = handleTop - kVolumeLabelSpacing - labelHeight;
+    ui::DrawText("VOLUME",
+                 glm::vec2{m_PromptVolumeTrackRect.x, labelTop}, labelStyle);
+
+    int volumePercent = static_cast<int>(std::round(
+        std::clamp(m_MasterVolume, 0.f, 1.f) * 100.f));
+    ui::TextStyle valueStyle = labelStyle;
+    std::string valueText = std::to_string(volumePercent) + "%";
+    glm::vec2 valueMetrics = ui::MeasureText(valueText, valueStyle);
+    float valueX =
+        m_PromptVolumeTrackRect.x + m_PromptVolumeTrackRect.w - valueMetrics.x;
+    ui::DrawText(valueText, glm::vec2{valueX, labelTop}, valueStyle);
+
+    glm::vec4 trackBgColor{0.08f, 0.12f, 0.14f, 1.0f};
+    glm::vec4 trackFillColor{0.35f, 0.65f, 0.85f, 1.0f};
+    glm::vec4 handleColor{0.9f, 0.9f, 0.9f, 1.0f};
+    bool hovered = m_PromptVolumeTrackRect.Contains(m_LastMousePos.x,
+                                                   m_LastMousePos.y) ||
+                   m_PromptVolumeHandleRect.Contains(m_LastMousePos.x,
+                                                     m_LastMousePos.y);
+    if (hovered || m_AdjustingVolume) {
+      handleColor = glm::vec4(0.95f, 0.75f, 0.35f, 1.0f);
+      trackFillColor =
+          glm::mix(trackFillColor, glm::vec4(0.95f, 0.85f, 0.4f, 1.0f), 0.35f);
+    }
+
+    Render2D::DrawQuad(
+        glm::vec2{m_PromptVolumeTrackRect.x, m_PromptVolumeTrackRect.y},
+        glm::vec2{m_PromptVolumeTrackRect.w, m_PromptVolumeTrackRect.h},
+        trackBgColor);
+
+    float fillWidth =
+        std::clamp(m_MasterVolume, 0.f, 1.f) * m_PromptVolumeTrackRect.w;
+    if (fillWidth > 0.f) {
+      Render2D::DrawQuad(
+          glm::vec2{m_PromptVolumeTrackRect.x, m_PromptVolumeTrackRect.y},
+          glm::vec2{fillWidth, m_PromptVolumeTrackRect.h}, trackFillColor);
+    }
+
+    if (m_PromptVolumeHandleRect.w > 0.f &&
+        m_PromptVolumeHandleRect.h > 0.f) {
+      Render2D::DrawQuad(
+          glm::vec2{m_PromptVolumeHandleRect.x, m_PromptVolumeHandleRect.y},
+          glm::vec2{m_PromptVolumeHandleRect.w, m_PromptVolumeHandleRect.h},
+          handleColor);
+    }
+  };
+
   if (m_PromptMode == PromptMode::RoundSummary ||
       m_PromptMode == PromptMode::MatchSummary) {
     if (!m_LastRoundScores.empty()) {
@@ -2750,6 +2971,8 @@ void KasinoGame::drawPromptOverlay() {
     float descMaxWidth = m_PromptBoxRect.w - 32.f;
     auto descLines = wrapText(desc, descStyle, descMaxWidth);
     drawWrappedLines(descLines, glm::vec2{descX, descY}, descStyle);
+
+    drawVolumeControls();
   } else if (m_PromptMode == PromptMode::HowToPlay) {
     ui::TextStyle howStyle;
     howStyle.scale = 2.6f;
@@ -2784,6 +3007,25 @@ void KasinoGame::drawPromptOverlay() {
 
     auto paragraph3 = wrapText(kSettingsParagraph3, secondaryStyle, maxWidth);
     drawWrappedLines(paragraph3, glm::vec2{textX, textY}, secondaryStyle);
+
+    drawVolumeControls();
+
+    if (m_SettingsMainMenuButtonRect.w > 0.f &&
+        m_SettingsMainMenuButtonRect.h > 0.f) {
+      ui::ButtonStyle mainMenuStyle;
+      mainMenuStyle.baseColor = glm::vec4(0.22f, 0.32f, 0.48f, 1.0f);
+      mainMenuStyle.hoveredColor = glm::vec4(0.32f, 0.45f, 0.68f, 1.0f);
+      mainMenuStyle.disabledColor = mainMenuStyle.baseColor;
+      mainMenuStyle.textStyle.scale = 3.2f;
+      mainMenuStyle.textStyle.color = glm::vec4(0.95f, 0.95f, 0.95f, 1.0f);
+      mainMenuStyle.hoveredTextColor = mainMenuStyle.textStyle.color;
+      mainMenuStyle.disabledTextColor = mainMenuStyle.textStyle.color;
+      mainMenuStyle.drawOutline = false;
+      bool hovered = m_SettingsMainMenuButtonRect.Contains(m_LastMousePos.x,
+                                                           m_LastMousePos.y);
+      ui::DrawButton(m_SettingsMainMenuButtonRect, "MAIN MENU", mainMenuStyle,
+                     ui::ButtonState{hovered, true});
+    }
   }
 
   bool primaryEnabled = true;
