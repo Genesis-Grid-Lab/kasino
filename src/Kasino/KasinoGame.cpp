@@ -234,6 +234,7 @@ bool KasinoGame::OnStart() {
   m_Input = std::make_unique<InputSystem>(m_Window->Events());
 
   m_MenuSeatIsAI = {false, true, true, true};
+  m_MenuHumanSeat = 0;
   m_MenuSelectedPlayers = 2;
   updateMenuHumanCounts();
   m_HumanSeatCount = m_MenuSelectedHumans;
@@ -2943,9 +2944,9 @@ void KasinoGame::drawPromptOverlay() {
                  std::to_string(aiCount),
              glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuSummaryTextY},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
-    ui::DrawText("SEAT 1 (BOTTOM) IS ALWAYS THE HUMAN PLAYER",
-             glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuInstructionTextY},
-             2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
+    // ui::DrawText("SEAT 1 (BOTTOM) IS ALWAYS THE HUMAN PLAYER",
+    //          glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuInstructionTextY},
+    //          2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
   } else if (m_PromptMode == PromptMode::MainMenuSettings) {
     ui::DrawText("SELECT DIFFICULTY", glm::vec2{m_PromptBoxRect.x + 16.f,
                                            m_PromptBoxRect.y + 64.f},

@@ -132,6 +132,7 @@ private:
 
   int m_MenuSelectedPlayers = 2;
   int m_MenuSelectedHumans = 1;
+  int m_MenuHumanSeat = 0;
   std::array<bool, 4> m_MenuSeatIsAI{false, true, true, true};
   Difficulty m_MenuDifficulty = Difficulty::Easy;
   Difficulty m_ActiveDifficulty = Difficulty::Easy;

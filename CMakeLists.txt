@@ -105,10 +105,10 @@ if (WINDOW_BACKEND STREQUAL "glfw")
           "-sUSE_GLFW=3"
           "-sUSE_WEBGL2=1"
           "-sFULL_ES3=1"
-          "-sALLOW_MEMORY_GROWTH=1"
-          "-sASSERTIONS=0"
-          "-sMINIFY_HTML=1"
-          "--shell-file ${CMAKE_SOURCE_DIR}/Resources/web/shell_kasino.html"
+          -sALLOW_MEMORY_GROWTH=1
+          -sASSERTIONS=0
+          -sMINIFY_HTML=1
+          --shell-file ${CMAKE_SOURCE_DIR}/Resources/web/shell_kasino.html
         )
     elseif (USE_FETCH_GLFW)
         include(FetchContent)
