@@ -398,16 +398,18 @@ void KasinoGame::updateVolumeHandleRect() {
 
 void KasinoGame::startNewMatch() {
   m_IsAiPlayer.assign(m_State.numPlayers, true);
+  bool hasHumanSeat = false;
   for (int i = 0; i < m_State.numPlayers; ++i) {
     bool isAi = true;
     if (i < static_cast<int>(m_SeatIsAI.size())) {
       isAi = m_SeatIsAI[i];
-    } else if (i == 0) {
+    } else if (!hasHumanSeat) {
       isAi = false;
     }
     m_IsAiPlayer[i] = isAi;
+    hasHumanSeat = hasHumanSeat || !isAi;
   }
-  if (!m_IsAiPlayer.empty()) {
+  if (!hasHumanSeat &&!m_IsAiPlayer.empty()) {
     m_IsAiPlayer[0] = false;
   }
 
