@@ -2895,8 +2895,7 @@ void KasinoGame::drawPromptOverlay() {
         if (p >= (int)m_LastRoundScores.size()) break;
         const auto &line = m_LastRoundScores[p];
         int total = (p < (int)m_TotalScores.size()) ? m_TotalScores[p] : 0;
-        std::string text = "P" + std::to_string(p + 1) + " ROUND " +
-                           std::to_string(line.total) + " TOTAL " +
+        std::string text = "P" + std::to_string(p + 1) + " TOTAL " +
                            std::to_string(total);
         ui::DrawText(text, glm::vec2{m_PromptBoxRect.x + 16.f, lineY}, 3.2f,
                  glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
