@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Kasino</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script>
+      var Module = {
+        canvas: document.getElementById('canvas'),
+
+        // Disable all console logging
+        print: () => {},
+        printErr: () => {},
+
+        // (Optional) Called when your runtime is ready
+        onRuntimeInitialized() {
+          console.clear();
+        }
+      };
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

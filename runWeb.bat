@@ -1,6 +1,6 @@
 @echo off
 
-set target=Targets
+set target=Targets-web
 
 if exist %target%\ (
     if exist %target%\Debug\ (
