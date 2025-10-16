@@ -66,6 +66,9 @@ private:
                         float delay);
   void handleRoundEnd();
   void handlePrompt(PromptAction action);
+  void returnToMainMenu();
+  void setMasterVolume(float volume);
+  void updateVolumeHandleRect();
 
   void drawScene();
   void drawMainMenu();
@@ -195,9 +198,14 @@ private:
   std::string m_PromptHeader;
   std::string m_PromptButtonLabel;
   std::string m_PromptSecondaryButtonLabel;
+  Rect m_PromptVolumeTrackRect{};
+  Rect m_PromptVolumeHandleRect{};
+  Rect m_SettingsMainMenuButtonRect{};
+  bool m_AdjustingVolume = false;
 
   std::vector<DealAnim> m_DealQueue;
   std::vector<int> m_DealtCounts;
+  float m_MasterVolume = 1.f;
   bool m_IsDealing = false;
   glm::vec2 m_DeckOrigin{0.f, 0.f};  
 
