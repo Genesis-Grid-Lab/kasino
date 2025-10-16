@@ -235,6 +235,7 @@ bool KasinoGame::OnStart() {
 
   m_MenuSeatIsAI = {false, true, true, true};
   m_MenuSelectedPlayers = 2;
+  m_MenuHumanSeat = 0;
   updateMenuHumanCounts();
   m_HumanSeatCount = m_MenuSelectedHumans;
   m_SeatIsAI.clear();
@@ -397,9 +398,19 @@ void KasinoGame::updateVolumeHandleRect() {
 }
 
 void KasinoGame::startNewMatch() {
-  m_IsAiPlayer.assign(m_State.numPlayers, true);
-  for (int i = 0; i < m_State.numPlayers; ++i) {
-    m_IsAiPlayer[i] = (i != 0);
+  if (static_cast<int>(m_SeatIsAI.size()) != m_State.numPlayers) {
+    m_SeatIsAI.assign(m_State.numPlayers, true);
+    if (!m_SeatIsAI.empty()) {
+      m_SeatIsAI[0] = false;
+    }
+  }
+
+  m_IsAiPlayer = m_SeatIsAI;
+  if (static_cast<int>(m_IsAiPlayer.size()) != m_State.numPlayers) {
+    m_IsAiPlayer.assign(m_State.numPlayers, true);
+    if (!m_IsAiPlayer.empty()) {
+      m_IsAiPlayer[0] = false;
+    }
   }
 
   m_TotalScores.assign(m_State.numPlayers, 0);
@@ -1022,23 +1033,65 @@ void KasinoGame::updatePromptLayout() {
 }
 
 void KasinoGame::updateMenuHumanCounts() {
-  m_MenuSelectedHumans = 0;
-  int seatCount = std::clamp(m_MenuSelectedPlayers, 0,
-                             static_cast<int>(m_MenuSeatIsAI.size()));
+  int seatCapacity = static_cast<int>(m_MenuSeatIsAI.size());
+  int seatCount = std::clamp(m_MenuSelectedPlayers, 0, seatCapacity);
 
-  for (size_t i = 0; i < m_MenuSeatIsAI.size(); ++i) {
-    if (static_cast<int>(i) >= seatCount) {
-      m_MenuSeatIsAI[i] = true;
-    } else if (i == 0) {
-      m_MenuSeatIsAI[i] = false;
-    } else {
+  if (seatCount <= 0) {
+    for (int i = 0; i < seatCapacity; ++i) {
       m_MenuSeatIsAI[i] = true;
     }
+    m_MenuHumanSeat = -1;
+    m_MenuSelectedHumans = 0;
+    return;
   }
 
-  if (seatCount > 0 && !m_MenuSeatIsAI.empty()) {
-    m_MenuSelectedHumans = 1;
+  if (m_MenuHumanSeat < 0 || m_MenuHumanSeat >= seatCount) {
+    m_MenuHumanSeat = 0;
   }
+
+  for (int i = 0; i < seatCount; ++i) {
+    m_MenuSeatIsAI[i] = (i != m_MenuHumanSeat);
+  }
+  for (int i = seatCount; i < seatCapacity; ++i) {
+    m_MenuSeatIsAI[i] = true;
+  }
+
+  m_MenuSelectedHumans = 1;
+}
+
+std::vector<int> KasinoGame::menuSeatOrderForPlay(int playerCount) const {
+  int seatCapacity = static_cast<int>(m_MenuSeatIsAI.size());
+  int seatCount = std::clamp(playerCount, 0, seatCapacity);
+  std::vector<int> order;
+  if (seatCount <= 0) {
+    return order;
+  }
+
+  int startSeat = m_MenuHumanSeat;
+  if (startSeat < 0 || startSeat >= seatCount) {
+    startSeat = 0;
+  }
+
+  order.reserve(seatCount);
+  for (int offset = 0; offset < seatCount; ++offset) {
+    int seatIndex = (startSeat + offset) % seatCount;
+    order.push_back(seatIndex);
+  }
+  return order;
+}
+
+std::vector<bool> KasinoGame::menuSeatAssignmentsForPlay(int playerCount) const {
+  auto order = menuSeatOrderForPlay(playerCount);
+  std::vector<bool> assignments;
+  assignments.reserve(order.size());
+  for (int seat : order) {
+    bool isAI = true;
+    if (seat >= 0 && seat < static_cast<int>(m_MenuSeatIsAI.size())) {
+      isAI = m_MenuSeatIsAI[seat];
+    }
+    assignments.push_back(isAI);
+  }
+  return assignments;
 }
 
 void KasinoGame::layoutActionEntries() {
@@ -1606,10 +1659,6 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
           newCount = std::clamp(newCount, 1, 4);
           if (newCount != m_MenuSelectedPlayers) {
             m_MenuSelectedPlayers = newCount;
-            for (int seat = m_MenuSelectedPlayers; seat < 4; ++seat)
-              m_MenuSeatIsAI[seat] = true;
-            if (m_MenuSelectedPlayers > 0)
-              m_MenuSeatIsAI[0] = false;
             updateMenuHumanCounts();
             updatePromptLayout();
           }
@@ -1623,11 +1672,7 @@ bool KasinoGame::handlePromptInput(float mx, float my) {
           if (!m_MenuSeatToggleRects[i].Contains(mx, my)) continue;
           int seat = static_cast<int>(i);
           if (seat < m_MenuSelectedPlayers) {
-            if (seat == 0) {
-              m_MenuSeatIsAI[seat] = false;
-            } else {
-              m_MenuSeatIsAI[seat] = true;
-            }
+            m_MenuHumanSeat = seat;
             updateMenuHumanCounts();
             handled = true;
           }
@@ -1830,11 +1875,16 @@ void KasinoGame::handlePrompt(PromptAction action) {
   case PromptMode::MatchSummary:
     if (action == PromptAction::Primary) {
       m_MenuSelectedPlayers = m_State.numPlayers;
-      for (int i = 0; i < 4; ++i) {
-        m_MenuSeatIsAI[i] = (i != 0);
-      }
+      m_MenuHumanSeat = 0;
       updateMenuHumanCounts();
       m_MenuDifficulty = m_ActiveDifficulty;
+      m_SeatIsAI = menuSeatAssignmentsForPlay(m_MenuSelectedPlayers);
+      if (static_cast<int>(m_SeatIsAI.size()) != m_MenuSelectedPlayers) {
+        m_SeatIsAI.assign(m_MenuSelectedPlayers, true);
+        if (!m_SeatIsAI.empty()) {
+          m_SeatIsAI[0] = false;
+        }
+      }
       startNewMatch();
     }
     break;
@@ -1878,9 +1928,12 @@ void KasinoGame::handlePrompt(PromptAction action) {
     if (m_MenuSelectedHumans <= 0 || m_MenuSelectedPlayers <= 0) return;
     m_State.numPlayers = m_MenuSelectedPlayers;
     m_State.players.resize(m_State.numPlayers);
-    m_SeatIsAI.assign(m_State.numPlayers, true);
-    if (!m_SeatIsAI.empty()) {
-      m_SeatIsAI[0] = false;
+    m_SeatIsAI = menuSeatAssignmentsForPlay(m_State.numPlayers);
+    if (static_cast<int>(m_SeatIsAI.size()) != m_State.numPlayers) {
+      m_SeatIsAI.assign(m_State.numPlayers, true);
+      if (!m_SeatIsAI.empty()) {
+        m_SeatIsAI[0] = false;
+      }
     }
     m_HumanSeatCount = m_MenuSelectedHumans;
     m_ActiveDifficulty = m_MenuDifficulty;
@@ -2943,7 +2996,7 @@ void KasinoGame::drawPromptOverlay() {
                  std::to_string(aiCount),
              glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuSummaryTextY},
              3.f, glm::vec4(0.8f, 0.85f, 0.9f, 1.0f));
-    ui::DrawText("SEAT 1 (BOTTOM) IS ALWAYS THE HUMAN PLAYER",
+    ui::DrawText("YOUR SELECTED SEAT WILL APPEAR AT THE BOTTOM DURING PLAY",
              glm::vec2{m_PromptBoxRect.x + 16.f, m_MenuInstructionTextY},
              2.8f, glm::vec4(0.7f, 0.75f, 0.8f, 1.0f));
   } else if (m_PromptMode == PromptMode::MainMenuSettings) {

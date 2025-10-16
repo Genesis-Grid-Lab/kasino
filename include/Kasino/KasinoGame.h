@@ -50,6 +50,8 @@ private:
   void updateLayout();
   void updatePromptLayout();
   void updateMenuHumanCounts();
+  std::vector<int> menuSeatOrderForPlay(int playerCount) const;
+  std::vector<bool> menuSeatAssignmentsForPlay(int playerCount) const;
   void updateActionOptions();
   void layoutActionEntries();
   void updateHoveredAction(float mx, float my);
@@ -132,6 +134,7 @@ private:
 
   int m_MenuSelectedPlayers = 2;
   int m_MenuSelectedHumans = 1;
+  int m_MenuHumanSeat = 0;
   std::array<bool, 4> m_MenuSeatIsAI{false, true, true, true};
   Difficulty m_MenuDifficulty = Difficulty::Easy;
   Difficulty m_ActiveDifficulty = Difficulty::Easy;
