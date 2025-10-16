@@ -2221,22 +2221,39 @@ void KasinoGame::drawScoreboard() {
     int cols = std::min(playerCount, 4);
     int rows = (playerCount + cols - 1) / cols; // should be 1
 
-    const float pad = 12.f;
+    float pad = 12.f;
+    if (playerCount > 2) {
+      // pad = 20.f + (playerCount - 2) * 6.f;
+    }    
     float gridTop = headerTop + headerHeight + headerSpacing;
     float totalW = std::max(0.f, columnAreaRight - columnAreaLeft);
     float cellW = std::max(0.f, (totalW - pad * (cols + 1)) / cols);
     float cellH = 76.f;
 
+    const float kMinShrinkPlayers = (playerCount > 2) ? 0.85f : 1.0f;
     auto clampFitPx = [&](const std::string& s, float want, float maxWidth) -> float {
         glm::vec2 m = ui::MeasureText(s, want);
         if (m.x <= 0.0001f) return want;
-        if (m.x <= maxWidth) return want;
-        return want * (maxWidth / m.x);
+        if (m.x <= maxWidth)
+          return want;
+	float px = want * (maxWidth / m.x);
+        // return want * (maxWidth / m.x);
+	return std::max(px, want * kMinShrinkPlayers);
     };
 
     for (int i = 0; i < playerCount; ++i) {
         int c = i % cols;
-        float x0 = columnAreaLeft + pad + c * (cellW + pad);
+        float gap = 12.f; 
+	switch (playerCount){
+        case 3:
+	  gap = 28.f;
+          break;
+        case 4:
+          gap = 45.f;
+	  pad = 0.f;
+	  break;          
+	}
+        float x0 = columnAreaLeft + pad + c * (cellW + gap);
         float y0 = gridTop;
 
         glm::vec4 color = m_PlayerColors[i % m_PlayerColors.size()];
